@@ -8,29 +8,43 @@ import java.io.IOException;
 import org.jruby.Ruby;
 import org.jruby.ast.Node;
 
-import org.cx4a.rsense.typing.TypeInferencer;
+import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.util.Logger;
 
 public class Main {
-    public static void main(String[] args) {
-        try {
-            Logger.setDebug(true);
+    public static void main(String[] args) throws Exception {
+        if (args.length < 4) {
+            System.out.println("Usage: command file encoding offset");
+            return;
+        }
 
-            String rsenseHome = System.getProperty("rsense.home");
-            if (rsenseHome == null) {
-                rsenseHome = ".";
+        Logger.setDebug(true);
+
+        String command = args[0];
+        File file = new File(args[1]);
+        String encoding = args[2];
+        int offset = Integer.parseInt(args[3]);
+
+        String rsenseHome = System.getProperty("rsense.home");
+        if (rsenseHome == null) {
+            rsenseHome = ".";
+        }
+
+        Project sandbox = new Project("<sandbox>", null);
+        Config config = new Config(rsenseHome);
+        CodeAssist codeAssist = new CodeAssist(config);
+        codeAssist.load(sandbox, new File(config.rsenseHome + "/stubs/1.8/base_types.rb"), "UTF-8");
+
+        if (command.equals("infer-type")) {
+            InferTypeResult result = codeAssist.inferType(sandbox, file, encoding, offset);
+            for (IRubyObject klass : result.getTypeSet()) {
+                System.out.println(klass);
             }
-
-            Project sandbox = new Project("<sandbox>", null);
-            Config config = new Config(rsenseHome);
-            CodeAssist codeAssist = new CodeAssist(config);
-            codeAssist.load(sandbox, new File(config.rsenseHome + "/stubs/1.8/base_types.rb"), "UTF-8");
-            SuggestCompletionResult result = codeAssist.suggestCompletion(sandbox, new File(args[0]), args[1], Integer.parseInt(args[2]));
+        } else if (command.equals("suggest-completion")) {
+            SuggestCompletionResult result = codeAssist.suggestCompletion(sandbox, file, encoding, offset);
             for (SuggestCompletionResult.CompletionCandidate completion : result.getCandidates()) {
                 System.out.println(completion);
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }

@@ -8,12 +8,18 @@ import org.cx4a.rsense.ruby.Block;
 import org.cx4a.rsense.typing.Propagation;
 
 public class CallVertex extends Vertex {
+    private String name;
     private Vertex receiverVertex;
     private Vertex[] argVertices;
     private Block block;
 
     public CallVertex(Node node, Vertex receiverVertex, Vertex[] argVertices, Block block) {
+        this(node, null, receiverVertex, argVertices, block);
+    }
+
+    public CallVertex(Node node, String name, Vertex receiverVertex, Vertex[] argVertices, Block block) {
         super(node);
+        this.name = name;
         this.receiverVertex = receiverVertex;
         this.argVertices = argVertices;
         this.block = block;
@@ -26,7 +32,7 @@ public class CallVertex extends Vertex {
     }
 
     public String getName() {
-        return ((INameNode) node).getName();
+        return name == null ? ((INameNode) node).getName() : name;
     }
 
     public Vertex getReceiverVertex() {

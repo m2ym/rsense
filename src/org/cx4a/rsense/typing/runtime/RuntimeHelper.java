@@ -503,7 +503,7 @@ public class RuntimeHelper {
         for (IRubyObject value : args) {
             Frame oldFrame = context.getCurrentFrame();
             context.setFrame(block.getFrame());
-            context.pushScope(new DynamicScope(block.getScope()));
+            context.pushScope(block.getScope());
 
             if (noargblock) {}
             else if (masgn != null) {

@@ -31,4 +31,12 @@ public class CodeAssistResult {
     public List<CodeAssistError> getErrors() {
         return errors == null ? Collections.<CodeAssistError>emptyList() : errors;
     }
+
+    public void setErrors(List<CodeAssistError> errors) {
+        this.errors = errors;
+    }
+
+    public boolean hasError() {
+        return errors != null;
+    }
 }

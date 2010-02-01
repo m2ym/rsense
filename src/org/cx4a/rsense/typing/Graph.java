@@ -127,6 +127,7 @@ import org.cx4a.rsense.ruby.Block;
 import org.cx4a.rsense.ruby.Frame;
 import org.cx4a.rsense.ruby.Scope;
 import org.cx4a.rsense.ruby.LocalScope;
+import org.cx4a.rsense.ruby.DynamicScope;
 import org.cx4a.rsense.ruby.DynamicMethod;
 import org.cx4a.rsense.util.Logger;
 
@@ -245,31 +246,30 @@ public class Graph implements NodeVisitor {
 
         addSpecialMethod("[]", new SpecialMethod() {
                 public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
+                    TypeSet typeSet = new TypeSet();
                     if (args != null && args.length > 0) {
                         for (IRubyObject receiver : receivers) {
                             if (receiver instanceof Hash) {
                                 Hash hash = (Hash) receiver;
                                 Object key = Hash.getRealKey(args[0].getNode());
                                 if (!hash.getTypeVarMap().isModified() && key != null) {
-                                    TypeSet ts = new TypeSet();
-                                    ts.add(hash.get(key));
-                                    result.setResultTypeSet(ts);
-                                    return;
+                                    typeSet.add(hash.get(key));
                                 }
                             } else if (receiver instanceof Tuple) {
                                 Tuple tuple = (Tuple) receiver;
                                 Integer n = Vertex.getFixnum(args[0]);
                                 if (!tuple.getTypeVarMap().isModified() && n != null) {
-                                    TypeSet ts = new TypeSet();
-                                    ts.add(tuple.safeGet(n));
-                                    result.setResultTypeSet(ts);
-                                    return;
+                                    typeSet.add(tuple.safeGet(n));
                                 }
                             }
                         }
                     }
-                    // fall through
-                    result.setCallNextMethod(true);
+
+                    if (typeSet.isEmpty()) {
+                        result.setCallNextMethod(true);
+                    } else {
+                        result.setResultTypeSet(typeSet);
+                    }
                 }
             });
 
@@ -447,7 +447,7 @@ public class Graph implements NodeVisitor {
         Block block = null;
         if (node.getIterNode() != null) {
             IterNode iterNode = (IterNode) node.getIterNode();
-            block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), context.getCurrentScope());
+            block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), new DynamicScope(context.getCurrentScope()));
         }
         CallVertex vertex = new CallVertex(node, receiverVertex, argVertices, block);
         RuntimeHelper.call(this, vertex);
@@ -640,7 +640,11 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitForNode(ForNode node) {
-        throw new UnsupportedOperationException();
+        Vertex receiverVertex = createVertex(node.getIterNode());
+        Block block = new Block(node.getVarNode(), node.getBodyNode(), context.getCurrentFrame(), context.getCurrentScope());
+        CallVertex vertex = new CallVertex(node, "each", receiverVertex, null, block);
+        RuntimeHelper.call(this, vertex);
+        return vertex;
     }
     
     public Object visitGlobalAsgnNode(GlobalAsgnNode node) {
@@ -900,7 +904,9 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitWhileNode(WhileNode node) {
-        throw new UnsupportedOperationException();
+        createVertex(node.getConditionNode());
+        createVertex(node.getBodyNode());
+        return NULL_VERTEX;
     }
     
     public Object visitXStrNode(XStrNode node) {

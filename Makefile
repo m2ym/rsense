@@ -18,7 +18,7 @@ build:
 		src/org/cx4a/rsense/util/*.java
 
 run:
-	java -cp $(CLASSPATH) org.cx4a.rsense.Main $(FILE) UTF-8 $(OFFSET)
+	java -cp $(CLASSPATH) org.cx4a.rsense.Main $(COMMAND) $(FILE) UTF-8 $(OFFSET)
 
 antlr:
 	java -cp .:$(ANTLR_JAR) org.antlr.Tool -make \
