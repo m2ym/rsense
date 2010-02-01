@@ -27,8 +27,9 @@ public class Context {
         this.frame = frame;
     }
 
-    public void pushFrame(RubyModule cbase, IRubyObject self, Block block, Visibility visibility) {
+    public Frame pushFrame(RubyModule cbase, IRubyObject self, Block block, Visibility visibility) {
         this.frame = new Frame(cbase, self, block, visibility, this.frame);
+        return this.frame;
     }
 
     public Frame popFrame() {

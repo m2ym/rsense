@@ -380,12 +380,13 @@ public class RuntimeHelper {
         Template template = new Template(method, context.getCurrentFrame(), attr);
         method.addTemplate(attr, template);
 
+        Vertex returnVertex = template.getReturnVertex();
+        setFrameTemplate(context.getCurrentFrame(), template);
+
         boolean noReturn = AnnotationHelper.resolveMethodAnnotation(graph, template);
         
         argsAssign(graph, (ArgsNode) method.getArgsNode(), argVertices);
 
-        Vertex returnVertex = template.getReturnVertex();
-        setFrameTemplate(context.getCurrentFrame(), template);
         if (method.getBodyNode() != null) {
             Vertex result = graph.createVertex(method.getBodyNode());
             if (result != null && !noReturn) {
@@ -481,6 +482,7 @@ public class RuntimeHelper {
     public static Vertex yield(Graph graph, Block block, Collection<IRubyObject> args, boolean expanded) {
         Ruby runtime = graph.getRuntime();
         Context context = runtime.getContext();
+        Frame frame = context.getCurrentFrame();
         Node varNode = block.getVarNode();
         boolean noargblock = false;
         MultipleAsgnNode masgn = null;
@@ -488,7 +490,8 @@ public class RuntimeHelper {
         boolean isRest = false;
         Node rest = null;
         ListNode pre = null;
-        Vertex returnVertex = graph.createFreeSingleTypeVertex(runtime.getNil());
+        Vertex vertex = graph.createFreeVertex();
+        Vertex returnVertex = getFrameTemplate(frame).getReturnVertex();
 
         if (varNode == null || varNode instanceof ZeroArgNode) {
             noargblock = true;
@@ -501,8 +504,7 @@ public class RuntimeHelper {
         }
         
         for (IRubyObject value : args) {
-            Frame oldFrame = context.getCurrentFrame();
-            context.setFrame(block.getFrame());
+            pushLoopFrame(graph, block.getFrame(), returnVertex);
             context.pushScope(block.getScope());
 
             if (noargblock) {}
@@ -520,14 +522,15 @@ public class RuntimeHelper {
             }
 
             if (block.getBodyNode() != null) {
-                returnVertex = graph.createVertex(block.getBodyNode());
+                Vertex v = graph.createVertex(block.getBodyNode());
+                graph.addEdgeAndPropagate(v, vertex);
             }
 
             context.popScope();
-            context.setFrame(oldFrame);
+            popLoopFrame(graph);
         }
 
-        return returnVertex;
+        return vertex;
     }
 
     public static Vertex yield(Graph graph, YieldVertex vertex) {
@@ -556,14 +559,46 @@ public class RuntimeHelper {
     }
 
     public static Template getFrameTemplate(Frame frame) {
-        if (frame.getTag() instanceof Template) {
-            return (Template) frame.getTag();
-        } else {
-            return null;
+        Object tag;
+        while (true) {
+            tag = frame.getTag();
+            if (tag instanceof Template) {
+                return (Template) tag;
+            } else if (tag instanceof Vertex) {
+            } else {
+                return null;
+            }
         }
     }
 
     public static void setFrameTemplate(Frame frame, Template template) {
         frame.setTag(template);
+    }
+
+    public static Vertex getFrameVertex(Frame frame) {
+        Object tag = frame.getTag();
+        if (tag instanceof Vertex) {
+            return (Vertex) tag;
+        } else {
+            return null;
+        }
+    }
+
+    public static void setFrameVertex(Frame frame, Vertex vertex) {
+        frame.setTag(vertex);
+    }
+
+    public static void pushLoopFrame(Graph graph, Vertex vertex) {
+        pushLoopFrame(graph, graph.getRuntime().getContext().getCurrentFrame(), vertex);
+    }
+    
+    public static void pushLoopFrame(Graph graph, Frame prev, Vertex vertex) {
+        Context context = graph.getRuntime().getContext();
+        Frame frame = context.pushFrame(prev.getModule(), prev.getSelf(), prev.getBlock(), prev.getVisibility());
+        setFrameVertex(frame, vertex);
+    }
+
+    public static void popLoopFrame(Graph graph) {
+        graph.getRuntime().getContext().popFrame();
     }
 }

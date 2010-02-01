@@ -37,8 +37,8 @@ public class CodeAssist {
     private SpecialMethod inferTypeMethod = new SpecialMethod() {
             public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
                 for (IRubyObject receiver : receivers) {
-                    //context.typeSet.add(receiver.getMetaClass());
-                    context.typeSet.add(receiver);
+                    context.typeSet.add(receiver.getMetaClass());
+                    //context.typeSet.add(receiver);
                 }
                 result.setResultTypeSet(receivers);
             }

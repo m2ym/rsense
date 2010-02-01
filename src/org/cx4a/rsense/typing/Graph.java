@@ -390,7 +390,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitBeginNode(BeginNode node) {
-        throw new UnsupportedOperationException();
+        return createVertex(node.getBodyNode());
     }
     
     public Object visitBignumNode(BignumNode node) {
@@ -414,7 +414,14 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitBreakNode(BreakNode node) {
-        throw new UnsupportedOperationException();
+        Frame frame = context.getCurrentFrame();
+        Vertex frameVertex = RuntimeHelper.getFrameVertex(frame);
+        if (frameVertex != null) {
+            Vertex vertex = createVertex(node.getValueNode());
+            addEdgeAndPropagate(vertex, frameVertex);
+            return vertex;
+        }
+        return NULL_VERTEX;
     }
     
     public Object visitConstDeclNode(ConstDeclNode node) {
@@ -640,10 +647,12 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitForNode(ForNode node) {
+        Vertex vertex = createEmptyVertex(node);
         Vertex receiverVertex = createVertex(node.getIterNode());
         Block block = new Block(node.getVarNode(), node.getBodyNode(), context.getCurrentFrame(), context.getCurrentScope());
-        CallVertex vertex = new CallVertex(node, "each", receiverVertex, null, block);
-        RuntimeHelper.call(this, vertex);
+        CallVertex callVertex = new CallVertex(node, "each", receiverVertex, null, block);
+        RuntimeHelper.call(this, callVertex);
+        addEdgeAndPropagate(callVertex, vertex);
         return vertex;
     }
     
@@ -904,9 +913,12 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitWhileNode(WhileNode node) {
+        Vertex vertex = createEmptyVertex(node);
         createVertex(node.getConditionNode());
+        RuntimeHelper.pushLoopFrame(this, vertex);
         createVertex(node.getBodyNode());
-        return NULL_VERTEX;
+        RuntimeHelper.popLoopFrame(this);
+        return vertex;
     }
     
     public Object visitXStrNode(XStrNode node) {
