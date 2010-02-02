@@ -471,7 +471,7 @@ public class Graph implements NodeVisitor {
     
     public Object visitCaseNode(CaseNode node) {
         // FIXME eval ===
-        Vertex vertex = createFreeVertex();
+        Vertex vertex = createEmptyVertex(node);
         createVertex(node.getCaseNode());
         ListNode cases = node.getCases();
         if (cases != null) {
@@ -536,7 +536,8 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitColon3Node(Colon3Node node) {
-        throw new UnsupportedOperationException();
+        IRubyObject value = runtime.getObject().getConstant(node.getName());
+        return value != null ? createSingleTypeVertex(node, value) : NULL_VERTEX;
     }
     
     public Object visitConstNode(ConstNode node) {
@@ -711,7 +712,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitIfNode(IfNode node) {
-        Vertex vertex = createFreeVertex();
+        Vertex vertex = createEmptyVertex(node);
         createVertex(node.getCondition());
         Vertex thenBodyVertex = null;
         if (node.getThenBody() != null) {
@@ -819,7 +820,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitOrNode(OrNode node) {
-        Vertex vertex = createFreeVertex();
+        Vertex vertex = createEmptyVertex(node);
         Vertex firstVertex = createVertex(node.getFirstNode());
         Vertex secondVertex = createVertex(node.getSecondNode());
         addEdgeAndCopyTypeSet(firstVertex, vertex);
