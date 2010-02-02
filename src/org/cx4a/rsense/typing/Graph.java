@@ -509,7 +509,7 @@ public class Graph implements NodeVisitor {
 
         RubyClass klass = module.defineOrGetClassUnder(name, superClass);
 
-        context.pushFrame(klass, klass, null, Visibility.PUBLIC);
+        context.pushFrame(klass, name, klass, null, Visibility.PUBLIC);
         context.pushScope(new LocalScope(module));
 
         Vertex result = null;
@@ -772,7 +772,7 @@ public class Graph implements NodeVisitor {
         RubyModule enclosingModule = RuntimeHelper.getNamespace(this, cpath);
         RubyModule module = enclosingModule.defineOrGetModuleUnder(name);
 
-        context.pushFrame(module, module, null, Visibility.PUBLIC);
+        context.pushFrame(module, name, module, null, Visibility.PUBLIC);
         context.pushScope(new LocalScope(enclosingModule));
 
         Vertex result = null;
@@ -936,7 +936,27 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitSuperNode(SuperNode node) {
-        throw new UnsupportedOperationException();
+        Vertex receiverVertex = createFreeSingleTypeVertex(context.getFrameSelf());
+        Vertex[] argVertices = null;
+        if (node.getArgsNode() != null) {
+            List<Node> argNodes = node.getArgsNode().childNodes();
+            argVertices = new Vertex[argNodes.size()];
+            for (int i = 0; i < argVertices.length; i++) {
+                argVertices[i] = createVertex(argNodes.get(i));
+            }
+        }
+        
+        Block block = null;
+        if (node.getIterNode() != null) {
+            IterNode iterNode = (IterNode) node.getIterNode();
+            DynamicScope scope = new DynamicScope(context.getCurrentScope().getModule(), context.getCurrentScope());
+            block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), scope);
+        } else {
+            block = context.getFrameBlock();
+        }
+        CallVertex vertex = new CallVertex(node, context.getCurrentFrame().getName(), receiverVertex, argVertices, block);
+        RuntimeHelper.callSuper(this, vertex);
+        return vertex;
     }
     
     public Object visitSValueNode(SValueNode node) {
@@ -1013,7 +1033,32 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitZSuperNode(ZSuperNode node) {
-        throw new UnsupportedOperationException();
+        Template template = RuntimeHelper.getFrameTemplate(context.getCurrentFrame());
+        if (template != null) {
+            // FIXME more efficient way
+            TemplateAttribute attr = template.getAttribute();
+            IRubyObject[] args = attr.getArgs();
+
+            Vertex receiverVertex = createFreeSingleTypeVertex(context.getFrameSelf());
+            Vertex[] argVertices = new Vertex[args.length];
+            for (int i = 0; i < args.length; i++) {
+                argVertices[i] = createFreeSingleTypeVertex(args[i]);
+            }
+            
+            Block block = null;
+            if (node.getIterNode() != null) {
+                IterNode iterNode = (IterNode) node.getIterNode();
+                DynamicScope scope = new DynamicScope(context.getCurrentScope().getModule(), context.getCurrentScope());
+                block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), scope);
+            } else {
+                block = context.getFrameBlock();
+            }
+            
+            CallVertex vertex = new CallVertex(node, context.getCurrentFrame().getName(), receiverVertex, argVertices, block);
+            RuntimeHelper.callSuper(this, vertex);
+            return vertex;
+        }
+        return NULL_VERTEX;
     }
 
     public boolean propagateVertex(Propagation propagation, Vertex dest, Vertex src) {

@@ -2,14 +2,16 @@ package org.cx4a.rsense.ruby;
 
 public class Frame {
     private RubyModule cbase;
+    private String name;
     private IRubyObject self;
     private Block block;
     private Visibility visibility;
     private Frame prev;
     private Object tag;
 
-    public Frame(RubyModule cbase, IRubyObject self, Block block, Visibility visibility, Frame prev) {
+    public Frame(RubyModule cbase, String name, IRubyObject self, Block block, Visibility visibility, Frame prev) {
         this.cbase = cbase;
+        this.name = name;
         this.self = self;
         this.block = block;
         this.visibility = visibility;
@@ -22,6 +24,10 @@ public class Frame {
 
     public void setModule(RubyModule cbase) {
         this.cbase = cbase;
+    }
+
+    public String getName() {
+        return name;
     }
 
     public IRubyObject getSelf() {

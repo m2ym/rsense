@@ -391,6 +391,14 @@ public class RuntimeHelper {
     }
 
     public static Vertex call(Graph graph, CallVertex vertex) {
+        return call(graph, vertex, false);
+    }
+
+    public static Vertex callSuper(Graph graph, CallVertex vertex) {
+        return call(graph, vertex, true);
+    }
+    
+    private static Vertex call(Graph graph, CallVertex vertex, boolean callSuper) {
         if (vertex.isApplicable()) {
             String name = vertex.getName();
             TypeSet receivers = vertex.getReceiverVertex().getTypeSet();
@@ -423,7 +431,7 @@ public class RuntimeHelper {
 
                 List<TemplateAttribute> attrs = generateTemplateAttributes(receivers, args, block);
                 for (TemplateAttribute attr : attrs) {
-                    Vertex returnVertex = applyTemplateAttribute(graph, vertex, name, attr);
+                    Vertex returnVertex = applyTemplateAttribute(graph, vertex, name, attr, callSuper);
                     if (returnVertex != null && !noReturn) {
                         accumulator.addAll(returnVertex.getTypeSet());
                     }
@@ -443,14 +451,26 @@ public class RuntimeHelper {
         return vertex;
     }
 
-    private static Vertex applyTemplateAttribute(Graph graph, CallVertex vertex, String name, TemplateAttribute attr) {
+    private static Vertex applyTemplateAttribute(Graph graph, CallVertex vertex, String name, TemplateAttribute attr, boolean callSuper) {
         IRubyObject receiver = attr.getReceiver();
-        RubyClass receiverType = receiver.getMetaClass();
+        RubyClass receiverType;
+        if (callSuper) {
+            RubyModule module = graph.getRuntime().getContext().getFrameModule();
+            if (module instanceof RubyClass) {
+                RubyClass klass = (RubyClass) module;
+                receiverType = klass.getSuperClass();
+            } else {
+                Logger.error("Cannot call super in module");
+                return null;
+            }
+        } else {
+            receiverType = receiver.getMetaClass();
+        }
         Method method = (Method) receiverType.searchMethod(name);
         if (method != null) {
             Template template = method.getTemplate(attr);
             if (template == null) {
-                template = createTemplate(graph, vertex, method, attr);
+                template = createTemplate(graph, vertex, name, method, attr);
             } else {
                 AnnotationHelper.mergeAffectedMap(template, receiver);
                 Logger.debug("Template reused: %s", name);
@@ -460,7 +480,7 @@ public class RuntimeHelper {
         return null;
     }
 
-    public static Template createTemplate(Graph graph, CallVertex vertex, Method method, TemplateAttribute attr) {
+    public static Template createTemplate(Graph graph, CallVertex vertex, String name, Method method, TemplateAttribute attr) {
         IRubyObject receiver = attr.getReceiver();
         Vertex[] argVertices = new Vertex[attr.getArgs().length];
         for (int i = 0; i < argVertices.length; i++) {
@@ -471,7 +491,7 @@ public class RuntimeHelper {
         Context context = runtime.getContext();
 
         Scope scope = new LocalScope(context.getCurrentScope().getModule());
-        context.pushFrame(method.getModule(), receiver, attr.getBlock(), Visibility.PUBLIC);
+        context.pushFrame(method.getModule(), name, receiver, attr.getBlock(), Visibility.PUBLIC);
         context.pushScope(scope);
 
         Template template = new Template(method, context.getCurrentFrame(), scope, attr);
@@ -714,7 +734,7 @@ public class RuntimeHelper {
     }
     
     public static void pushLoopFrame(Context context, Frame prev, Vertex returnVertex, Vertex yieldVertex) {
-        Frame frame = context.pushFrame(prev.getModule(), prev.getSelf(), prev.getBlock(), prev.getVisibility());
+        Frame frame = context.pushFrame(prev.getModule(), prev.getName(), prev.getSelf(), prev.getBlock(), prev.getVisibility());
         frame.setTag(new LoopTag(returnVertex, yieldVertex));
     }
 

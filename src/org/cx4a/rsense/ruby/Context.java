@@ -11,7 +11,7 @@ public class Context {
         this.runtime = runtime;
         this.scopes = new Stack<Scope>();
         pushScope(new LocalScope(runtime.getObject()));
-        pushFrame(runtime.getObject(), runtime.getTopSelf(), null, Visibility.PRIVATE);
+        pushFrame(runtime.getObject(), "main", runtime.getTopSelf(), null, Visibility.PRIVATE);
     }
 
     public void pushScope(Scope scope) {
@@ -26,8 +26,8 @@ public class Context {
         this.frame = frame;
     }
 
-    public Frame pushFrame(RubyModule cbase, IRubyObject self, Block block, Visibility visibility) {
-        this.frame = new Frame(cbase, self, block, visibility, this.frame);
+    public Frame pushFrame(RubyModule cbase, String name, IRubyObject self, Block block, Visibility visibility) {
+        this.frame = new Frame(cbase, name, self, block, visibility, this.frame);
         return this.frame;
     }
 

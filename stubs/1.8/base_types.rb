@@ -295,6 +295,8 @@ class Array
   def |(other) end
   ##% "<<"<v> ; v <= t : v -> self
   def <<(obj) end
+  ##% push<v> ; v <= t : v -> self
+  def push(obj) end
   ##% "<=>" : a -> Fixnum
   def <=>(other) end
   ##% == : a -> Boolean
@@ -824,11 +826,8 @@ class IO
   SEEK_END = 0
   SEEK_SET = 0
   
-  def self.new(fd, mode = 0)
-    io = super()
-    yield io
-    io
-  end
+  ##% self.new : (Fixnum, ?String) -> IO
+  def self.new(fd, mode = '') end
  
   ##% self.open : String -> File
   ##% self.open : String {File -> a} -> ?
