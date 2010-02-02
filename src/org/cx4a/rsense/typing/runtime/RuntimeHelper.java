@@ -561,7 +561,7 @@ public class RuntimeHelper {
         }
         
         for (IRubyObject value : args) {
-            pushLoopFrame(graph, block.getFrame(), returnVertex);
+            pushLoopFrame(context, block.getFrame(), returnVertex);
             context.pushScope(block.getScope());
 
             if (noargblock) {}
@@ -584,7 +584,7 @@ public class RuntimeHelper {
             }
 
             context.popScope();
-            popLoopFrame(graph);
+            popLoopFrame(context);
         }
 
         return vertex;
@@ -645,17 +645,23 @@ public class RuntimeHelper {
         frame.setTag(vertex);
     }
 
-    public static void pushLoopFrame(Graph graph, Vertex vertex) {
-        pushLoopFrame(graph, graph.getRuntime().getContext().getCurrentFrame(), vertex);
+    public static void pushLoopFrame(Context context, Vertex vertex) {
+        pushLoopFrame(context, context.getCurrentFrame(), vertex);
     }
     
-    public static void pushLoopFrame(Graph graph, Frame prev, Vertex vertex) {
-        Context context = graph.getRuntime().getContext();
+    public static void pushLoopFrame(Context context, Frame prev, Vertex vertex) {
         Frame frame = context.pushFrame(prev.getModule(), prev.getSelf(), prev.getBlock(), prev.getVisibility());
         setFrameVertex(frame, vertex);
     }
 
-    public static void popLoopFrame(Graph graph) {
-        graph.getRuntime().getContext().popFrame();
+    public static void popLoopFrame(Context context) {
+        context.popFrame();
+    }
+
+    public static boolean isBoolean(Ruby runtime, IRubyObject object) {
+        RubyClass klass = object.getMetaClass();
+        return klass == runtime.getBoolean()
+            || klass == runtime.getTrueClass()
+            || klass == runtime.getFalseClass();
     }
 }

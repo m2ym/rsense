@@ -636,6 +636,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitEvStrNode(EvStrNode node) {
+        // never reach here
         throw new UnsupportedOperationException();
     }
     
@@ -668,7 +669,8 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitFlipNode(FlipNode node) {
-        throw new UnsupportedOperationException();
+        // FIXME check booleans (new vertex)
+        return createSingleTypeVertex(node, newInstanceOf(runtime.getBoolean()));
     }
     
     public Object visitFloatNode(FloatNode node) {
@@ -944,9 +946,9 @@ public class Graph implements NodeVisitor {
     public Object visitWhileNode(WhileNode node) {
         Vertex vertex = createEmptyVertex(node);
         createVertex(node.getConditionNode());
-        RuntimeHelper.pushLoopFrame(this, vertex);
+        RuntimeHelper.pushLoopFrame(context, vertex);
         createVertex(node.getBodyNode());
-        RuntimeHelper.popLoopFrame(this);
+        RuntimeHelper.popLoopFrame(context);
         return vertex;
     }
     
