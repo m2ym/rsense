@@ -429,15 +429,22 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitClassVarAsgnNode(ClassVarAsgnNode node) {
-        throw new UnsupportedOperationException();
+        return RuntimeHelper.classVarAssign(this, node);
     }
     
     public Object visitClassVarDeclNode(ClassVarDeclNode node) {
-        throw new UnsupportedOperationException();
+        return RuntimeHelper.classVarDeclaration(this, node);
     }
     
     public Object visitClassVarNode(ClassVarNode node) {
-        throw new UnsupportedOperationException();
+        RubyModule module = context.getCurrentScope().getModule();
+        if (!(module instanceof RubyClass)) {
+            Logger.error("classvar error");
+            return Graph.NULL_VERTEX;
+        }
+        RubyClass klass = (RubyClass) module;
+        VertexHolder holder = (VertexHolder) klass.getClassVar(node.getName());
+        return holder != null ? holder.getVertex() : NULL_VERTEX;
     }
     
     public Object visitCallNode(CallNode node) {
@@ -454,7 +461,8 @@ public class Graph implements NodeVisitor {
         Block block = null;
         if (node.getIterNode() != null) {
             IterNode iterNode = (IterNode) node.getIterNode();
-            block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), new DynamicScope(context.getCurrentScope()));
+            DynamicScope scope = new DynamicScope(context.getCurrentScope().getModule(), context.getCurrentScope());
+            block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), scope);
         }
         CallVertex vertex = new CallVertex(node, receiverVertex, argVertices, block);
         RuntimeHelper.call(this, vertex);
@@ -486,7 +494,7 @@ public class Graph implements NodeVisitor {
         RubyClass klass = module.defineOrGetClassUnder(name, superClass);
 
         context.pushFrame(klass, klass, null, Visibility.PUBLIC);
-        context.pushScope(new LocalScope());
+        context.pushScope(new LocalScope(module));
 
         Vertex result = null;
         if (node.getBodyNode() != null) {
@@ -742,7 +750,7 @@ public class Graph implements NodeVisitor {
         RubyModule module = enclosingModule.defineOrGetModuleUnder(name);
 
         context.pushFrame(module, module, null, Visibility.PUBLIC);
-        context.pushScope(new LocalScope());
+        context.pushScope(new LocalScope(enclosingModule));
 
         Vertex result = null;
         if (node.getBodyNode() != null) {

@@ -1,6 +1,7 @@
 package org.cx4a.rsense.typing;
 
 import org.cx4a.rsense.ruby.Frame;
+import org.cx4a.rsense.ruby.Scope;
 import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.typing.runtime.Method;
 import org.cx4a.rsense.typing.runtime.TypeVarMap;
@@ -13,11 +14,13 @@ public class Template {
     private TypeVarMap affectedMap;
     private Vertex returnVertex;
     private Frame frame;
+    private Scope scope;
     
-    public Template(Method method, Frame frame, TemplateAttribute attr) {
+    public Template(Method method, Frame frame, Scope scope, TemplateAttribute attr) {
         this.method = method;
         this.attr = attr;
         this.frame = frame;
+        this.scope = scope;
         returnVertex = new Vertex();
     }
 
@@ -50,5 +53,9 @@ public class Template {
 
     public Frame getFrame() {
         return frame;
+    }
+
+    public Scope getScope() {
+        return scope;
     }
 }

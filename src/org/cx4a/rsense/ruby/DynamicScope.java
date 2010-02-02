@@ -3,7 +3,8 @@ package org.cx4a.rsense.ruby;
 public class DynamicScope extends LocalScope {
     private Scope scope;
 
-    public DynamicScope(Scope scope) {
+    public DynamicScope(RubyModule cref, Scope scope) {
+        super(cref);
         this.scope = scope;
     }
 

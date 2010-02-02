@@ -4,10 +4,16 @@ import java.util.Map;
 import java.util.HashMap;
 
 public class LocalScope implements Scope {
+    private RubyModule cref;
     private Map<String, IRubyObject> localVars;
 
-    public LocalScope() {
+    public LocalScope(RubyModule cref) {
+        this.cref = cref;
         this.localVars = new HashMap<String, IRubyObject>();
+    }
+
+    public RubyModule getModule() {
+        return cref;
     }
 
     public IRubyObject getValue(String name) {

@@ -5,13 +5,12 @@ import java.util.Stack;
 public class Context {
     private Ruby runtime;
     private Stack<Scope> scopes;
-    private RubyModule cref;
     private Frame frame;
 
     public Context(Ruby runtime) {
         this.runtime = runtime;
         this.scopes = new Stack<Scope>();
-        pushScope(new LocalScope());
+        pushScope(new LocalScope(runtime.getObject()));
         pushFrame(runtime.getObject(), runtime.getTopSelf(), null, Visibility.PRIVATE);
     }
 

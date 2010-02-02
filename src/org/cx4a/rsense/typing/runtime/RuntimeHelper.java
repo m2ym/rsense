@@ -13,6 +13,8 @@ import org.jruby.ast.ArgumentNode;
 import org.jruby.ast.ListNode;
 import org.jruby.ast.LocalAsgnNode;
 import org.jruby.ast.DAsgnNode;
+import org.jruby.ast.ClassVarDeclNode;
+import org.jruby.ast.ClassVarAsgnNode;
 import org.jruby.ast.InstAsgnNode;
 import org.jruby.ast.MultipleAsgnNode;
 import org.jruby.ast.ConstDeclNode;
@@ -145,6 +147,60 @@ public class RuntimeHelper {
         return src;
     }
 
+    public static Vertex classVarDeclaration(Graph graph, ClassVarDeclNode node) {
+        return classVarDeclaration(graph, node, null);
+    }
+    
+    public static Vertex classVarDeclaration(Graph graph, ClassVarDeclNode node, Vertex src) {
+        RubyModule module = graph.getRuntime().getContext().getCurrentScope().getModule();
+        if (!(module instanceof RubyClass)) {
+            Logger.error("classvar error");
+            return Graph.NULL_VERTEX;
+        }
+        RubyClass klass = (RubyClass) module;
+        if (src == null) {
+            src = graph.createVertex(node.getValueNode());
+        }
+        VertexHolder holder = (VertexHolder) klass.getClassVar(node.getName());
+        Vertex dest;
+        if (holder == null) {
+            holder = graph.createFreeVertexHolder();
+            dest = holder.getVertex();
+            klass.setClassVar(node.getName(), holder);
+        } else {
+            dest = holder.getVertex();
+        }
+        graph.addEdgeAndPropagate(src, dest);
+        return src;
+    }
+
+    public static Vertex classVarAssign(Graph graph, ClassVarAsgnNode node) {
+        return classVarAssign(graph, node, null);
+    }
+
+    public static Vertex classVarAssign(Graph graph, ClassVarAsgnNode node, Vertex src) {
+        RubyModule module = graph.getRuntime().getContext().getCurrentScope().getModule();
+        if (!(module instanceof RubyClass)) {
+            Logger.error("classvar error");
+            return Graph.NULL_VERTEX;
+        }
+        RubyClass klass = (RubyClass) module;
+        if (src == null) {
+            src = graph.createVertex(node.getValueNode());
+        }
+        VertexHolder holder = (VertexHolder) klass.getClassVar(node.getName());
+        Vertex dest;
+        if (holder == null) {
+            holder = graph.createFreeVertexHolder();
+            dest = holder.getVertex();
+            klass.setClassVar(node.getName(), holder);
+        } else {
+            dest = holder.getVertex();
+        }
+        graph.addEdgeAndPropagate(src, dest);
+        return src;
+    }
+    
     public static void argsAssign(Graph graph, ArgsNode argsNode, Vertex[] args) {
         Scope scope = graph.getRuntime().getContext().getCurrentScope();
         ListNode pre = argsNode.getPre();
@@ -374,10 +430,11 @@ public class RuntimeHelper {
         Ruby runtime = graph.getRuntime();
         Context context = runtime.getContext();
 
+        Scope scope = new LocalScope(context.getCurrentScope().getModule());
         context.pushFrame(method.getModule(), receiver, attr.getBlock(), Visibility.PUBLIC);
-        context.pushScope(new LocalScope());
+        context.pushScope(scope);
 
-        Template template = new Template(method, context.getCurrentFrame(), attr);
+        Template template = new Template(method, context.getCurrentFrame(), scope, attr);
         method.addTemplate(attr, template);
 
         Vertex returnVertex = template.getReturnVertex();
