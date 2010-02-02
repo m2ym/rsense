@@ -188,16 +188,9 @@ public class Graph implements NodeVisitor {
     private void initSpecialMethods() {
         addSpecialMethod("new", new SpecialMethod() {
                 public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
-                    if (result.getPrevious() != null) {
-                        result
-                            .setCallNextMethod(true)
-                            .setNextMethodChange(true)
-                            .setNextMethodName("initialize")
-                            .setNextMethodReceivers(result.getAccumulator())
-                            .setNextMethodBlock(null)
-                            .setNextMethodNoReturn(true);
-                    } else {
-                        TypeSet resultTypeSet = new TypeSet();
+                    TypeSet accumulator = result.getAccumulator();
+                    if (result.getPrevious() == null) {
+                        TypeSet resultTypeSet = accumulator = new TypeSet();
                         TypeSet newReceivers = new TypeSet();
                         for (IRubyObject receiver : receivers) {
                             if (receiver instanceof RubyClass) {
@@ -208,14 +201,25 @@ public class Graph implements NodeVisitor {
                                 }
                             }
                         }
-                        result
-                            .setResultTypeSet(resultTypeSet)
-                            .setCallNextMethod(true)
-                            .setNextMethodChange(true)
-                            .setNextMethodName("new")
-                            .setNextMethodReceivers(newReceivers)
-                            .setNextMethodBlock(block);
+                        if (!newReceivers.isEmpty()) {
+                            result
+                                .setResultTypeSet(resultTypeSet)
+                                .setCallNextMethod(true)
+                                .setNextMethodChange(true)
+                                .setNextMethodName("new")
+                                .setNextMethodReceivers(newReceivers)
+                                .setNextMethodBlock(block);
+                            return;
+                        }
                     }
+                    result
+                        .setResultTypeSet(accumulator)
+                        .setCallNextMethod(true)
+                        .setNextMethodChange(true)
+                        .setNextMethodName("initialize")
+                        .setNextMethodReceivers(accumulator)
+                        .setNextMethodBlock(null)
+                        .setNextMethodNoReturn(true);
                 }
             });
 
@@ -438,14 +442,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitClassVarNode(ClassVarNode node) {
-        RubyModule module = context.getCurrentScope().getModule();
-        if (!(module instanceof RubyClass)) {
-            Logger.error("classvar error");
-            return Graph.NULL_VERTEX;
-        }
-        RubyClass klass = (RubyClass) module;
-        VertexHolder holder = (VertexHolder) klass.getClassVar(node.getName());
-        return holder != null ? holder.getVertex() : NULL_VERTEX;
+        return RuntimeHelper.classVariable(this, node);
     }
     
     public Object visitCallNode(CallNode node) {
@@ -693,8 +690,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitGlobalVarNode(GlobalVarNode node) {
-        VertexHolder holder = (VertexHolder) runtime.getGlobalVar(node.getName());
-        return holder != null ? holder.getVertex() : NULL_VERTEX;
+        return RuntimeHelper.globalVariable(this, node);
     }
     
     public Object visitHashNode(HashNode node) {
@@ -713,8 +709,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitInstVarNode(InstVarNode node) {
-        VertexHolder holder = (VertexHolder) runtime.getContext().getFrameSelf().getInstVar(node.getName());
-        return holder != null ? holder.getVertex() : NULL_VERTEX;
+        return RuntimeHelper.instanceVariable(this, node);
     }
     
     public Object visitIfNode(IfNode node) {
@@ -817,7 +812,8 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitNthRefNode(NthRefNode node) {
-        throw new UnsupportedOperationException();
+        // FIXME
+        return createSingleTypeVertex(node, newInstanceOf(runtime.getString()));
     }
     
     public Object visitOpElementAsgnNode(OpElementAsgnNode node) {
@@ -825,7 +821,24 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitOpAsgnNode(OpAsgnNode node) {
-        throw new UnsupportedOperationException();
+        String operator = node.getOperatorName();
+        String var = node.getVariableName();
+        String varAsgn = node.getVariableNameAsgn();
+        Vertex receiverVertex = createVertex(node.getReceiverNode());
+        Vertex src = createVertex(node.getValueNode());
+        Vertex value;
+        if (operator.equals("||") || operator.equals("&&")) {
+            // do nothing
+            value = src;
+        } else {
+            CallVertex getter = new CallVertex(node.getValueNode(), var, receiverVertex, null, null);
+            CallVertex op = new CallVertex(node.getValueNode(), operator, RuntimeHelper.call(this, getter), new Vertex[] {src}, null);
+            value = RuntimeHelper.call(this, op);
+        }
+        
+        CallVertex setter = new CallVertex(node. getValueNode(), varAsgn, receiverVertex, new Vertex[] {value}, null);
+        RuntimeHelper.call(this, setter);
+        return src;
     }
     
     public Object visitOpAsgnAndNode(OpAsgnAndNode node) {
