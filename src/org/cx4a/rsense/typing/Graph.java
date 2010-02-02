@@ -842,11 +842,21 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitOpAsgnAndNode(OpAsgnAndNode node) {
-        throw new UnsupportedOperationException();
+        Vertex vertex = createEmptyVertex(node);
+        Vertex firstVertex = createVertex(node.getFirstNode());
+        Vertex secondVertex = createVertex(node.getSecondNode());
+        addEdgeAndCopyTypeSet(firstVertex, vertex);
+        addEdgeAndCopyTypeSet(secondVertex, vertex);
+        return vertex;
     }
     
     public Object visitOpAsgnOrNode(OpAsgnOrNode node) {
-        throw new UnsupportedOperationException();
+        Vertex vertex = createEmptyVertex(node);
+        Vertex firstVertex = createVertex(node.getFirstNode());
+        Vertex secondVertex = createVertex(node.getSecondNode());
+        addEdgeAndCopyTypeSet(firstVertex, vertex);
+        addEdgeAndCopyTypeSet(secondVertex, vertex);
+        return vertex;
     }
     
     public Object visitOrNode(OrNode node) {
