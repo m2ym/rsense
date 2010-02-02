@@ -470,7 +470,24 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitCaseNode(CaseNode node) {
-        throw new UnsupportedOperationException();
+        // FIXME eval ===
+        Vertex vertex = createFreeVertex();
+        createVertex(node.getCaseNode());
+        ListNode cases = node.getCases();
+        if (cases != null) {
+            for (int i = 0; i < cases.size(); i++) {
+                WhenNode when = (WhenNode) cases.get(i);
+                if (when.getBodyNode() != null) {
+                    Vertex v = createVertex(when.getBodyNode());
+                    addEdgeAndCopyTypeSet(v, vertex);
+                }
+            }
+        }
+        if (node.getElseNode() != null) {
+            Vertex v = createVertex(node.getElseNode());
+            addEdgeAndCopyTypeSet(v, vertex);
+        }
+        return vertex;
     }
     
     public Object visitClassNode(ClassNode node) {
