@@ -268,6 +268,16 @@ public class RuntimeHelper {
         return holder.getVertex();
     }
 
+    public static void aliasGlobalVaraibles(Graph graph, String newName, String oldName) {
+        Ruby runtime = graph.getRuntime();
+        VertexHolder holder = (VertexHolder) runtime.getGlobalVar(oldName);
+        if (holder == null) {
+            holder = graph.createFreeVertexHolder();
+            runtime.setGlobalVar(oldName, holder);
+        }
+        runtime.setGlobalVar(newName, holder); // no propagation ?
+    }
+
     public static void argsAssign(Graph graph, ArgsNode argsNode, Vertex[] args) {
         Scope scope = graph.getRuntime().getContext().getCurrentScope();
         ListNode pre = argsNode.getPre();

@@ -974,7 +974,8 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitVAliasNode(VAliasNode node) {
-        throw new UnsupportedOperationException();
+        RuntimeHelper.aliasGlobalVaraibles(this, node.getNewName(), node.getOldName());
+        return NULL_VERTEX;
     }
     
     public Object visitVCallNode(VCallNode node) {
@@ -983,6 +984,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitWhenNode(WhenNode node) {
+        // never reach here
         throw new UnsupportedOperationException();
     }
     
@@ -996,7 +998,8 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitXStrNode(XStrNode node) {
-        throw new UnsupportedOperationException();
+        // FIXME eval `
+        return createSingleTypeVertex(node, newInstanceOf(runtime.getString()));
     }
     
     public Object visitYieldNode(YieldNode node) {
