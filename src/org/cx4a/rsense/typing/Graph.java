@@ -550,16 +550,18 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitDRegxNode(DRegexpNode node) {
-        throw new UnsupportedOperationException();
+        // FIXME eval
+        return createSingleTypeVertex(node, newInstanceOf(runtime.getRegexp()));
     }
     
     public Object visitDStrNode(DStrNode node) {
-        //return new Vertex(node, RubyString.newString(runtime, "dstr"));
-        throw new UnsupportedOperationException();
+        // FIXME eval
+        return createSingleTypeVertex(node, newInstanceOf(runtime.getString()));
     }
     
     public Object visitDSymbolNode(DSymbolNode node) {
-        throw new UnsupportedOperationException();
+        // FIXME eval
+        return createSingleTypeVertex(node, newInstanceOf(runtime.getSymbol()));
     }
     
     public Object visitDVarNode(DVarNode node) {
@@ -568,7 +570,8 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitDXStrNode(DXStrNode node) {
-        throw new UnsupportedOperationException();
+        // FIXME eval `
+        return createSingleTypeVertex(node, newInstanceOf(runtime.getString()));
     }
     
     public Object visitDefinedNode(DefinedNode node) {
@@ -841,7 +844,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitRegexpNode(RegexpNode node) {
-        throw new UnsupportedOperationException();
+        return createSingleTypeVertex(node, newInstanceOf(runtime.getRegexp()));
     }
     
     public Object visitRescueBodyNode(RescueBodyNode node) {
