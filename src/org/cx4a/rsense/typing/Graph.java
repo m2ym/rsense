@@ -812,7 +812,8 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitNotNode(NotNode node) {
-        throw new UnsupportedOperationException();
+        createVertex(node.getConditionNode());
+        return createSingleTypeVertex(node, newInstanceOf(runtime.getBoolean()));
     }
     
     public Object visitNthRefNode(NthRefNode node) {
