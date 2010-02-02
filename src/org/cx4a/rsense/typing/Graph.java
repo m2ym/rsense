@@ -140,6 +140,7 @@ import org.cx4a.rsense.typing.runtime.SpecialMethod;
 import org.cx4a.rsense.typing.runtime.RuntimeHelper;
 import org.cx4a.rsense.typing.runtime.AnnotationHelper;
 import org.cx4a.rsense.typing.runtime.TypeVarMap;
+import org.cx4a.rsense.typing.runtime.LoopTag;
 import org.cx4a.rsense.typing.vertex.Vertex;
 import org.cx4a.rsense.typing.vertex.ArrayVertex;
 import org.cx4a.rsense.typing.vertex.HashVertex;
@@ -415,10 +416,10 @@ public class Graph implements NodeVisitor {
     
     public Object visitBreakNode(BreakNode node) {
         Frame frame = context.getCurrentFrame();
-        Vertex frameVertex = RuntimeHelper.getFrameVertex(frame);
-        if (frameVertex != null) {
+        LoopTag loopTag = RuntimeHelper.getFrameLoopTag(frame);
+        if (loopTag != null) {
             Vertex vertex = createVertex(node.getValueNode());
-            addEdgeAndPropagate(vertex, frameVertex);
+            addEdgeAndPropagate(vertex, loopTag.getReturnVertex());
             return vertex;
         }
         return NULL_VERTEX;
@@ -755,15 +756,18 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitMatch2Node(Match2Node node) {
-        throw new UnsupportedOperationException();
+        // FIXME speedup node
+        return createSingleTypeVertex(node, newInstanceOf(runtime.getMatchData()));
     }
     
     public Object visitMatch3Node(Match3Node node) {
-        throw new UnsupportedOperationException();
+        // FIXME speedup node
+        return createSingleTypeVertex(node, newInstanceOf(runtime.getMatchData()));
     }
     
     public Object visitMatchNode(MatchNode node) {
-        throw new UnsupportedOperationException();
+        // FIXME speedup node
+        return createSingleTypeVertex(node, newInstanceOf(runtime.getMatchData()));
     }
     
     public Object visitModuleNode(ModuleNode node) {
@@ -793,7 +797,14 @@ public class Graph implements NodeVisitor {
     }
 
     public Object visitNextNode(NextNode node) {
-        throw new UnsupportedOperationException();
+        Frame frame = context.getCurrentFrame();
+        LoopTag loopTag = RuntimeHelper.getFrameLoopTag(frame);
+        if (loopTag != null && loopTag.getYieldVertex() != null) {
+            Vertex vertex = createVertex(node.getValueNode());
+            addEdgeAndPropagate(vertex, loopTag.getYieldVertex());
+            return vertex;
+        }
+        return NULL_VERTEX;
     }
     
     public Object visitNilNode(NilNode node) {
@@ -946,7 +957,7 @@ public class Graph implements NodeVisitor {
     public Object visitWhileNode(WhileNode node) {
         Vertex vertex = createEmptyVertex(node);
         createVertex(node.getConditionNode());
-        RuntimeHelper.pushLoopFrame(context, vertex);
+        RuntimeHelper.pushLoopFrame(context, vertex, null);
         createVertex(node.getBodyNode());
         RuntimeHelper.popLoopFrame(context);
         return vertex;

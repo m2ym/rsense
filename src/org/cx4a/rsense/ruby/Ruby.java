@@ -9,7 +9,8 @@ public class Ruby {
         numericClass, integerClass, fixnumClass, bignumClass,
         floatClass, stringClass, symbolClass,
         booleanClass, trueClass, falseClass, nilClass,
-        arrayClass, hashClass, rangeClass, regexpClass;
+        arrayClass, hashClass, rangeClass,
+        regexpClass, matchDataClass;
     private IRubyObject nilObject, trueObject, falseObject;
     private IRubyObject topSelf;
     private Map<String, IRubyObject> globalVars;
@@ -43,6 +44,7 @@ public class Ruby {
         hashClass = RubyClass.newClass(this, "Hash", objectClass);
         rangeClass = RubyClass.newClass(this, "Range", objectClass);
         regexpClass = RubyClass.newClass(this, "Regexp", objectClass);
+        matchDataClass = RubyClass.newClass(this, "Regexp", objectClass);
 
         objectClass.setConstant("Object", objectClass);
         objectClass.setConstant("Module", moduleClass);
@@ -61,6 +63,7 @@ public class Ruby {
         objectClass.setConstant("Hash", hashClass);
         objectClass.setConstant("Range", rangeClass);
         objectClass.setConstant("Regexp", regexpClass);
+        objectClass.setConstant("MatchData", matchDataClass);
 
         nilObject = new SpecialObject(this, nilClass, "nil");
         trueObject = new SpecialObject(this, trueClass, "true");
@@ -138,6 +141,10 @@ public class Ruby {
 
     public RubyClass getRegexp() {
         return regexpClass;
+    }
+
+    public RubyClass getMatchData() {
+        return matchDataClass;
     }
 
     public RubyClass getNilClass() {

@@ -591,7 +591,7 @@ public class RuntimeHelper {
         }
         
         for (IRubyObject value : args) {
-            pushLoopFrame(context, block.getFrame(), returnVertex);
+            pushLoopFrame(context, block.getFrame(), returnVertex, vertex);
             context.pushScope(block.getScope());
 
             if (noargblock) {}
@@ -662,26 +662,22 @@ public class RuntimeHelper {
         frame.setTag(template);
     }
 
-    public static Vertex getFrameVertex(Frame frame) {
+    public static LoopTag getFrameLoopTag(Frame frame) {
         Object tag = frame.getTag();
-        if (tag instanceof Vertex) {
-            return (Vertex) tag;
+        if (tag instanceof LoopTag) {
+            return (LoopTag) tag;
         } else {
             return null;
         }
     }
 
-    public static void setFrameVertex(Frame frame, Vertex vertex) {
-        frame.setTag(vertex);
-    }
-
-    public static void pushLoopFrame(Context context, Vertex vertex) {
-        pushLoopFrame(context, context.getCurrentFrame(), vertex);
+    public static void pushLoopFrame(Context context, Vertex returnVertex, Vertex yieldVertex) {
+        pushLoopFrame(context, context.getCurrentFrame(), returnVertex, yieldVertex);
     }
     
-    public static void pushLoopFrame(Context context, Frame prev, Vertex vertex) {
+    public static void pushLoopFrame(Context context, Frame prev, Vertex returnVertex, Vertex yieldVertex) {
         Frame frame = context.pushFrame(prev.getModule(), prev.getSelf(), prev.getBlock(), prev.getVisibility());
-        setFrameVertex(frame, vertex);
+        frame.setTag(new LoopTag(returnVertex, yieldVertex));
     }
 
     public static void popLoopFrame(Context context) {
