@@ -147,6 +147,7 @@ import org.cx4a.rsense.typing.vertex.HashVertex;
 import org.cx4a.rsense.typing.vertex.CallVertex;
 import org.cx4a.rsense.typing.vertex.MultipleAsgnVertex;
 import org.cx4a.rsense.typing.vertex.ToAryVertex;
+import org.cx4a.rsense.typing.vertex.SplatVertex;
 import org.cx4a.rsense.typing.vertex.YieldVertex;
 import org.cx4a.rsense.typing.annotation.TypeAnnotation;
 import org.cx4a.rsense.typing.annotation.TypeVariable;
@@ -877,7 +878,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitRedoNode(RedoNode node) {
-        throw new UnsupportedOperationException();
+        return NULL_VERTEX;
     }
     
     public Object visitRegexpNode(RegexpNode node) {
@@ -897,7 +898,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitRetryNode(RetryNode node) {
-        throw new UnsupportedOperationException();
+        return NULL_VERTEX;
     }
     
     public Object visitReturnNode(ReturnNode node) {
@@ -924,7 +925,10 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitSplatNode(SplatNode node) {
-        throw new UnsupportedOperationException();
+        Vertex valueVertex = createVertex(node.getValue());
+        SplatVertex vertex = new SplatVertex(node, valueVertex);
+        RuntimeHelper.splatValue(this, vertex);
+        return vertex;
     }
     
     public Object visitStrNode(StrNode node) {
@@ -944,13 +948,10 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitToAryNode(ToAryNode node) {
-/*
-        Vertex valueVertex = (Vertex) node.getValue().accept(this);
+        Vertex valueVertex = createVertex(node.getValue());
         ToAryVertex vertex = new ToAryVertex(node, valueVertex);
-        visitToAryVertex(vertex);
+        RuntimeHelper.toAryValue(this, vertex);
         return vertex;
-*/
-        throw new UnsupportedOperationException();
     }
     
     public Object visitTrueNode(TrueNode node) {
@@ -1044,26 +1045,26 @@ public class Graph implements NodeVisitor {
         if (propagation.checkVisited(dest)) { return true; }
 
         Vertex valueVertex = dest.getValueVertex();
-        for (IRubyObject obj : valueVertex.getTypeSet()) {
-            Tuple tuple = null;
-            switch (valueVertex.getNode().getNodeType()) {
-            case ARRAYNODE:
-                if (obj instanceof Tuple) {
-                    tuple = (Tuple) obj;
-                }
-                break;
-            case SPLATNODE:
-            default:
-            }
-            if (tuple != null) {
-                RuntimeHelper.multipleAssign(this, (MultipleAsgnNode) dest.getNode(), tuple);
+        for (IRubyObject object : RuntimeHelper.arrayValue(propagation.getGraph(), valueVertex)) {
+            if (object instanceof Tuple) {
+                RuntimeHelper.multipleAssign(this, (MultipleAsgnNode) dest.getNode(), (Tuple) object);
             }
         }
         return true;
     }
 
+    public boolean propagateSplatVertex(Propagation propagation, SplatVertex dest, Vertex src) {
+        if (propagation.checkVisited(dest)) { return true; }
+
+        RuntimeHelper.splatValue(this, dest);
+        return propagateEdges(propagation, dest);
+    }
+
     public boolean propagateToAryVertex(Propagation propagation, ToAryVertex dest, Vertex src) {
-        return false;
+        if (propagation.checkVisited(dest)) { return true; }
+
+        RuntimeHelper.toAryValue(this, dest);
+        return propagateEdges(propagation, dest);
     }
 
     public boolean propagateYieldVertex(Propagation propagation, YieldVertex dest, Vertex src) {

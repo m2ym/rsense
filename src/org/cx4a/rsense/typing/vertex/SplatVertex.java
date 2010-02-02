@@ -1,13 +1,13 @@
 package org.cx4a.rsense.typing.vertex;
 
-import org.jruby.ast.ToAryNode;
+import org.jruby.ast.SplatNode;
 
 import org.cx4a.rsense.typing.Propagation;
 
-public class ToAryVertex extends Vertex {
+public class SplatVertex extends Vertex {
     private Vertex valueVertex;
 
-    public ToAryVertex(ToAryNode node, Vertex valueVertex) {
+    public SplatVertex(SplatNode node, Vertex valueVertex) {
         super(node);
         this.valueVertex = valueVertex;
         valueVertex.addEdge(this);
@@ -19,6 +19,6 @@ public class ToAryVertex extends Vertex {
 
     @Override
     public boolean accept(Propagation propagation, Vertex src) {
-        return propagation.getGraph().propagateToAryVertex(propagation, this, src);
+        return propagation.getGraph().propagateSplatVertex(propagation, this, src);
     }
 }

@@ -59,6 +59,7 @@ import org.cx4a.rsense.typing.vertex.ArrayVertex;
 import org.cx4a.rsense.typing.vertex.CallVertex;
 import org.cx4a.rsense.typing.vertex.MultipleAsgnVertex;
 import org.cx4a.rsense.typing.vertex.ToAryVertex;
+import org.cx4a.rsense.typing.vertex.SplatVertex;
 import org.cx4a.rsense.typing.vertex.YieldVertex;
 
 public class RuntimeHelper {
@@ -627,6 +628,34 @@ public class RuntimeHelper {
             graph.addEdgeAndCopyTypeSet(returnVertex, vertex);
         }
         return vertex;
+    }
+
+    public static void splatValue(Graph graph, SplatVertex vertex) {
+        vertex.getTypeSet().addAll(arrayValue(graph, vertex.getValueVertex()));
+    }
+
+    public static void toAryValue(Graph graph, ToAryVertex vertex) {
+        vertex.getTypeSet().addAll(arrayValue(graph, vertex.getValueVertex()));
+    }
+
+    public static TypeSet arrayValue(Graph graph, Vertex vertex) {
+        Ruby runtime = graph.getRuntime();
+        TypeSet typeSet = new TypeSet();
+        for (IRubyObject object : vertex.getTypeSet()) {
+            if (object.isInstanceOf(runtime.getArray())) {
+                typeSet.add(object);
+            } else {
+                CallVertex callVertex = new CallVertex(vertex.getNode(), "to_a", vertex, null, null);
+                for (IRubyObject array : call(graph, callVertex).getTypeSet()) {
+                    if (array.isInstanceOf(runtime.getArray())) {
+                        typeSet.add(array);
+                    } else {
+                        Logger.error("to_a should be return Array");
+                    }
+                }
+            }
+        }
+        return typeSet;
     }
 
     public static RubyModule getNamespace(Graph graph, Colon3Node node) {
