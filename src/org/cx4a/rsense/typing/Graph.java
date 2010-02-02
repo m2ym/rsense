@@ -688,7 +688,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitGlobalAsgnNode(GlobalAsgnNode node) {
-        throw new UnsupportedOperationException();
+        return RuntimeHelper.globalAssign(this, node);
     }
     
     public Object visitGlobalVarNode(GlobalVarNode node) {

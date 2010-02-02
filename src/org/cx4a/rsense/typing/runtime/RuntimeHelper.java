@@ -16,8 +16,9 @@ import org.jruby.ast.DAsgnNode;
 import org.jruby.ast.ClassVarDeclNode;
 import org.jruby.ast.ClassVarAsgnNode;
 import org.jruby.ast.InstAsgnNode;
-import org.jruby.ast.MultipleAsgnNode;
 import org.jruby.ast.ConstDeclNode;
+import org.jruby.ast.GlobalAsgnNode;
+import org.jruby.ast.MultipleAsgnNode;
 import org.jruby.ast.Colon2Node;
 import org.jruby.ast.Colon2ImplicitNode;
 import org.jruby.ast.Colon3Node;
@@ -72,6 +73,12 @@ public class RuntimeHelper {
             return dynamicAssign(graph, (DAsgnNode) node, src);
         case CONSTDECLNODE:
             return constDeclaration(graph, (ConstDeclNode) node, src);
+        case CLASSVARASGNNODE:
+            return classVarAssign(graph, (ClassVarAsgnNode) node, src);
+        case CLASSVARDECLNODE:
+            return classVarDeclaration(graph, (ClassVarDeclNode) node, src);
+        case GLOBALASGNNODE:
+            return globalAssign(graph, (GlobalAsgnNode) node, src);
         case ARGUMENTNODE:
         case RESTARG:
             return argumentAssign(graph, (ArgumentNode) node, src);
@@ -200,7 +207,67 @@ public class RuntimeHelper {
         graph.addEdgeAndPropagate(src, dest);
         return src;
     }
+
+
+    public static Vertex constDeclaration(Graph graph, ConstDeclNode node) {
+        return constDeclaration(graph, node, null);
+    }
     
+    public static Vertex constDeclaration(Graph graph, ConstDeclNode node, Vertex src) {
+        RubyModule module = null;
+        String name = null;
+        INameNode constNode = (INameNode) node.getConstNode();
+        if (constNode == null) {
+            name = node.getName();
+            module = graph.getRuntime().getContext().getFrameModule();
+        } else if (constNode instanceof Colon2Node) {
+            Node leftNode = ((Colon2Node) constNode).getLeftNode();
+
+            Vertex v = graph.createVertex(leftNode);
+            for (IRubyObject mod : v.getTypeSet()) {
+                if (mod instanceof RubyModule) {
+                    module = (RubyModule) mod;
+                    break;
+                }
+            }
+            name = constNode.getName();
+        } else { // colon3
+            module = graph.getRuntime().getObject();
+            name = constNode.getName();
+        }
+
+        if (src == null) {
+            src = graph.createVertex(node.getValueNode());
+        }
+        if (module != null && name != null) {
+            module.setConstant(name, src.singleType());
+        }
+
+        return src;
+    }
+
+    public static Vertex globalAssign(Graph graph, GlobalAsgnNode node) {
+        return globalAssign(graph, node, null);
+    }
+
+    public static Vertex globalAssign(Graph graph, GlobalAsgnNode node, Vertex src) {
+        Ruby runtime = graph.getRuntime();
+        VertexHolder holder = (VertexHolder) runtime.getGlobalVar(node.getName());
+        Vertex dest;
+        if (src == null) {
+            src = graph.createVertex(node.getValueNode());
+        }
+        if (holder == null) {
+            holder = graph.createFreeVertexHolder();
+            dest = holder.getVertex();
+            runtime.setGlobalVar(node.getName(), holder);
+        } else {
+            dest = holder.getVertex();
+        }
+        graph.addEdgeAndPropagate(src, dest);
+        return src;
+    }
+
     public static void argsAssign(Graph graph, ArgsNode argsNode, Vertex[] args) {
         Scope scope = graph.getRuntime().getContext().getCurrentScope();
         ListNode pre = argsNode.getPre();
@@ -311,43 +378,6 @@ public class RuntimeHelper {
             assign(graph, node.getHeadNode().get(j++), Graph.NULL_VERTEX);
         }
         return graph.createFreeSingleTypeVertex(tuple);
-    }
-
-    public static Vertex constDeclaration(Graph graph, ConstDeclNode node) {
-        return constDeclaration(graph, node, null);
-    }
-    
-    public static Vertex constDeclaration(Graph graph, ConstDeclNode node, Vertex src) {
-        RubyModule module = null;
-        String name = null;
-        INameNode constNode = (INameNode) node.getConstNode();
-        if (constNode == null) {
-            name = node.getName();
-            module = graph.getRuntime().getContext().getFrameModule();
-        } else if (constNode instanceof Colon2Node) {
-            Node leftNode = ((Colon2Node) constNode).getLeftNode();
-
-            Vertex v = graph.createVertex(leftNode);
-            for (IRubyObject mod : v.getTypeSet()) {
-                if (mod instanceof RubyModule) {
-                    module = (RubyModule) mod;
-                    break;
-                }
-            }
-            name = constNode.getName();
-        } else { // colon3
-            module = graph.getRuntime().getObject();
-            name = constNode.getName();
-        }
-
-        if (src == null) {
-            src = graph.createVertex(node.getValueNode());
-        }
-        if (module != null && name != null) {
-            module.setConstant(name, src.singleType());
-        }
-
-        return src;
     }
 
     public static Vertex call(Graph graph, CallVertex vertex) {
