@@ -959,11 +959,18 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitUndefNode(UndefNode node) {
-        throw new UnsupportedOperationException();
+        //throw new UnsupportedOperationException();
+        Logger.warn("undef is not supported yet.");
+        return NULL_VERTEX;
     }
     
     public Object visitUntilNode(UntilNode node) {
-        throw new UnsupportedOperationException();
+        Vertex vertex = createEmptyVertex(node);
+        createVertex(node.getConditionNode());
+        RuntimeHelper.pushLoopFrame(context, vertex, null);
+        createVertex(node.getBodyNode());
+        RuntimeHelper.popLoopFrame(context);
+        return vertex;
     }
     
     public Object visitVAliasNode(VAliasNode node) {
