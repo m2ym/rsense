@@ -575,7 +575,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitDefinedNode(DefinedNode node) {
-        throw new UnsupportedOperationException();
+        return createSingleTypeVertex(node, newInstanceOf(runtime.getString()));
     }
     
     public Object visitDefnNode(DefnNode node) {
