@@ -17,8 +17,20 @@ build:
 		src/org/cx4a/rsense/parser/*.java \
 		src/org/cx4a/rsense/util/*.java
 
-run:
-	java -cp $(CLASSPATH) org.cx4a.rsense.Main $(COMMAND) $(FILE) UTF-8 $(OFFSET)
+run-interactive:
+	java -cp $(CLASSPATH) org.cx4a.rsense.Main interactive
+
+run-code-completion:
+	java -cp $(CLASSPATH) org.cx4a.rsense.Main code-completion --file=$(FILE) --encoding=UTF-8 --offset=$(OFFSET)
+
+run-type-inference:
+	java -cp $(CLASSPATH) org.cx4a.rsense.Main type-inference --file=$(FILE) --encoding=UTF-8 --offset=$(OFFSET)
+
+run-help:
+	java -cp $(CLASSPATH) org.cx4a.rsense.Main help
+
+run-version:
+	java -cp $(CLASSPATH) org.cx4a.rsense.Main version
 
 antlr:
 	java -cp .:$(ANTLR_JAR) org.antlr.Tool -make \

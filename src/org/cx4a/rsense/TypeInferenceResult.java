@@ -5,10 +5,10 @@ import java.util.List;
 import org.jruby.ast.Node;
 import org.cx4a.rsense.typing.TypeSet;
 
-public class InferTypeResult extends CodeAssistResult {
+public class TypeInferenceResult extends CodeAssistResult {
     private TypeSet typeSet;
     
-    public InferTypeResult() {
+    public TypeInferenceResult() {
         super();
     }
 
@@ -20,8 +20,8 @@ public class InferTypeResult extends CodeAssistResult {
         return typeSet;
     }
 
-    public static InferTypeResult failWithException(String message, Throwable cause) {
-        InferTypeResult result = new InferTypeResult();
+    public static TypeInferenceResult failWithException(String message, Throwable cause) {
+        TypeInferenceResult result = new TypeInferenceResult();
         result.addError(new CodeAssistError(message, cause));
         return result;
     }

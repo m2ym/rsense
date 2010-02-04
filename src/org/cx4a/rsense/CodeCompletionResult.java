@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.jruby.ast.Node;
 
-public class SuggestCompletionResult extends CodeAssistResult {
+public class CodeCompletionResult extends CodeAssistResult {
     public static class CompletionCandidate {
         private String completion;
 
@@ -24,7 +24,7 @@ public class SuggestCompletionResult extends CodeAssistResult {
 
     private List<CompletionCandidate> candidates;
     
-    public SuggestCompletionResult() {
+    public CodeCompletionResult() {
         super();
     }
 
@@ -36,8 +36,8 @@ public class SuggestCompletionResult extends CodeAssistResult {
         return candidates;
     }
 
-    public static SuggestCompletionResult failWithException(String message, Throwable cause) {
-        SuggestCompletionResult result = new SuggestCompletionResult();
+    public static CodeCompletionResult failWithException(String message, Throwable cause) {
+        CodeCompletionResult result = new CodeCompletionResult();
         result.addError(new CodeAssistError(message, cause));
         return result;
     }

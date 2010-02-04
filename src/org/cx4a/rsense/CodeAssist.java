@@ -23,7 +23,7 @@ import org.cx4a.rsense.typing.runtime.SpecialMethod;
 import org.cx4a.rsense.util.Logger;
 
 public class CodeAssist {
-    public static final String INFER_TYPE_METHOD_NAME = "__rsense_infer_type__";
+    public static final String TYPE_INFERENCE_METHOD_NAME = "__rsense_type_inference__";
 
     public static class Context {
         public Project project;
@@ -34,7 +34,7 @@ public class CodeAssist {
     private final Config config;
     private final Context context;
 
-    private SpecialMethod inferTypeMethod = new SpecialMethod() {
+    private SpecialMethod typeInferenceMethod = new SpecialMethod() {
             public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
                 for (IRubyObject receiver : receivers) {
                     context.typeSet.add(receiver.getMetaClass());
@@ -77,58 +77,58 @@ public class CodeAssist {
         }
     }
 
-    public InferTypeResult inferType(Project project, File file, String encoding, long offset) {
+    public TypeInferenceResult typeInference(Project project, File file, String encoding, long offset) {
         try {
             InputStream in = new FileInputStream(file);
             try {
-                return inferType(project, new InputStreamReader(in, encoding), offset);
+                return typeInference(project, new InputStreamReader(in, encoding), offset);
             } finally {
                 in.close();
             }
         } catch (IOException e) {
-            return InferTypeResult.failWithException("Cannot open file", e);
+            return TypeInferenceResult.failWithException("Cannot open file", e);
         } 
     }
 
-    public InferTypeResult inferType(Project project, Reader reader, long offset) {
+    public TypeInferenceResult typeInference(Project project, Reader reader, long offset) {
         try {
             prepare(project);
-            Node ast = parseString(readAndInjectCode(reader, offset, INFER_TYPE_METHOD_NAME, "."));
+            Node ast = parseString(readAndInjectCode(reader, offset, TYPE_INFERENCE_METHOD_NAME, "."));
             project.getGraph().createVertex(ast);
 
-            InferTypeResult result = new InferTypeResult();
+            TypeInferenceResult result = new TypeInferenceResult();
             result.setTypeSet(context.typeSet);
             return result;
         } catch (IOException e) {
-            return InferTypeResult.failWithException("Cannot read file", e);
+            return TypeInferenceResult.failWithException("Cannot read file", e);
         }
     }
 
-    public SuggestCompletionResult suggestCompletion(Project project, File file, String encoding, long offset) {
+    public CodeCompletionResult codeCompletion(Project project, File file, String encoding, long offset) {
         try {
             InputStream in = new FileInputStream(file);
             try {
-                return suggestCompletion(project, new InputStreamReader(in, encoding), offset);
+                return codeCompletion(project, new InputStreamReader(in, encoding), offset);
             } finally {
                 in.close();
             }
         } catch (IOException e) {
-            return SuggestCompletionResult.failWithException("Cannot open file", e);
+            return CodeCompletionResult.failWithException("Cannot open file", e);
         } 
     }
 
-    public SuggestCompletionResult suggestCompletion(Project project, Reader reader, long offset) {
-        SuggestCompletionResult result = new SuggestCompletionResult();
-        InferTypeResult r = inferType(project, reader, offset);
+    public CodeCompletionResult codeCompletion(Project project, Reader reader, long offset) {
+        CodeCompletionResult result = new CodeCompletionResult();
+        TypeInferenceResult r = typeInference(project, reader, offset);
         if (r.hasError()) {
             result.setErrors(r.getErrors());
             return result;
         }
 
-        List<SuggestCompletionResult.CompletionCandidate> candidates = new ArrayList<SuggestCompletionResult.CompletionCandidate>();
+        List<CodeCompletionResult.CompletionCandidate> candidates = new ArrayList<CodeCompletionResult.CompletionCandidate>();
         for (IRubyObject klass : r.getTypeSet()) {
             for (String name : ((RubyClass) klass).getMethods(true)) {
-                candidates.add(new SuggestCompletionResult.CompletionCandidate(name));
+                candidates.add(new CodeCompletionResult.CompletionCandidate(name));
             }
         }
 
@@ -140,7 +140,7 @@ public class CodeAssist {
         context.project = project;
         context.typeSet = new TypeSet();
 
-        project.getGraph().addSpecialMethod(INFER_TYPE_METHOD_NAME, inferTypeMethod);
+        project.getGraph().addSpecialMethod(TYPE_INFERENCE_METHOD_NAME, typeInferenceMethod);
     }
 
     private String readAll(Reader reader) throws IOException {
