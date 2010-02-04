@@ -3,8 +3,11 @@
 
 BOOLEAN = true || false
 
-module Enumerable end
-module Precision end
+module Enumerable; end
+module Precision; end
+class IO; end
+class File < IO; end
+module File::Constants; end
 
 # FIXME
 ARGS = nil
@@ -506,8 +509,140 @@ class FalseClass
   def |(other) BOOLEAN end
 end
 
-# FIXME
 class File
+  ALT_SEPARATOR = ''
+  PATH_SEPARATOR = ''
+  SEPARATOR = ''
+  Separator = ''
+  
+  include File::Constants
+
+  ##% self.atime(String or IO) -> Time
+  def self.atime(filename) Time.new end
+  ##% self.basename(String, ?String) -> String
+  def self.basename(filename, suffix = '') '' end
+  ##% self.blockdev?(String or IO) -> Boolean
+  def self.blockdev?(path) BOOLEAN end
+  ##% self.chardev?(String or IO) -> Boolean
+  def self.chardev?(path) BOOLEAN end
+  ##% self.chmod(Integer, *String) -> Integer
+  def self.chmod(mode, *filename) 0 end
+  ##% self.chown(Integer, Integer, *String) -> Integer
+  def self.chown(owner, group, *filename) 0 end
+  ##% self.ctime(String or IO) -> Time
+  def self.ctime(filename) Time.new end
+  ##% self.delete(*String) -> Integer
+  def self.delete(*filename) 0 end
+  ##% self.unlink(*String) -> Integer
+  def self.unlink(*filename) 0 end
+  ##% self.directory?(String or IO) -> Boolean
+  def self.directory?(path) BOOLEAN end
+  ##% self.dirname(String) -> String
+  def self.dirname(filename) '' end
+  ##% self.executable?(String or IO) ->Boolean
+  def self.executable?(path) BOOLEAN end
+  ##% self.executable_real?(String or IO) ->Boolean
+  def self.executable_real?(path) BOOLEAN end
+  ##% self.exist?(String or IO) -> Boolean
+  def self.exist?(path) BOOLEAN end
+  ##% self.exists?(String or IO) -> Boolean
+  def self.exists?(path) BOOLEAN end
+  ##% self.expand_path(String, ?String) -> String
+  def self.expand_path(path, default_dir = '.') '' end
+  ##% self.extname(String) -> String
+  def self.extname(filename) '' end
+  ##% self.file?(String or IO) -> Boolean
+  def self.file?(path) BOOLEAN end
+  ##% self.fnmatch(String, String, ?Integer) -> Boolean
+  def self.fnmatch(pattern, path, flags = 0) BOOLEAN end
+  ##% self.fnmatch?(String, String, ?Integer) -> Boolean
+  def self.fnmatch?(pattern, path, flags = 0) BOOLEAN end
+  ##% self.ftype(String) -> String
+  def self.ftype(filename) '' end
+  ##% self.grpowned?(String or IO) -> Boolean
+  def self.grpowned?(filename) BOOLEAN end
+  ##% self.identical?(String or IO, String or IO) -> Boolean
+  def self.identical?(filename1, filename2) BOOLEAN end
+  ##% self.join(*String) -> String
+  def self.join(*item) '' end
+  ##% self.lchmod(Integer, *String) -> Integer
+  def self.lchmod(mode, *filename) 0 end
+  ##% self.lchown(Integer, Integer, *String) -> Integer
+  def self.lchown(owner, group, *filename) 0 end
+  ##% self.link(String, String) -> Integer
+  def self.link(old, new) 0 end
+  ##% self.lstat(String) -> File::Stat
+  def self.lstat(filename) File::Stat.new end
+  ##% self.mtime(String or IO) -> Time
+  def self.mtime(filename) Time.new end
+  ##% self.new(String or Integer, ?a, ?Integer) -> File
+  def self.new(path, mode = 'r', perm = 0666) File.new('') end
+  ##% self.open(String or Integer, ?a, ?Integer) -> File
+  ##% self.open(String or Integer, ?a, ?Integer) {File -> a} -> a
+  def self.open(path, mode = 'r', perm = 0666) File.new('') end
+  ##% self.owned?(String or IO) -> Boolean
+  def self.owned?(path) BOOLEAN end
+  ##% self.pipe?(String or IO) -> Boolean
+  def self.pipe?(path) BOOLEAN end
+  ##% self.readable?(String or IO) -> Boolean
+  def self.readable?(path) BOOLEAN end
+  ##% self.readable_real?(String or IO) -> Boolean
+  def self.readable_real?(path) BOOLEAN end
+  ##% self.readlink(String) -> String
+  def self.readlink(path) '' end
+  ##% self.rename(String, String) -> Integer
+  def self.rename(from, to) 0 end
+  ##% self.setgid?(String or IO) -> Boolean
+  def self.setgid?(path) BOOLEAN end
+  ##% self.setuid?(String or IO) -> Boolean
+  def self.setuid?(path) BOOLEAN end
+  ##% self.size(String or IO) -> Integer
+  def self.size(path) 0 end
+  ##% self.size?(String or IO) -> Boolean
+  def self.size?(path) BOOLEAN end
+  ##% self.socket?(String or IO) -> Boolean
+  def self.socket?(path) BOOLEAN end
+  ##% self.split(String) -> (String, String)
+  def self.split(pathname) ['', ''] end
+  ##% self.stat(String) -> File::Stat
+  def self.stat(filename) File::Stat.new end
+  ##% self.stickey?(String or IO) -> Boolean
+  def self.stickey?(path) BOOLEAN end
+  ##% self.symlink(String, String) -> Integer
+  def self.symlink(old, new) 0 end
+  ##% self.symlink?(String or IO) -> Boolean
+  def self.symlinky?(path) BOOLEAN end
+  ##% self.truncate(String, Integer) -> Integer
+  def self.truncate(path, length) 0 end
+  ##% self.umask(?Integer) -> Integer
+  def self.umask(umask = 0) 0 end
+  ##% self.utime(Time or Integer, Time or Integer, *String) -> Integer
+  def self.utime(atime, mtime, *filename) 0 end
+  ##% self.writable?(String or IO) -> Boolean
+  def self.writable?(path) BOOLEAN end
+  ##% self.writable_real?(String or IO) -> Boolean
+  def self.writable_real?(path) BOOLEAN end
+  ##% self.zero?(String or IO) -> Boolean
+  def self.zero?(path) BOOLEAN end
+
+  ##% atime() -> Time
+  def atime() Time.new end
+  ##% chmod(Integer) -> Integer
+  def chmod(mode) 0 end
+  ##% chown(Integer, Integer) -> Integer
+  def chown(owner, group) 0 end
+  ##% ctime() -> Time
+  def ctime() Time.new end
+  ##% flock(Integer) -> Integer or FalseClass
+  def flock(operation) 0 || false end
+  ##% lstat() -> File::Stat
+  def lstat() File::Stat.new end
+  ##% mtime() -> Time
+  def mtime() Time.new end
+  ##% path() -> String
+  def path() '' end
+  ##% truncate(Integer) -> Integer
+  def truncate(length) 0 end
 end
 
 module File::Constants
