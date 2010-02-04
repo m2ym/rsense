@@ -18,7 +18,7 @@ end
 
 def start_server
   fork {
-    #daemonize
+    daemonize
     
     begin
       io = IO.popen("java -cp #{$classpath} -Drsense.home=#{$rsense_home} org.cx4a.rsense.Main interactive --end-mark=#{$end_mark}", 'r+')
