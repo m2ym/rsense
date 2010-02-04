@@ -755,7 +755,46 @@ class File::Stat
 end
 
 module FileTest
-  # FIXME
+  ##% self.blockdev?(String or IO) -> Boolean
+  def self.blockdev?(path) BOOLEAN end
+  ##% self.chardev?(String or IO) -> Boolean
+  def self.chardev?(path) BOOLEAN end
+  ##% self.directory?(String or IO) -> Boolean
+  def self.directory?(path) BOOLEAN end
+  ##% self.executable?(String or IO) ->Boolean
+  def self.executable?(path) BOOLEAN end
+  ##% self.executable_real?(String or IO) ->Boolean
+  def self.executable_real?(path) BOOLEAN end
+  ##% self.exist?(String or IO) -> Boolean
+  def self.exist?(path) BOOLEAN end
+  ##% self.exists?(String or IO) -> Boolean
+  def self.exists?(path) BOOLEAN end
+  ##% self.file?(String or IO) -> Boolean
+  def self.file?(path) BOOLEAN end
+  ##% self.grpowned?(String or IO) -> Boolean
+  def self.grpowned?(filename) BOOLEAN end
+  ##% self.identical?(String or IO, String or IO) -> Boolean
+  def self.identical?(filename1, filename2) BOOLEAN end
+  ##% self.owned?(String or IO) -> Boolean
+  def self.owned?(path) BOOLEAN end  ##% self.setgid?(String or IO) -> Boolean
+  ##% self.setgid?(String or IO) -> Boolean
+  def self.setgid?(path) BOOLEAN end
+  ##% self.setuid?(String or IO) -> Boolean
+  def self.setuid?(path) BOOLEAN end
+  ##% self.size(String or IO) -> Integer
+  def self.size(path) 0 end
+  ##% self.size?(String or IO) -> Boolean
+  def self.size?(path) BOOLEAN end
+  ##% self.socket?(String or IO) -> Boolean
+  def self.socket?(path) BOOLEAN end
+  ##% self.sticky?(String or IO) -> Boolean
+  def self.sticky?(path) BOOLEAN end
+  ##% self.writable?(String or IO) -> Boolean
+  def self.writable?(path) BOOLEAN end
+  ##% self.writable_real?(String or IO) -> Boolean
+  def self.writable_real?(path) BOOLEAN end
+  ##% self.zero?(String or IO) -> Boolean
+  def self.zero?(path) BOOLEAN end
 end
 
 class Fixnum
