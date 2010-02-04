@@ -1,0 +1,73 @@
+#!ruby
+
+require 'socket'
+
+$rsense_home = ENV['RSENSE_HOME'] || File.dirname(File.dirname(File.expand_path($0)))
+$socket_path = ENV['RSENSE_SOCKET'] || '/tmp/rsense-socket'
+$classpath = ENV['RSENSE_CLASSPATH'] || '.' + ['', 'rsense.jar', 'antlr-runtime-3.2.jar', 'jruby.jar'].join(":#{$rsense_home}/lib/")
+$end_mark = 'END'
+
+def daemonize
+  if Process.respond_to? :daemon  # Ruby 1.9
+    Process.daemon
+  else                            # Ruby 1.8
+    require 'webrick'
+    WEBrick::Daemon.start
+    end
+end
+
+def start_server
+  fork {
+    #daemonize
+    
+    begin
+      io = IO.popen("java -cp #{$classpath} -Drsense.home=#{$rsense_home} org.cx4a.rsense.Main interactive --end-mark=#{$end_mark}", 'r+')
+      UNIXServer.open($socket_path) {|serv|
+        begin
+          loop do
+            sock = serv.accept
+            cmd = sock.gets
+            exit if cmd =~ /^(exit|quit)/
+            io.puts(cmd)
+            sock.close_read
+            ret = ''
+            while l = io.gets
+              break if l =~ /^#{$end_mark}/
+              ret << l
+            end
+            sock.puts(ret)
+            sock.puts('END')
+            sock.close_write
+          end
+        ensure
+          File.unlink($socket_path)
+        end
+      }
+    ensure
+      io.close
+    end
+  }
+
+  ok = false
+  1.upto(10) {
+    if File.socket? $socket_path
+      ok = true
+      break
+    end
+    sleep 1
+  }
+  exit(1) unless ok
+end
+
+start_server unless File.socket? $socket_path
+
+UNIXSocket.open($socket_path) {|sock|
+  sock.puts(ARGV.join(' '))
+  sock.close_write
+  ret = ''
+  while l = sock.gets
+    break if l =~ /^#{$end_mark}/
+    ret << l
+  end
+  puts ret
+}

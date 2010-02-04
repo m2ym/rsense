@@ -60,12 +60,20 @@ public class Main {
             return offset == null ? null : Integer.valueOf(offset);
         }
 
+        public String getEndMark() {
+            return get("end-mark");
+        }
+
         public static String defaultFormat() {
             return "plain";
         }
 
         public static String defaultEncoding() {
             return "UTF-8";
+        }
+
+        public static String defaultEndMark() {
+            return "END";
         }
     }
 
@@ -154,8 +162,8 @@ public class Main {
             String arg = args[i];
             if (arg.startsWith("--")) {
                 String[] lr = arg.substring(2).split("=");
-                if (lr.length == 2) {
-                    options.put(lr[0], lr[1]);
+                if (lr.length >= 1) {
+                    options.put(lr[0], lr.length >= 2 ? lr[1] : "");
                 }
             }
         }
@@ -175,6 +183,10 @@ public class Main {
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(in, encoding));
             String line;
+            String endMark = options.getEndMark();
+            if (endMark != null && endMark.length() == 0) {
+                endMark = Options.defaultEndMark();
+            }
             while ((line = reader.readLine()) != null) {
                 String[] argv = line.split(" ");
                 if (argv.length > 0) {
@@ -191,6 +203,9 @@ public class Main {
                         opts.setEncoding(encoding);
                     }
                     command(command, opts);
+                    if (endMark != null) {
+                        out.println(endMark);
+                    }
                 }
             }
         } catch (IOException e) {

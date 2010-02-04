@@ -2,12 +2,13 @@ JRUBY_HOME=../jruby-1.4.0/
 JRUBY_ORIG_HOME=../jruby-1.4.0-orig/
 ANTLR_JAR=build_lib/antlr-3.2.jar
 
-CLASSPATH=.:src:lib/jruby.jar:lib/antlr-runtime-3.2.jar
+CLASSPATH=.:lib/rsense.jar:lib/jruby.jar:lib/antlr-runtime-3.2.jar
 
-all: build
+all: rsense
 
-build:
-	javac -cp $(CLASSPATH) \
+rsense:
+	mkdir -p build
+	javac -cp $(CLASSPATH) -d build \
 		src/org/cx4a/rsense/*.java \
 		src/org/cx4a/rsense/typing/*.java \
 		src/org/cx4a/rsense/typing/annotation/*.java \
@@ -16,6 +17,7 @@ build:
 		src/org/cx4a/rsense/ruby/*.java \
 		src/org/cx4a/rsense/parser/*.java \
 		src/org/cx4a/rsense/util/*.java
+	jar cf lib/rsense.jar -C build org
 
 run-interactive:
 	java -cp $(CLASSPATH) org.cx4a.rsense.Main interactive
@@ -45,7 +47,9 @@ jruby-diff:
 		> etc/jruby-1.4.0.patch
 
 clean:
+	rm -rf build
 	rm -f hs_err_pid*.log \
+		lib/rsense.jar \
 		TypeAnnotation.tokens \
 		src/org/cx4a/rsense/*.class \
 		src/org/cx4a/rsense/typing/*.class \
