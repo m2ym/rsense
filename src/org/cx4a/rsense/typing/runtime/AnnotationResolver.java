@@ -123,7 +123,6 @@ public class AnnotationResolver {
                         System.arraycopy(args, i, elements, 0, len);
                     }
                     arg = new Tuple(runtime, elements);
-                    argType = ((TypeSplat) argType).getExpression();
                     break;
                 }
                 default:
@@ -214,11 +213,28 @@ public class AnnotationResolver {
                 }
             }
             return false;
+        case SPLAT: {
+            TypeSplat splat = (TypeSplat) argType;
+            TypeExpression expr = splat.getExpression();
+            if (expr == null) {
+                return true;
+            } else if (expr.getType() == TypeExpression.Type.VARIABLE) {
+                return resolveMethodArg(template, classType, expr, receiver, arg);
+            } else if (arg instanceof Tuple) {
+                Tuple tuple = (Tuple) arg;
+                for (IRubyObject a : tuple.getElements()) {
+                    if (!resolveMethodArg(template, classType, expr, receiver, a)) {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            return false;
+        }
         case OPTIONAL: {
             return arg.isNil() ? true : resolveMethodArg(template, classType, ((TypeOptional) argType).getExpression(), receiver, arg);
         }
         case ANY:
-        case SPLAT:
             return true;
         default:
             new Throwable().printStackTrace();

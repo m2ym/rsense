@@ -1,5 +1,5 @@
 # ruby 1.8.7 builtin library stub
-# http://doc.okkez.net/187/view/class/Array
+# http://doc.okkez.net/187/view/library/
 
 BOOLEAN = true || false
 
@@ -293,7 +293,7 @@ end
 class Data
 end
 
-##% Dir<_ | t <= String>
+##% Dir<| t <= String>
 class Dir
   include Enumerable
 
@@ -835,7 +835,7 @@ class Hash
   def values_at(*key) [_v] end
 end
 
-##% IO<_ | t <= String>
+##% IO<| t <= String>
 class IO
   SEEK_CUR = 0
   SEEK_END = 0
@@ -1301,7 +1301,207 @@ module Signal
   # FIXME
 end
 
+##% String<| String <= t>
 class String
+  include Enumerable
+  include Comparable
+  
+  ##% self.new(?String) -> String
+  def self.new(string = '') '' end
+
+  ##% %(a) -> String
+  def %(args) '' end
+  ##% "*"(Integer) -> String
+  def *(times) '' end
+  ##% +(String) -> String
+  def +(other) '' end
+  ##% "<<"(?Fixnum or String) -> self
+  def <<(other) self end
+  alias :concat :<<
+  ##% "<=>"(String) -> Integer
+  def <=>(other) 0 end
+  ##% ==(a) -> Boolean
+  def ==(other) BOOLEAN end
+  # FIXME =~
+  ##% =~(a) -> Integer
+  def =~(other) 0 end
+  ##% [](Integer) -> Fixnum
+  ##% [](Integer, Integer) -> String
+  ##% [](String) -> String
+  ##% [](Regexp, ?Integer) -> String
+  ##% [](Range) -> String
+  def [](*) 0 end
+  alias :slice :[]
+  ##% []=(Integer, String or Integer) -> String
+  ##% []=(Integer, Integer, String or Integer) -> String
+  ##% []=(String, String or Integer) -> String
+  ##% []=(Regexp, ?Integer, String or Integer) -> String
+  ##% []=(Range, String or Integer) -> String
+  def []=(*) '' end
+  ##% each_byte() {Fixnum -> ?} -> self
+  ##% each_byte() -> Enumerator<self, Fixnum>
+  def each_byte() yield 0; self end
+  alias :bytes :each_byte
+  ##% bytesize() -> Integer
+  def bytesize() 0 end
+  ##% capitalize() -> String
+  def capitalize() '' end
+  ##% capitalize!() -> self
+  def capitalize!() '' end
+  ##% casecmp(String) -> Integer
+  def casecmp(other) 0 end
+  ##% center(Integer, ?String) -> String
+  def center(width, padding = ' ') '' end
+  ##% each_char() {String -> ?} -> self
+  ##% each_char() -> Enumerator<self, String>
+  def each_char() yield ''; self end
+  alias :chars :each_char
+  ##% chomp(?String) -> String
+  def chomp(rs = $/) '' end
+  ##% chomp!(?String) -> self
+  def chomp!(rs = $/) self end
+  ##% chop() -> String
+  def chop() '' end
+  ##% chop!() -> self
+  def chop!() self end
+  ##% count(*String) -> Integer
+  def count(*chars) 0 end
+  ##% crypt(String) -> String
+  def crypt(salt) '' end
+  ##% delete(*String) -> String
+  def delete(*strs) '' end
+  ##% delete!(*String) -> self
+  def delete!(*strs) self end
+  ##% downcase() -> String
+  def downcase() '' end
+  ##% downcase!() -> self
+  def downcase!() self end
+  ##% dump() -> String
+  def dump() '' end
+  ##% each(?String) {String -> ?} -> self
+  ##% each(?String) -> Enumerator<self, String>
+  def each(rs = $/) yield ''; self end
+  alias :each_line :each
+  alias :lines :each
+  ##% empty?() -> Boolean
+  def empty?() Boolean end
+  ##% end_with?(String) -> Boolean
+  def end_with?(str) BOOLEAN end
+  ##% eql?(a) -> Boolean
+  def eql?(other) BOOLEAN end
+  ##% gsub(String or Regexp, String) -> String
+  ##% gsub(String or Regexp) {String -> ?} -> String
+  ##% gsub(String or Regexp) -> Enumerator<String, String>
+  def gsub(pattern, replace = nil) '' end
+  ##% gsub!(String or Regexp, String) -> self
+  ##% gsub!(String or Regexp) {String -> ?} -> self
+  ##% gsub!(String or Regexp) -> Enumerator<String, self>
+  def gsub!(pattern, replace = nil) self end
+  ##% hash() -> Integer
+  def hash() 0 end
+  ##% hex() -> Integer
+  def hex() 0 end
+  ##% include?(String or Integer) -> Boolean
+  def include?(substr) BOOLEAN end
+  ##% index(String or Regexp, ?Integer) -> Integer
+  def index(pattern, pos = 0) 0 end
+  ##% insert(Integer, String) -> self
+  def insert(pos, other) self end
+  ##% inspect() -> String
+  def inspect() '' end
+  ##% intern() -> Symbol
+  def intern() :a end
+  alias :to_sym :intern
+  ##% length() -> Integer
+  def length() 0 end
+  alias :length :size
+  ##% ljust(Integer, ?String) -> String
+  def ljust(width, padding = ' ') '' end
+  ##% lstrip() -> String
+  def lstrip() '' end
+  ##% lstrip!() -> self
+  def lstrip!() self end
+  ##% match(String or Regexp) -> MatchData
+  def match(regexp) MatchData.new end
+  ##% succ() -> String
+  def succ() '' end
+  alias :next :succ
+  ##% succ!() -> self
+  def succ!() self end
+  alias :next! :succ!
+  ##% oct() -> Integer
+  def oct() 0 end
+  ##% partition(String or Regexp) -> (String, String, String)
+  def partition(sep) ['', '', ''] end
+  ##% replace(String) -> String
+  def replace(other) self end
+  ##% reverse() -> String
+  def reverse() '' end
+  ##% reverse!() -> self
+  def reverse!() self end
+  ##% rindex(String or Regexp, ?Integer) -> Integer
+  def rindex(pattern, pos = 0) 0 end
+  ##% rjust(Integer, ?String) -> String
+  def rjust(width, padding = ' ') '' end
+  ##% rpartition(String or Regexp) -> (String, String, String)
+  def rpartition(sep) ['', '', ''] end
+  ##% rstrip() -> String
+  def rstrip() '' end
+  ##% rstrip!() -> self
+  def rstrip!() self end
+  ##% scan(String or Regexp) -> Array<String> or Array<Array<String> >
+  ##% scan(String or Regexp) {String -> ?} -> self
+  def scan(re) [''] || [['']] end
+  alias :slice! :[]
+  ##% split(?String, ?Integer) -> Array<String> or Array<Array<String> >
+  def split(sep = $;, limit = 0) [''] || [['']] end
+  ##% squeeze(*String) -> String
+  def squeeze(*chars) '' end
+  ##% squeeze!(*String) -> self
+  def squeeze!(*chars) self end
+  ##% start_with?(String) -> Boolean
+  def start_with?(str) BOOLEAN end
+  ##% strip() -> String
+  def strip() '' end
+  ##% strip!() -> self
+  def strip!() self end
+  ##% sub(String or Regexp, String) -> String
+  ##% sub(String or Regexp) {String -> ?} -> String
+  ##% sub(String or Regexp) -> Enumerator<String, String>
+  def sub(pattern, replace = nil) '' end
+  ##% sub!(String or Regexp, String) -> self
+  ##% sub!(String or Regexp) {String -> ?} -> self
+  ##% sub!(String or Regexp) -> Enumerator<String, self>
+  def sub!(pattern, replace = nil) self end
+  ##% sum(?Integer) -> Integer
+  def sum(bits = 16) 0 end
+  ##% swapcase() -> String
+  def swapcase() '' end
+  ##% swapcase!() -> self
+  def swapcase!() self end
+  ##% to_f() -> Float
+  def to_f() 0.0 end
+  ##% to_i(?Integer) -> Integer
+  def to_i(base = 10) 0 end
+  ##% to_s() -> self
+  def to_s() self end
+  alias :to_str :to_s
+  ##% tr(String, String) -> String
+  def tr(pattern, replace) '' end
+  ##% tr!(String, String) -> self
+  def tr!(pattern, replace) self end
+  ##% tr_s(String, String) -> String
+  def tr_s(pattern, replace) '' end
+  ##% tr_s!(String, String) -> self
+  def tr_s!(pattern, replace) self end
+  ##% unpack(String) -> Array
+  def unpack(template) [] end
+  ##% upcase() -> String
+  def upcase() '' end
+  ##% upcase!() -> self
+  def upcase!() self end
+  ##% upto(String, ?Boolean) {String -> ?} -> self
+  def upto(max, exclusive = false) yield ''; self end
 end
 
 class Struct

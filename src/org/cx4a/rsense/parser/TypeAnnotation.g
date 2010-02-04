@@ -44,7 +44,7 @@ type returns [TypeAnnotation value]
     ;
 
 method_type returns [MethodType value]
-    : ('::'? (ID|CONST_ID) '.')* method_name ('<' type_var_list ('|' constraint_list)? '>')? method_sig {
+    : ('::'? (ID|CONST_ID) '.')* method_name ('<' type_var_list? ('|' constraint_list)? '>')? method_sig {
             $value = new MethodType($method_name.text, $type_var_list.value, $constraint_list.value, $method_sig.value);
         }
     ;
@@ -65,7 +65,7 @@ method_name
     ;
 
 class_type returns [ClassType value]
-    : CONST_ID ('<' type_var_list ('|' constraint_list)? '>')? {
+    : CONST_ID ('<' type_var_list? ('|' constraint_list)? '>')? {
             $value = new ClassType($CONST_ID.text, $type_var_list.value, $constraint_list.value);
         }
     ;

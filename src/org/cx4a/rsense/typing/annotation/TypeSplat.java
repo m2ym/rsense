@@ -14,4 +14,9 @@ public class TypeSplat implements TypeExpression {
     public Type getType() {
         return Type.SPLAT;
     }
+
+    @Override
+    public String toString() {
+        return expr != null ? "*" + expr.toString() : "*";
+    }
 }
