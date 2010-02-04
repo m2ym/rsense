@@ -1,3 +1,7 @@
 - begin/rescue/else/ensure/end
 - template clone
 - unit test
+- proc, lambda
+- callcc
+- exceptions
+- partial update

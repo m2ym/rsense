@@ -33,7 +33,7 @@ public class Main {
         Project sandbox = new Project("<sandbox>", null);
         Config config = new Config(rsenseHome);
         CodeAssist codeAssist = new CodeAssist(config);
-        codeAssist.load(sandbox, new File(config.rsenseHome + "/stubs/1.8/base_types.rb"), "UTF-8");
+        codeAssist.load(sandbox, new File(config.rsenseHome + "/stubs/1.8/builtin.rb"), "UTF-8");
 
         if (command.equals("infer-type")) {
             InferTypeResult result = codeAssist.inferType(sandbox, file, encoding, offset);

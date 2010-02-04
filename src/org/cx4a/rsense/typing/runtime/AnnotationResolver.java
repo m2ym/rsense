@@ -69,15 +69,15 @@ public class AnnotationResolver {
                     if (resolveClassConstraints(template, classType, receiver)
                         && resolveReceiverClassConstraints(template, classType, receiver)
                         && resolveMethodArg(template, classType, argType, receiver, args)
-                        && resolveMethodConstraints(template, classType, constraints, receiver)
                         && resolveMethodBlock(template, classType, block, receiver)
+                        && resolveMethodConstraints(template, classType, constraints, receiver)
                         && resolveMethodReturn(template, classType, returnType, receiver)) {
                         return true;
                     }
                 }
             }
 
-            Logger.warn("Cannot resolve method annotation");
+            Logger.warn("Cannot resolve method annotation of %s", template.getFrame().getName());
         }
         return false;
     }
@@ -98,7 +98,10 @@ public class AnnotationResolver {
     }
     
     public boolean resolveMethodArg(Template template, ClassType classType, TypeExpression argType, IRubyObject receiver, IRubyObject[] args) {
-        if (argType == null) { return true; }
+        if (argType == null) {
+            // arity check
+            return args.length == 0;
+        }
 
         switch (argType.getType()) {
         case TUPLE: {
@@ -202,7 +205,7 @@ public class AnnotationResolver {
         }
         case RELATIVE_IDENTITY: {
             IRubyObject guard = resolveIdentity(template, (TypeIdentity) argType);
-            return guard instanceof RubyClass ? arg.isInstanceOf((RubyClass) guard) : false;
+            return (guard instanceof RubyClass) && arg.isKindOf((RubyClass) guard);
         }
         case UNION:
             for (TypeExpression expr : (TypeUnion) argType) {
@@ -218,6 +221,7 @@ public class AnnotationResolver {
         case SPLAT:
             return true;
         default:
+            new Throwable().printStackTrace();
             Logger.error("Unknown arg type");
         }
         
@@ -314,6 +318,8 @@ public class AnnotationResolver {
             TypeVariable var = (TypeVariable) returnType;
             if (var.getName().equals("self")) {
                 result.add(receiver);
+            } else if (var.getName().equals("nil")) {
+                result.add(runtime.getNil());
             } else {
                 VertexHolder holder = (VertexHolder) env.get(var);
                 TypeVarMap typeVarMap = AnnotationHelper.getTypeVarMap(receiver);

@@ -234,7 +234,7 @@ public class RuntimeHelper {
             src = graph.createVertex(node.getValueNode());
         }
         if (module != null && name != null) {
-            module.setConstant(name, src.singleType());
+            module.setConstant(name, graph.createVertexHolder(src));
         }
 
         return src;
@@ -597,6 +597,10 @@ public class RuntimeHelper {
     }
     
     public static Vertex yield(Graph graph, Block block, Collection<IRubyObject> args, boolean expanded) {
+        if (block == null) {
+            return Graph.NULL_VERTEX;
+        }
+
         Ruby runtime = graph.getRuntime();
         Context context = runtime.getContext();
         Frame frame = context.getCurrentFrame();

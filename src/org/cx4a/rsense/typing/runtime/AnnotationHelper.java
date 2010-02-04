@@ -44,9 +44,11 @@ import org.cx4a.rsense.parser.TypeAnnotationParser;
 public class AnnotationHelper {
     private AnnotationHelper() {}
 
-    public static TypeAnnotation parseAnnotation(String annot) {
+    public static TypeAnnotation parseAnnotation(String annot, int lineno) {
         if (annot.startsWith("#%")) {
-            TypeAnnotationLexer lex = new TypeAnnotationLexer(new ANTLRStringStream(annot.substring(2)));
+            ANTLRStringStream in = new ANTLRStringStream(annot.substring(2));
+            in.setLine(lineno);
+            TypeAnnotationLexer lex = new TypeAnnotationLexer(in);
             CommonTokenStream tokens = new CommonTokenStream(lex);
             TypeAnnotationParser parser = new TypeAnnotationParser(tokens);
             try {
@@ -56,10 +58,10 @@ public class AnnotationHelper {
         return null;
     }
 
-    public static List<TypeAnnotation> parseAnnotations(List<ByteList> commentList) {
+    public static List<TypeAnnotation> parseAnnotations(List<ByteList> commentList, int lineno) {
         List<TypeAnnotation> annots = new ArrayList<TypeAnnotation>();
         for (ByteList comment : commentList) {
-            TypeAnnotation annot = parseAnnotation(comment.toString());
+            TypeAnnotation annot = parseAnnotation(comment.toString(), lineno);
             if (annot != null) {
                 annots.add(annot);
             }

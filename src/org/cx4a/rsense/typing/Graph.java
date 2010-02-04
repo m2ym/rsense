@@ -288,6 +288,18 @@ public class Graph implements NodeVisitor {
                     result.setResultTypeSet(ts);
                 }
             });
+
+        addSpecialMethod("superclass", new SpecialMethod() {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                    TypeSet ts = new TypeSet();
+                    for (IRubyObject receiver : receivers) {
+                        if (receiver instanceof RubyClass) {
+                            ts.add(((RubyClass) receiver).getSuperClass());
+                        }
+                    }
+                    result.setResultTypeSet(ts);
+                }
+            });
     }
 
     public Vertex createVertex(Node node) {
@@ -304,6 +316,10 @@ public class Graph implements NodeVisitor {
         return vertex;
     }
 
+    public VertexHolder createVertexHolder(Vertex vertex) {
+        return new VertexHolder(runtime, vertex);
+    }
+    
     public VertexHolder createFreeVertexHolder() {
         return new VertexHolder(runtime, createFreeVertex());
     }
@@ -520,7 +536,7 @@ public class Graph implements NodeVisitor {
         context.popScope();
         context.popFrame();
 
-        AnnotationHelper.setClassAnnotation(klass, AnnotationHelper.parseAnnotations(node.getCommentList()));
+        AnnotationHelper.setClassAnnotation(klass, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
         
         return result != null ? result : NULL_VERTEX;
     }
@@ -528,7 +544,14 @@ public class Graph implements NodeVisitor {
     public Object visitColon2Node(Colon2Node node) {
         RubyModule target = RuntimeHelper.getNamespace(this, node);
         if (target != null) {
-            return createSingleTypeVertex(node, target.getConstant(node.getName()));
+            IRubyObject value = target.getConstant(node.getName());
+            if (value instanceof VertexHolder) {
+                return ((VertexHolder) value).getVertex();
+            } else if (value != null) {
+                return createSingleTypeVertex(node, value);
+            } else {
+                return NULL_VERTEX;
+            }
         } else {
             return NULL_VERTEX;
         }
@@ -536,12 +559,24 @@ public class Graph implements NodeVisitor {
     
     public Object visitColon3Node(Colon3Node node) {
         IRubyObject value = runtime.getObject().getConstant(node.getName());
-        return value != null ? createSingleTypeVertex(node, value) : NULL_VERTEX;
+        if (value instanceof VertexHolder) {
+            return ((VertexHolder) value).getVertex();
+        } else if (value != null) {
+            return createSingleTypeVertex(node, value);
+        } else {
+            return NULL_VERTEX;
+        }
     }
     
     public Object visitConstNode(ConstNode node) {
         IRubyObject value = context.getConstant(node.getName());
-        return value != null ? createSingleTypeVertex(node, value) : NULL_VERTEX;
+        if (value instanceof VertexHolder) {
+            return ((VertexHolder) value).getVertex();
+        } else if (value != null) {
+            return createSingleTypeVertex(node, value);
+        } else {
+            return NULL_VERTEX;
+        }
     }
     
     public Object visitDAsgnNode(DAsgnNode node) {
@@ -587,7 +622,7 @@ public class Graph implements NodeVisitor {
         Method newMethod = new Method(cbase, node.getBodyNode(), node.getArgsNode(), visibility, node.getPosition());
         cbase.addMethod(name, newMethod);
 
-        AnnotationHelper.setMethodAnnotation(newMethod, AnnotationHelper.parseAnnotations(node.getCommentList()));
+        AnnotationHelper.setMethodAnnotation(newMethod, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
 
         return NULL_VERTEX;
     }
@@ -605,7 +640,7 @@ public class Graph implements NodeVisitor {
             Method newMethod = new Method(rubyClass, node.getBodyNode(), node.getArgsNode(), Visibility.PUBLIC, node.getPosition());
             rubyClass.addMethod(node.getName(), newMethod);
 
-            AnnotationHelper.setMethodAnnotation(newMethod, AnnotationHelper.parseAnnotations(node.getCommentList()));
+            AnnotationHelper.setMethodAnnotation(newMethod, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
         }
 
         return NULL_VERTEX;
@@ -783,7 +818,7 @@ public class Graph implements NodeVisitor {
         context.popScope();
         context.popFrame();
         
-        AnnotationHelper.setClassAnnotation(module, AnnotationHelper.parseAnnotations(node.getCommentList()));
+        AnnotationHelper.setClassAnnotation(module, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
 
         return result != null ? result : NULL_VERTEX;
     }

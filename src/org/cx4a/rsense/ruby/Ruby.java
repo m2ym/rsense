@@ -29,7 +29,7 @@ public class Ruby {
         metaClass = moduleClass.makeMetaClass(metaClass);
         metaClass = classClass.makeMetaClass(metaClass);
 
-        numericClass = RubyClass.newClass(this, "Number", objectClass);
+        numericClass = RubyClass.newClass(this, "Numeric", objectClass);
         integerClass = RubyClass.newClass(this, "Integer", numericClass);
         fixnumClass = RubyClass.newClass(this, "Fixnum", integerClass);
         bignumClass = RubyClass.newClass(this, "Bignum", integerClass);
@@ -49,6 +49,7 @@ public class Ruby {
         objectClass.setConstant("Object", objectClass);
         objectClass.setConstant("Module", moduleClass);
         objectClass.setConstant("Class", classClass);
+        objectClass.setConstant("Numeric", numericClass);
         objectClass.setConstant("Integer", integerClass);
         objectClass.setConstant("Fixnum", fixnumClass);
         objectClass.setConstant("Bignum", bignumClass);
@@ -85,6 +86,23 @@ public class Ruby {
 
     public Context getContext() {
         return context;
+    }
+
+    public boolean isInstanceOf(IRubyObject object, RubyClass klass) {
+        return object.getMetaClass() == klass;
+    }
+
+    public boolean isKindOf(IRubyObject object, RubyClass klass) {
+        // FIXME included modules
+        // FIXME speedup
+        RubyClass oclass = object.getMetaClass();
+        while (oclass != null) {
+            if (oclass == klass) {
+                return true;
+            }
+            oclass = oclass.getSuperClass();
+        }
+        return false;
     }
 
     public RubyClass getObject() {

@@ -16,4 +16,20 @@ public class TypeTuple implements TypeExpression {
     public Type getType() {
         return Type.TUPLE;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        String delim = "";
+        sb.append("(");
+        if (elements != null) {
+            for (TypeExpression expr : elements) {
+                sb.append(delim);
+                delim = ", ";
+                sb.append(expr.toString());
+            }
+        }
+        sb.append(")");
+        return sb.toString();
+    }
 }

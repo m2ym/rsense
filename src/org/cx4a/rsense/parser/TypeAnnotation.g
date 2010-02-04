@@ -44,7 +44,7 @@ type returns [TypeAnnotation value]
     ;
 
 method_type returns [MethodType value]
-    : ((ID|CONST_ID) '.')* method_name ('<' type_var_list '>' (';' constraint_list)?)? ':' method_sig {
+    : ('::'? (ID|CONST_ID) '.')* method_name ('<' type_var_list ('|' constraint_list)? '>')? method_sig {
             $value = new MethodType($method_name.text, $type_var_list.value, $constraint_list.value, $method_sig.value);
         }
     ;
@@ -65,15 +65,15 @@ method_name
     ;
 
 class_type returns [ClassType value]
-    : CONST_ID ('<' type_var_list '>')? (';' constraint_list)? {
+    : CONST_ID ('<' type_var_list ('|' constraint_list)? '>')? {
             $value = new ClassType($CONST_ID.text, $type_var_list.value, $constraint_list.value);
         }
     ;
 
 constraint_list returns [List<TypeConstraint> value]
-    : type_var '<' '=' type_expr (',' rest=constraint_list)? {
+    : e1=type_expr '<=' e2=type_expr (',' rest=constraint_list)? {
             $value = new ArrayList<TypeConstraint>();
-            $value.add(new TypeConstraint(TypeExpression.Type.SUBTYPE_CONS, $type_var.value, $type_expr.value));
+            $value.add(new TypeConstraint(TypeExpression.Type.SUBTYPE_CONS, $e1.value, $e2.value));
             if ($rest.value != null) {
                 $value.addAll($rest.value);
             }
@@ -158,7 +158,7 @@ type_var_list returns [List<TypeVariable> value]
     ;
 
 ID
-    : ('a'..'z') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')* '\''*
+    : ('a'..'z'|'_') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')* '\''*
     ;
 
 CONST_ID
@@ -166,18 +166,23 @@ CONST_ID
     ;
 
 METHOD_NAME
-    : ('a'..'z'|'A'..'Z') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')* ('!'|'?'|'=')?
+    : '"' METHOD_NAME_UNQUOTED '"'
+    | METHOD_NAME_UNQUOTED
+    ;
+
+fragment METHOD_NAME_UNQUOTED
+    : ('a'..'z'|'A'..'Z'|'_') ('a'..'z'|'A'..'Z'|'0'..'9'|'_')* ('!'|'?'|'=')?
     | ('..'|'...')
     | ('+'|'+@')
     | ('-'|'-@')
-    | '"' ('*'|'**') '"'
+    | ('*'|'**')
     | '/'
     | '%'
     | '|'
     | '^'
     | '&'
-    | '"' ('<'|'<<'|'<='|'<=>') '"'
-    | '"' ('>'|'>>'|'>=') '"'
+    | ('<'|'<<'|'<='|'<=>')
+    | ('>'|'>>'|'>=')
     | ('='|'=='|'==='|'=~')
     | ('!'|'!='|'!~'|'!@')
     | ('~'|'~@')

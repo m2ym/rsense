@@ -68,12 +68,11 @@ public class RubyObject implements IRubyObject {
     }
 
     public boolean isInstanceOf(RubyClass klass) {
-        // special handling for boolean
-        if (klass == runtime.getBoolean()
-            && metaClass.getSuperClass() == klass) {
-            return true;
-        }
-        return metaClass == klass;
+        return runtime.isInstanceOf(this, klass);
+    }
+
+    public boolean isKindOf(RubyClass klass) {
+        return runtime.isKindOf(this, klass);
     }
 
     public Object getTag() {

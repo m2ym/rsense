@@ -42,4 +42,5 @@ clean:
 		src/org/cx4a/rsense/typing/vertex/*.class \
 		src/org/cx4a/rsense/ruby/*.class \
 		src/org/cx4a/rsense/parser/*.class \
+		src/org/cx4a/rsense/parser/TypeAnnotation*.java \
 		src/org/cx4a/rsense/util/*.class
