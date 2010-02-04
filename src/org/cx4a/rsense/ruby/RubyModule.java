@@ -111,7 +111,27 @@ public class RubyModule extends RubyObject {
         Set<String> result = new HashSet<String>(methods.keySet());
         if (inheritedToo) {
             for (RubyModule module : includes) {
-                result.addAll(module.getMethods(inheritedToo));
+                result.addAll(module.getPublicMethods(inheritedToo));
+            }
+        }
+        return result;
+    }
+
+    public Set<String> getPublicMethods(boolean inheritedToo) {
+        Set<String> result = getVisibleMethods(Visibility.PUBLIC);
+        if (inheritedToo) {
+            for (RubyModule module : includes) {
+                result.addAll(module.getPublicMethods(inheritedToo));
+            }
+        }
+        return result;
+    }
+
+    private Set<String> getVisibleMethods(Visibility visibility) {
+        Set<String> result = new HashSet<String>();
+        for (Map.Entry<String, DynamicMethod> entry : methods.entrySet()) {
+            if (entry.getValue().getVisibility() == visibility) {
+                result.add(entry.getKey());
             }
         }
         return result;

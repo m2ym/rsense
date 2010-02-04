@@ -35,16 +35,29 @@
    (read-from-string
     (shell-command-to-string (format "%s/bin/rsense %s --format=emacs" rsense-home (mapconcat 'identity command " "))))))
 
-(defun rsense-code-completion (buffer offset &optional remove-until)
+(defun rsense-buffer-command (buffer offset command &optional remove-until)
   (with-temp-buffer
     (insert (with-current-buffer buffer (buffer-string)))
     (if remove-until
         (delete-region offset remove-until))
     (write-region (point-min) (point-max) rsense-temp-file nil 0)
-    (rsense-command "code-completion"
+    (rsense-command command
                     (format "--file=%s" rsense-temp-file)
                     (format "--encoding=UTF-8")
                     (format "--offset=%s" (1- offset)))))
+
+(defun rsense-code-completion (buffer offset &optional remove-until)
+  (rsense-buffer-command buffer offset "code-completion" remove-until))
+
+(defun rsense-type-inference (buffer offset)
+  (rsense-buffer-command buffer offset "type-inference"))
+
+(defun rsense-type-help ()
+  (interactive)
+  (let ((result (assoc-default 'type (rsense-type-inference (current-buffer) (point)))))
+    (popup-tip (if result
+                   (mapconcat 'identity result " | ")
+                 "No type information"))))
 
 (defun ac-rsense-candidates ()
   (assoc-default 'completion

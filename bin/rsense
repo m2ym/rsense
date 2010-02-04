@@ -27,7 +27,11 @@ def start_server
           loop do
             sock = serv.accept
             cmd = sock.gets
-            exit if cmd =~ /^(exit|quit)/
+            if cmd =~ /^(exit|quit)/
+              sock.puts('END')
+              sock.close
+              exit
+            end
             io.puts(cmd)
             sock.close_read
             ret = ''

@@ -666,7 +666,9 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitEnsureNode(EnsureNode node) {
-        throw new UnsupportedOperationException();
+        // FIXME
+        //throw new UnsupportedOperationException();
+        return NULL_VERTEX;
     }
     
     public Object visitEvStrNode(EvStrNode node) {
@@ -853,7 +855,34 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitOpElementAsgnNode(OpElementAsgnNode node) {
-        throw new UnsupportedOperationException();
+        String operator = node.getOperatorName();
+        Vertex receiverVertex = createVertex(node.getReceiverNode());
+        Vertex[] argVertices = null;
+        if (node.getArgsNode() != null) {
+            List<Node> argNodes = node.getArgsNode().childNodes();
+            argVertices = new Vertex[argNodes.size()];
+            for (int i = 0; i < argVertices.length; i++) {
+                argVertices[i] = createVertex(argNodes.get(i));
+            }
+        }
+        Vertex src = createVertex(node.getValueNode());
+        Vertex value;
+
+        if (operator.equals("||") || operator.equals("&&")) {
+            // do nothing
+            value = src;
+        } else {
+            CallVertex getter = new CallVertex(node.getReceiverNode(), "[]", receiverVertex, argVertices, null);
+            CallVertex op = new CallVertex(node, operator, RuntimeHelper.call(this, getter), new Vertex[] {src}, null);
+            value = RuntimeHelper.call(this, op);
+        }
+       
+        Vertex[] expandedArgs = new Vertex[argVertices.length + 1];
+        System.arraycopy(argVertices, 0, expandedArgs, 0, argVertices.length);
+        expandedArgs[expandedArgs.length - 1] = value;
+        CallVertex setter = new CallVertex(node, "[]=", receiverVertex, expandedArgs, null);
+        RuntimeHelper.call(this, setter);
+        return src;
     }
     
     public Object visitOpAsgnNode(OpAsgnNode node) {
@@ -872,7 +901,7 @@ public class Graph implements NodeVisitor {
             value = RuntimeHelper.call(this, op);
         }
         
-        CallVertex setter = new CallVertex(node. getValueNode(), varAsgn, receiverVertex, new Vertex[] {value}, null);
+        CallVertex setter = new CallVertex(node.getValueNode(), varAsgn, receiverVertex, new Vertex[] {value}, null);
         RuntimeHelper.call(this, setter);
         return src;
     }
@@ -921,11 +950,15 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitRescueBodyNode(RescueBodyNode node) {
-        throw new UnsupportedOperationException();
+        // FIXME
+        //throw new UnsupportedOperationException();
+        return NULL_VERTEX;
     }
     
     public Object visitRescueNode(RescueNode node) {
-        throw new UnsupportedOperationException();
+        // FIXME
+        //throw new UnsupportedOperationException();
+        return NULL_VERTEX;
     }
     
     public Object visitRestArgNode(RestArgNode node) {

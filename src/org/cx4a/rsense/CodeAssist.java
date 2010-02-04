@@ -171,7 +171,7 @@ public class CodeAssist {
                     }
                 }
             }
-            buffer.append(buf, index, read);
+            buffer.append(buf, index, read - index);
         }
         return buffer.toString();
     }

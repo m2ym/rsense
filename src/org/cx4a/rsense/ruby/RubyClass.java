@@ -95,7 +95,7 @@ public class RubyClass extends RubyModule {
         Set<String> result = super.getMethods(inheritedToo);
         RubyClass sclass = superClass;
         while (sclass != null) {
-            result.addAll(sclass.getMethods(inheritedToo));
+            result.addAll(sclass.getPublicMethods(inheritedToo));
             sclass = sclass.getSuperClass();
         }
         return result;
