@@ -76,7 +76,7 @@ public class Main {
     private CodeAssist codeAssist;
     
     public static void main(String[] args) throws Exception {
-        Logger.setDebug(true);
+        //Logger.setDebug(true);
         new Main().run(args);
     }
 
@@ -165,6 +165,12 @@ public class Main {
     private void interactive(Options options) {
         String format = options.getFormat();
         String encoding = options.getEncoding();
+        if (format == null) {
+            format = options.defaultFormat();
+        }
+        if (encoding == null) {
+            encoding = options.defaultEncoding();
+        }
 
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(in, encoding));
@@ -201,6 +207,7 @@ public class Main {
             commandHelp(options);
         } else if (command.equals("version")) {
             commandVersion(options);
+        } else if (command.length() == 0) {
         } else {
             commandUnknown(options);
         }
