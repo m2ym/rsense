@@ -140,7 +140,16 @@ or_type_list returns [List<TypeExpression> value]
     ;
 
 type_ident returns [TypeIdentity value]
-    : CONST_ID { $value = TypeIdentity.newRelativeIdentity($CONST_ID.text); }
+    : CONST_ID ('::' id=type_ident)? {
+            if ($id.value != null) {
+                $value = TypeIdentity.newScopedIdentity($CONST_ID.text, $id.value);
+            } else {
+                $value = TypeIdentity.newRelativeIdentity($CONST_ID.text);
+            }
+        }
+    | '::' id=type_ident {
+            $value = TypeIdentity.newAbsoluteIdentity($id.value);
+        }
     ;
 
 type_var returns [TypeVariable value]

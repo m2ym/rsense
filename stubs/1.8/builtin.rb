@@ -572,7 +572,7 @@ class File
   ##% self.link(String, String) -> Integer
   def self.link(old, new) 0 end
   ##% self.lstat(String) -> File::Stat
-  def self.lstat(filename) File::Stat.new end
+  def self.lstat(filename) File::Stat.new('') end
   ##% self.mtime(String or IO) -> Time
   def self.mtime(filename) Time.new end
   ##% self.new(String or Integer, ?a, ?Integer) -> File
@@ -605,9 +605,9 @@ class File
   ##% self.split(String) -> (String, String)
   def self.split(pathname) ['', ''] end
   ##% self.stat(String) -> File::Stat
-  def self.stat(filename) File::Stat.new end
-  ##% self.stickey?(String or IO) -> Boolean
-  def self.stickey?(path) BOOLEAN end
+  def self.stat(filename) File::Stat.new('') end
+  ##% self.sticky?(String or IO) -> Boolean
+  def self.sticky?(path) BOOLEAN end
   ##% self.symlink(String, String) -> Integer
   def self.symlink(old, new) 0 end
   ##% self.symlink?(String or IO) -> Boolean
@@ -636,7 +636,7 @@ class File
   ##% flock(Integer) -> Integer or FalseClass
   def flock(operation) 0 || false end
   ##% lstat() -> File::Stat
-  def lstat() File::Stat.new end
+  def lstat() File::Stat.new('') end
   ##% mtime() -> Time
   def mtime() Time.new end
   ##% path() -> String
@@ -669,7 +669,89 @@ module File::Constants
 end
 
 class File::Stat
-  # FIXME
+  include Comparable
+
+  ##% self.new(String) -> File::Stat
+  def self.new(path) super() end
+
+  ##% "<=>"(File::Stat) -> Fixnum
+  def <=>(o) 0 end
+  ##% atime() -> Time
+  def atime() Time.new end
+  ##% blksize() -> Integer
+  def blksize() 0 end
+  ##% blockdev?() -> Boolean
+  def blockdev?() BOOLEAN end
+  ##% blocks() -> Integer
+  def blocks() 0 end
+  ##% chardev?() -> Boolean
+  def chardev?() BOOLEAN end
+  ##% ctime() -> Time
+  def ctime() Time.new end
+  ##% dev() -> Integer
+  def dev() 0 end
+  ##% dev_major() -> Integer
+  def dev_major() 0 end
+  ##% dev_minor() -> Integer
+  def dev_minor() 0 end
+  ##% directory?() -> Boolean
+  def directory?() BOOLEAN end
+  ##% executable?() -> Boolean
+  def executable?() BOOLEAN end
+  ##% executable_real?() -> Boolean
+  def executable_real?() BOOLEAN end
+  ##% file?() -> Boolean
+  def file?() BOOLEAN end
+  ##% ftype() -> String
+  def ftype() '' end
+  ##% gid() -> Integer
+  def gid() 0 end
+  ##% grpowned?() -> Boolean
+  def grpowned?() BOOLEAN end
+  ##% ino() -> Integer
+  def ino() 0 end
+  ##% mode() -> Integer
+  def mode() 0 end
+  ##% mtime() -> Time
+  def mtime() Time.new end
+  ##% nlink() -> Integer
+  def nlink() 0 end
+  ##% owned?() -> Boolean
+  def owned?() BOOLEAN end
+  ##% pipe?() -> Boolean
+  def pipe?() BOOLEAN end
+  ##% rdev() -> Integer
+  def rdev() 0 end
+  ##% rdev_major() -> Integer
+  def rdev_major() 0 end
+  ##% rdev_minor() -> Integer
+  def rdev_minor() 0 end
+  ##% readable?() -> Boolean
+  def readable?() BOOLEAN end
+  ##% readable_real?() -> Boolean
+  def readable_real?() BOOLEAN end
+  ##% setgid?() -> Boolean
+  def setgid?() BOOLEAN end
+  ##% setuid?() -> Boolean
+  def setuid?() BOOLEAN end
+  ##% size() -> Integer
+  def size() 0 end
+  ##% size?() -> Integer or nil
+  def size?() 0 || nil end
+  ##% socket?() -> Boolean
+  def socket?() BOOLEAN end
+  ##% sticky?() -> Boolean
+  def sticky?() BOOLEAN end
+  ##% symlink?() -> FalseClass
+  def symlink?() false end
+  ##% uid() -> Integer
+  def uid() 0 end
+  ##% writable?() -> Boolean
+  def writable?() BOOLEAN end
+  ##% writable_real?() -> Boolean
+  def writable_real?() BOOLEAN end
+  ##% zero?() -> Boolean
+  def zero?() BOOLEAN end
 end
 
 module FileTest
@@ -1096,7 +1178,7 @@ class IO
   ##% seek(Integer, ?Fixnum) -> Fixnum
   def seek(offset, whence = IO::SEEK_SET) 0 end
   ##% stat() -> File::Stat
-  def stat() FIle::Stat.new end
+  def stat() File::Stat.new('') end
   ##% sync() -> Boolean
   def sync() BOOLEAN end
   ##% sync=(Boolean) -> Boolean

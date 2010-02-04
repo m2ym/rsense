@@ -202,6 +202,8 @@ public class AnnotationResolver {
             }
             return true;
         }
+        case SCOPED_IDENTITY:
+        case ABSOLUTE_IDENTITY:
         case RELATIVE_IDENTITY: {
             IRubyObject guard = resolveIdentity(template, (TypeIdentity) argType);
             return (guard instanceof RubyClass) && arg.isKindOf((RubyClass) guard);
@@ -382,6 +384,8 @@ public class AnnotationResolver {
             }
             return result;
         }
+        case SCOPED_IDENTITY:
+        case ABSOLUTE_IDENTITY:
         case RELATIVE_IDENTITY: {
             IRubyObject ret = resolveIdentity(template, (TypeIdentity) returnType);
             if (ret != null && ret instanceof RubyClass) {
@@ -438,14 +442,34 @@ public class AnnotationResolver {
     }
 
     public IRubyObject resolveIdentity(Template template, TypeIdentity ident) {
-        RubyModule module = template.getFrame().getModule();
-        switch (ident.getType()) {
-        case RELATIVE_IDENTITY:
-            return module.getConstant(ident.getName());
-        default:
-            Logger.error("Unknown identity");
+        return resolveIdentity(template, ident, template.getFrame().getModule());
+    }
+
+    public IRubyObject resolveIdentity(Template template, TypeIdentity ident, RubyModule module) {
+        if (ident.getType() == TypeExpression.Type.ABSOLUTE_IDENTITY) {
+            return resolveIdentity(template, ident.getPath(), runtime.getObject());
         }
-        return null;
+
+        IRubyObject value = module.getConstant(ident.getName());
+        if (value instanceof VertexHolder) {
+            module = null;
+            for (IRubyObject t : ((VertexHolder) value).getVertex().getTypeSet()) {
+                if (t instanceof RubyModule) {
+                    module = (RubyModule) t;
+                    break;
+                }
+            }
+        } else if (value instanceof RubyModule) {
+            module = (RubyModule) value;
+        } else {
+            return value;
+        }
+
+        if (module != null && ident.getType() == TypeExpression.Type.SCOPED_IDENTITY) {
+            return resolveIdentity(template, ident.getPath(), module);
+        } else {
+            return module;
+        }
     }
 
     public boolean checkArity(List<TypeExpression> list, IRubyObject[] args) {
