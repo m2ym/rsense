@@ -75,7 +75,8 @@ public class TemplateAttribute {
 
         if (!receiver.getMetaClass().equals(o.receiver.getMetaClass())
             || (typeVarMap != null && !typeVarMap.equals(o.typeVarMap))
-            || args.length != o.args.length) {
+            || args.length != o.args.length
+            || block != o.block) {
             return false;
         }
 
