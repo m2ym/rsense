@@ -11,20 +11,19 @@ public class NodeDiff {
     }
 
     public List<Node> diff(Node newNode, Node oldNode) {
-        List<Node> result = new ArrayList<Node>();
         if (isSameStatementSequence(newNode, oldNode)) {
-            collectStructualNodes(newNode, result);
+            return collectStructualNodes(newNode);
         } else {
-            result.add(newNode);
+            return null;
         }
-        return result;
     }
 
     public boolean noDiff(Node newNode, Node oldNode) {
-        return diff(newNode, oldNode).isEmpty();
+        return diff(newNode, oldNode) != null;
     }
 
-    protected void collectStructualNodes(Node node, List<Node> result) {
+    protected List<Node> collectStructualNodes(Node node) {
+        List<Node> result = new ArrayList<Node>();
         if (node != null) {
             for (Node child : node.childNodes()) {
                 if (isStructuralNode(node)) {
@@ -32,6 +31,7 @@ public class NodeDiff {
                 }
             }
         }
+        return result;
     }
 
     protected boolean isSameNode(Node a, Node b) {
@@ -56,9 +56,9 @@ public class NodeDiff {
         while (true) {
             Node x = getNextStatementNode(i);
             Node y = getNextStatementNode(j);
-            if (x == null && x == null) {
+            if (x == null && y == null) {
                 return true;
-            } else if (x == null || y == null || !isSameNode(x, y)) {
+            } else if (x == null || y == null || !isSameStatementSequence(x, y)) {
                 return false;
             }
         }

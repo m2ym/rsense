@@ -318,12 +318,15 @@ public class Graph implements NodeVisitor {
 
     public void load(Node newAST, Node oldAST) {
         if (oldAST != null && nodeDiff != null) {
-            for (Node dirty : nodeDiff.diff(newAST, oldAST)) {
-                createVertex(dirty);
+            List<Node> partialDiff = nodeDiff.diff(newAST, oldAST);
+            if (partialDiff != null) {
+                for (Node dirty : partialDiff) {
+                    createVertex(dirty);
+                }
+                return;
             }
-        } else {
-            createVertex(newAST);
         }
+        createVertex(newAST);
     }
 
     public Vertex createVertex(Node node) {
@@ -557,8 +560,13 @@ public class Graph implements NodeVisitor {
         if (bodyNode != null) {
             ClassTag oldTag = RuntimeHelper.getClassTag(klass);
             if (nodeDiff != null && oldTag != null) {
-                for (Node dirty : nodeDiff.diff(bodyNode, oldTag.getBodyNode())) {
-                    result = createVertex(dirty);
+                List<Node> partialDiff = nodeDiff.diff(bodyNode, oldTag.getBodyNode());
+                if (partialDiff != null) {
+                    for (Node dirty : partialDiff) {
+                        result = createVertex(dirty);
+                    }
+                } else {
+                    result = createVertex(node.getBodyNode());
                 }
             } else {
                 result = createVertex(node.getBodyNode());
@@ -667,7 +675,15 @@ public class Graph implements NodeVisitor {
                 newMethod.setTemplates(((Method) oldMethod).getTemplates());
             }
         }
-        
+
+        if (newMethod.getTemplates().isEmpty()) {
+            // FIXME more effective way?
+            // dummy template
+            IRubyObject dummyReceiver = newInstanceOf(runtime.getObject());
+            CallVertex dummyCallVertex = new CallVertex(node, createFreeSingleTypeVertex(dummyReceiver), null, null);
+            RuntimeHelper.call(this, dummyCallVertex);
+        }
+
         RuntimeHelper.setMethodTag(newMethod, node, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
 
         return NULL_VERTEX;
@@ -698,6 +714,14 @@ public class Graph implements NodeVisitor {
                     // FIXME annotation diff
                     newMethod.setTemplates(((Method) oldMethod).getTemplates());
                 }
+            }
+
+            if (newMethod.getTemplates().isEmpty()) {
+                // FIXME more effective way?
+                // dummy template
+                IRubyObject dummyReceiver = newInstanceOf(runtime.getObject());
+                CallVertex dummyCallVertex = new CallVertex(node, createFreeSingleTypeVertex(dummyReceiver), null, null);
+                RuntimeHelper.call(this, dummyCallVertex);
             }
 
             RuntimeHelper.setMethodTag(newMethod, node, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
@@ -877,8 +901,13 @@ public class Graph implements NodeVisitor {
         if (bodyNode != null) {
             ClassTag oldTag = RuntimeHelper.getClassTag(module);
             if (nodeDiff != null && oldTag != null) {
-                for (Node dirty : nodeDiff.diff(bodyNode, oldTag.getBodyNode())) {
-                    result = createVertex(dirty);
+                List<Node> partialDiff = nodeDiff.diff(bodyNode, oldTag.getBodyNode());
+                if (partialDiff != null) {
+                    for (Node dirty : partialDiff) {
+                        result = createVertex(dirty);
+                    }
+                } else {
+                    result = createVertex(node.getBodyNode());
                 }
             } else {
                 result = createVertex(node.getBodyNode());

@@ -58,7 +58,7 @@ public class Options extends HashMap<String, String> {
     }
 
     public String getPrompt() {
-        return get("prompt");
+        return containsKey("no-prompt") ? "" : get("prompt");
     }
 
     public File getFile() {

@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.io.File;
 import java.io.InputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.io.Reader;
 import java.io.BufferedReader;
@@ -56,7 +57,7 @@ public class Main {
             Logger.getInstance().setLevel(Logger.Level.DEBUG);
         }
         if (options.getLog() != null) {
-            PrintStream log = new PrintStream(options.getLog());
+            PrintStream log = new PrintStream(new FileOutputStream(options.getLog(), true));
             try {
                 Logger.getInstance().setOut(log);
                 start(command, options);

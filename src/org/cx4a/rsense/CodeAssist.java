@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.ArrayList;
 
 import org.jruby.ast.Node;
+import org.jruby.ast.NodeType;
+import org.jruby.ast.types.INameNode;
 
 import org.cx4a.rsense.ruby.Ruby;
 import org.cx4a.rsense.ruby.RubyClass;
@@ -39,7 +41,7 @@ public class CodeAssist {
             this.offset = offset;
             this.line = line;
             this.col = col;
-            this.mark = mark.toCharArray();
+            this.mark = mark != null ? mark.toCharArray() : null;
         }
 
         public int getOffset() {
@@ -121,6 +123,19 @@ public class CodeAssist {
     }
 
     private static class NodeDiffForTypeInference extends NodeDiff {
+        @Override
+        protected boolean isSameNode(Node a, Node b) {
+            if (!super.isSameNode(a, b)) {
+                return false;
+            }
+
+            if (a.getNodeType() == NodeType.CALLNODE
+                && ((INameNode) a).getName().equals(TYPE_INFERENCE_METHOD_NAME)) {
+                // scratch!
+                return false;
+            }
+            return true;
+        }
     }
 
     private org.jruby.Ruby rubyRuntime;

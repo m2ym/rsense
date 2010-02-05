@@ -5,6 +5,8 @@ require 'socket'
 $rsense_home = ENV['RSENSE_HOME'] || File.dirname(File.dirname(File.expand_path($0)))
 $socket_path = ENV['RSENSE_SOCKET'] || '/tmp/rsense-socket'
 $classpath = ENV['RSENSE_CLASSPATH'] || '.' + ['', 'rsense.jar', 'antlr-runtime-3.2.jar', 'jruby.jar'].join(":#{$rsense_home}/lib/")
+$log = ENV['RSENSE_LOG']
+$debug = ENV['RSENSE_DEBUG']
 $end_mark = 'END'
 
 def daemonize
@@ -21,7 +23,8 @@ def start_server
     daemonize
     
     begin
-      io = IO.popen("java -cp #{$classpath} -Drsense.home=#{$rsense_home} org.cx4a.rsense.Main script --end-mark=#{$end_mark}", 'r+')
+      options = "--no-prompt --end-mark=#{$end_mark} #{'--debug' if $debug} #{'--log=' + $log if $log}"
+      io = IO.popen("java -cp #{$classpath} -Drsense.home=#{$rsense_home} org.cx4a.rsense.Main script #{options}", 'r+')
       UNIXServer.open($socket_path) {|serv|
         begin
           loop do

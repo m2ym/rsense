@@ -30,10 +30,21 @@
 (defcustom rsense-temp-file "/tmp/rsense-buf"
   "Temporary file for containing uncomplete buffer.")
 
+(defcustom rsense-debug t
+  "Non-nil means RSense runs on debug mode.")
+
+(defcustom rsense-log-file "/tmp/rsense.log"
+  "RSense log file.")
+
 (defun rsense-command (&rest command)
+  (setenv "RSENSE_LOG" rsense-log-file)
+  (setenv "RSENSE_DEBUG" (if rsense-debug "true"))
   (car-safe
    (read-from-string
-    (shell-command-to-string (format "%s/bin/rsense %s --format=emacs" rsense-home (mapconcat 'identity command " "))))))
+    (shell-command-to-string (format "%s/bin/rsense %s --format=emacs"
+                                     rsense-home
+                                     (mapconcat 'identity command " ")
+                                     rsense-log-file)))))
 
 (defun rsense-buffer-command (buffer offset command &optional remove-until)
   (with-temp-buffer
@@ -44,7 +55,7 @@
     (rsense-command command
                     (format "--file=%s" rsense-temp-file)
                     (format "--encoding=UTF-8")
-                    (format "--offset=%s" (1- offset)))))
+                    (format "--location=%s" (1- offset)))))
 
 (defun rsense-code-completion (buffer offset &optional remove-until)
   (rsense-buffer-command buffer offset "code-completion" remove-until))
