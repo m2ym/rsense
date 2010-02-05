@@ -42,6 +42,10 @@ public class Frame {
         return visibility;
     }
 
+    public void setVisibility(Visibility visibility) {
+        this.visibility = visibility;
+    }
+
     public Frame getPrevious() {
         return prev;
     }

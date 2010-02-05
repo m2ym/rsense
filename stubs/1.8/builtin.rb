@@ -355,9 +355,6 @@ class Dir
   def rewind() self end
 end
 
-# FIXME
-ENV = nil
-
 ##% Enumerable<t>
 module Enumerable
   # Special method for internal use
@@ -1365,13 +1362,14 @@ class Integer
 end
 
 module Kernel
+  private
+
   ### Constants
-  # FIXME
-  ARGF = nil
+  ARGF = IO.new(0)
   ARGV = ['']
   DATA = File.new('')
-  # FIXME
-  ENV = nil
+  ENV = {}
+  ENV[''] = ''                  # normalize
   FALSE = false
   NIL = nil
   PLATFORM = ''
@@ -1391,9 +1389,64 @@ module Kernel
   VERSION = ''
 
   ### Global Variables
+  $! = Exception.new
+  $" = ['']
+  $LOADED_FEATURES = $"
+  $$ = 0
+  #$& = ''
+  #$' = ''
+  $* = ['']
+  #$+ = ''
+  $, = ''
+  $/ = ''
+  $-0 = ''
+  $; = // || ''
+  $-F = $;
+  $: = ['']
+  $LOAD_PATH = $:
+  $-I = $:
+  $KCODE = ''
+  $-K = ''
+  $-a = BOOLEAN
+  $DEBUG = BOOLEAN
+  $-d = BOOLEAN
+  $-i = BOOLEAN
+  $-l = BOOLEAN
+  $-p = BOOLEAN
+  $VERBOSE = BOOLEAN
+  $-v = BOOLEAN
+  $-w = BOOLEAN
+  $. = 0
+  $0 = ''
+  $PROGRAM_NAME = ''
+  #$1 = ''
+  #$2 = ''
+  #$3 = ''
+  #$4 = ''
+  #$5 = ''
+  #$6 = ''
+  #$7 = ''
+  #$8 = ''
+  #$9 = ''
+  #$10 = ''
+  #$11 = ''
+  $< = IO.new(0)
+  $= = BOOLEAN
+  $> = IO.new(0)
+  $stdout = $>
+  $defout = $stdout
+  $? = Process::Status.new
+  $@ = ['']
+  $FILENAME = ''
+  $SAFE = 0
+  $\ = ''
+  $_ = ''
+  #$` = ''
+  $stderr = IO.new(0)
+  $deferr = $stderr
+  $stdin = IO.new(0)
+  $~ = MatchData
   
-  
-
   ### Module Methods
   # FIXME to_ary
   ##% Array<a | a <= Array>(a) -> a

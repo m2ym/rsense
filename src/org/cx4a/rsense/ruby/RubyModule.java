@@ -56,9 +56,29 @@ public class RubyModule extends RubyObject {
     }
 
     public IRubyObject getConstant(String name) {
+        return getConstant(name, null);
+    }
+
+    private IRubyObject getConstant(String name, Set<RubyModule> seen) {
+        if (seen != null && seen.contains(this)) {
+            return null;
+        }
+
         IRubyObject constant = getConstantUnder(name);
         if (constant == null && parent != null) {
-            return parent.getConstant(name);
+            constant = parent.getConstant(name, seen);
+        }
+        if (constant == null) {
+            if (seen == null) {
+                seen = new HashSet<RubyModule>();
+            }
+            seen.add(this);
+            for (RubyModule module : includes) {
+                constant = module.getConstant(name, seen);
+                if (constant != null) {
+                    return constant;
+                }
+            }
         }
         return constant;
     }
