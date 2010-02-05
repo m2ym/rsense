@@ -27,6 +27,7 @@ import org.cx4a.rsense.typing.TemplateAttribute;
 import org.cx4a.rsense.typing.Graph;
 import org.cx4a.rsense.typing.runtime.TypeVarMap;
 import org.cx4a.rsense.typing.runtime.AnnotationHelper;
+import org.cx4a.rsense.typing.runtime.ClassTag;
 import org.cx4a.rsense.typing.annotation.TypeAnnotation;
 import org.cx4a.rsense.typing.annotation.TypeExpression;
 import org.cx4a.rsense.typing.annotation.TypeVariable;
@@ -71,69 +72,5 @@ public class AnnotationHelper {
 
     public static boolean resolveMethodAnnotation(Graph graph, Template template) {
         return new AnnotationResolver(graph).resolveMethodAnnotation(template);
-    }
-
-    public static TypeVarMap getTypeVarMap(IRubyObject object) {
-        if (object.getTag() instanceof TypeVarMap) {
-            return (TypeVarMap) object.getTag();
-        } else {
-            return null;
-        }
-    }
-
-    public static ClassType getClassAnnotation(RubyModule klass) {
-        if (klass.getTag() instanceof ClassType) {
-            return (ClassType) klass.getTag();
-        } else {
-            return null;
-        }
-    }
-
-    public static void setClassAnnotation(RubyModule klass, ClassType type) {
-        klass.setTag(type);
-    }
-    
-    public static void setClassAnnotation(RubyModule klass, List<TypeAnnotation> annotations) {
-        for (TypeAnnotation annot : annotations) {
-            if (annot instanceof ClassType) {
-                if (klass.getTag() == null) {
-                    setClassAnnotation(klass, (ClassType) annot);
-                } else {
-                    Logger.warn("Class already has annotation");
-                }
-                break;
-            }
-        }
-    }
-
-    public static void setMethodAnnotation(Method method, List<TypeAnnotation> annotations) {
-        if (!annotations.isEmpty()) {
-            List<MethodType> types = new ArrayList<MethodType>();
-            for (TypeAnnotation annot : annotations) {
-                if (annot instanceof MethodType) {
-                    types.add((MethodType) annot);
-                }
-            }
-            method.setAnnotations(types);
-        }
-    }
-
-    public static ClassType getEnclosingClassAnnotation(RubyModule module) {
-        ClassType type;
-        while (module != null) {
-            type = getClassAnnotation(module);
-            if (type != null) {
-                return type;
-            }
-            module = module.getParent();
-        }
-        return null;
-    }
-
-    public static void mergeAffectedMap(Template template, IRubyObject receiver) {
-        TypeVarMap map = getTypeVarMap(receiver);
-        if (map != null && template.getAffectedMap() != null) {
-            map.putAll(template.getAffectedMap());
-        }
     }
 }

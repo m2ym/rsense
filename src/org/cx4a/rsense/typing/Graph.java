@@ -130,7 +130,7 @@ import org.cx4a.rsense.ruby.LocalScope;
 import org.cx4a.rsense.ruby.DynamicScope;
 import org.cx4a.rsense.ruby.DynamicMethod;
 import org.cx4a.rsense.util.Logger;
-
+import org.cx4a.rsense.util.NodeDiff;
 import org.cx4a.rsense.typing.runtime.InstanceFactory;
 import org.cx4a.rsense.typing.runtime.VertexHolder;
 import org.cx4a.rsense.typing.runtime.Tuple;
@@ -141,6 +141,7 @@ import org.cx4a.rsense.typing.runtime.RuntimeHelper;
 import org.cx4a.rsense.typing.runtime.AnnotationHelper;
 import org.cx4a.rsense.typing.runtime.TypeVarMap;
 import org.cx4a.rsense.typing.runtime.LoopTag;
+import org.cx4a.rsense.typing.runtime.ClassTag;
 import org.cx4a.rsense.typing.vertex.Vertex;
 import org.cx4a.rsense.typing.vertex.ArrayVertex;
 import org.cx4a.rsense.typing.vertex.HashVertex;
@@ -161,6 +162,7 @@ public class Graph implements NodeVisitor {
     protected Context context;
     protected InstanceFactory instanceFactory;
     protected Map<String, SpecialMethod> specialMethods;
+    protected NodeDiff nodeDiff;
 
     public Graph(Ruby runtime) {
         this.runtime = runtime;
@@ -184,6 +186,14 @@ public class Graph implements NodeVisitor {
 
     public void addSpecialMethod(String name, SpecialMethod method) {
         specialMethods.put(name, method);
+    }
+
+    public NodeDiff getNodeDiff() {
+        return nodeDiff;
+    }
+
+    public void setNodeDiff(NodeDiff nodeDiff) {
+        this.nodeDiff = nodeDiff;
     }
 
     private void initSpecialMethods() {
@@ -300,6 +310,20 @@ public class Graph implements NodeVisitor {
                     result.setResultTypeSet(ts);
                 }
             });
+    }
+
+    public void load(Node newAST) {
+        load(newAST, null);
+    }
+
+    public void load(Node newAST, Node oldAST) {
+        if (oldAST != null && nodeDiff != null) {
+            for (Node dirty : nodeDiff.diff(newAST, oldAST)) {
+                createVertex(dirty);
+            }
+        } else {
+            createVertex(newAST);
+        }
     }
 
     public Vertex createVertex(Node node) {
@@ -529,14 +553,22 @@ public class Graph implements NodeVisitor {
         context.pushScope(new LocalScope(module));
 
         Vertex result = null;
-        if (node.getBodyNode() != null) {
-            result = createVertex(node.getBodyNode());
+        Node bodyNode = node.getBodyNode();
+        if (bodyNode != null) {
+            ClassTag oldTag = RuntimeHelper.getClassTag(klass);
+            if (nodeDiff != null && oldTag != null) {
+                for (Node dirty : nodeDiff.diff(bodyNode, oldTag.getBodyNode())) {
+                    result = createVertex(dirty);
+                }
+            } else {
+                result = createVertex(node.getBodyNode());
+            }
         }
 
         context.popScope();
         context.popFrame();
 
-        AnnotationHelper.setClassAnnotation(klass, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
+        RuntimeHelper.setClassTag(klass, bodyNode, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
         
         return result != null ? result : NULL_VERTEX;
     }
@@ -615,14 +647,28 @@ public class Graph implements NodeVisitor {
     public Object visitDefnNode(DefnNode node) {
         RubyModule cbase = context.getFrameModule();
         String name = node.getName();
+        Node bodyNode = node.getBodyNode();
+        Node argsNode = node.getArgsNode();
         Visibility visibility = context.getFrameVisibility();
         if (name == "initialize" || name == "initialize_copy" || visibility == Visibility.MODULE_FUNCTION) {
             visibility = Visibility.PRIVATE;
         }
-        Method newMethod = new Method(cbase, node.getBodyNode(), node.getArgsNode(), visibility, node.getPosition());
+
+        DynamicMethod oldMethod = cbase.getMethod(name);
+        Method newMethod = new Method(cbase, name, bodyNode, argsNode, visibility, node.getPosition());
         cbase.addMethod(name, newMethod);
 
-        AnnotationHelper.setMethodAnnotation(newMethod, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
+        // partial update
+        if (oldMethod instanceof Method && nodeDiff != null) {
+            if (nodeDiff.noDiff(bodyNode, oldMethod.getBodyNode())) { // XXX nested class, defn
+                Logger.debug("Method reused");
+                
+                // FIXME annotation diff
+                newMethod.setTemplates(((Method) oldMethod).getTemplates());
+            }
+        }
+        
+        RuntimeHelper.setMethodTag(newMethod, node, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
 
         return NULL_VERTEX;
     }
@@ -634,13 +680,27 @@ public class Graph implements NodeVisitor {
             return NULL_VERTEX;
         }
 
+        String name = node.getName();
         for (IRubyObject receiver : receiverVertex.getTypeSet()) {
             RubyClass rubyClass = receiver.getSingletonClass();
-            Node body = node.getBodyNode();
-            Method newMethod = new Method(rubyClass, node.getBodyNode(), node.getArgsNode(), Visibility.PUBLIC, node.getPosition());
-            rubyClass.addMethod(node.getName(), newMethod);
+            Node bodyNode = node.getBodyNode();
+            Node argsNode = node.getArgsNode();
 
-            AnnotationHelper.setMethodAnnotation(newMethod, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
+            DynamicMethod oldMethod = rubyClass.getMethod(name);
+            Method newMethod = new Method(rubyClass, name, bodyNode, argsNode, Visibility.PUBLIC, node.getPosition());
+            rubyClass.addMethod(name, newMethod);
+
+            // partial update
+            if (oldMethod instanceof Method && nodeDiff != null) {
+                if (nodeDiff.noDiff(bodyNode, oldMethod.getBodyNode())) { // XXX nested class, defn
+                    Logger.debug("Method reused");
+
+                    // FIXME annotation diff
+                    newMethod.setTemplates(((Method) oldMethod).getTemplates());
+                }
+            }
+
+            RuntimeHelper.setMethodTag(newMethod, node, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
         }
 
         return NULL_VERTEX;
@@ -651,7 +711,7 @@ public class Graph implements NodeVisitor {
         IRubyObject range = newInstanceOf(runtime.getRange());
         Vertex beginVertex = createVertex(node.getBeginNode());
         Vertex endVertex = createVertex(node.getEndNode());
-        TypeVarMap typeVarMap = AnnotationHelper.getTypeVarMap(range);
+        TypeVarMap typeVarMap = RuntimeHelper.getTypeVarMap(range);
         if (typeVarMap != null && beginVertex != null && endVertex != null) {
             VertexHolder holder = createFreeVertexHolder();
             holder.getVertex().copyTypeSet(beginVertex);
@@ -813,14 +873,22 @@ public class Graph implements NodeVisitor {
         context.pushScope(new LocalScope(enclosingModule));
 
         Vertex result = null;
-        if (node.getBodyNode() != null) {
-            result = createVertex(node.getBodyNode());
+        Node bodyNode = node.getBodyNode();
+        if (bodyNode != null) {
+            ClassTag oldTag = RuntimeHelper.getClassTag(module);
+            if (nodeDiff != null && oldTag != null) {
+                for (Node dirty : nodeDiff.diff(bodyNode, oldTag.getBodyNode())) {
+                    result = createVertex(dirty);
+                }
+            } else {
+                result = createVertex(node.getBodyNode());
+            }
         }
 
         context.popScope();
         context.popFrame();
         
-        AnnotationHelper.setClassAnnotation(module, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
+        RuntimeHelper.setClassTag(module, bodyNode, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
 
         return result != null ? result : NULL_VERTEX;
     }
@@ -985,7 +1053,10 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitSClassNode(SClassNode node) {
-        throw new UnsupportedOperationException();
+        // FIXME
+        //throw new UnsupportedOperationException();
+        Logger.debug("SClass is not supported");
+        return NULL_VERTEX;
     }
     
     public Object visitSelfNode(SelfNode node) {

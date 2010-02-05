@@ -19,7 +19,7 @@ public class InstanceFactory {
     }
 
     public IRubyObject newInstance(RubyClass klass) {
-        ClassType classType = AnnotationHelper.getClassAnnotation(klass);
+        ClassType classType = RuntimeHelper.getClassAnnotation(klass);
         if (classType != null && classType.isPolymorphic()) {
             return newPolymorphicInstance(klass, classType);
         } else {

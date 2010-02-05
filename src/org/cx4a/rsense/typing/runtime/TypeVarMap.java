@@ -10,6 +10,8 @@ import org.cx4a.rsense.typing.vertex.Vertex;
 import org.cx4a.rsense.typing.annotation.TypeVariable;
 
 public class TypeVarMap extends HashMap<TypeVariable, IRubyObject> {
+    private static final long serialVersionUID = 0L;
+
     private boolean modified = false;
 
     public TypeVarMap() {

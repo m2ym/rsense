@@ -1,5 +1,8 @@
 package org.cx4a.rsense;
 
+import java.util.List;
+import java.util.ArrayList;
+
 import java.io.File;
 import java.io.InputStream;
 import java.io.FileInputStream;
@@ -18,6 +21,18 @@ import org.cx4a.rsense.util.Logger;
 
 public class Main {
     private static class Options extends HashMap<String, String> {
+        private static final long serialVersionUID = 0L;
+
+        private List<String> rest = new ArrayList<String>();
+
+        public void addRestArg(String arg) {
+            rest.add(arg);
+        }
+
+        public List<String> getRestArgs() {
+            return rest;
+        }
+
         public boolean isFormatGiven() {
             return containsKey("format");
         }
@@ -50,6 +65,10 @@ public class Main {
             put("encoding", encoding);
         }
 
+        public String getPrompt() {
+            return get("prompt");
+        }
+
         public File getFile() {
             String file = get("file");
             return file == null ? null : new File(file);
@@ -64,6 +83,14 @@ public class Main {
             return get("end-mark");
         }
 
+        public boolean isDebug() {
+            return containsKey("debug");
+        }
+
+        public String getLog() {
+            return get("log");
+        }
+
         public static String defaultFormat() {
             return "plain";
         }
@@ -75,6 +102,10 @@ public class Main {
         public static String defaultEndMark() {
             return "END";
         }
+
+        public static String defaultPrompt() {
+            return "> ";
+        }
     }
 
     private InputStream in;
@@ -84,11 +115,10 @@ public class Main {
     private CodeAssist codeAssist;
     
     public static void main(String[] args) throws Exception {
-        //Logger.setDebug(true);
         new Main().run(args);
     }
 
-    public void run(String[] args) {
+    public void run(String[] args) throws Exception {
         in = System.in;
         out = System.out;
 
@@ -104,10 +134,19 @@ public class Main {
 
         String command = args[0];
         Options options = parseOptions(args, 1);
-        if (command.equals("interactive")) {
-            interactive(options);
+        if (options.isDebug()) {
+            Logger.getInstance().setLevel(Logger.Level.DEBUG);
+        }
+        if (options.getLog() != null) {
+            PrintStream log = new PrintStream(options.getLog());
+            try {
+                Logger.getInstance().setOut(log);
+                start(command, options);
+            } finally {
+                log.close();
+            }
         } else {
-            command(command, options);
+            start(command, options);
         }
     }
 
@@ -123,29 +162,41 @@ public class Main {
         codeAssist.load(sandbox, new File(config.rsenseHome + "/stubs/1.8/builtin.rb"), "UTF-8");
     }
 
+    private void start(String command, Options options) {
+        if (command.equals("script")) {
+            script(options);
+        } else {
+            command(command, options);
+        }
+    }
+
     private void usage() {
         out.println("RSense: Ruby development tools\n"
                     + "\n"
                     + "Usage: java -jar rsense.jar org.cx4a.rsense.Main command option...\n"
                     + "\n"
                     + "command:\n"
-                    + "  interactive            - Start interactive mode.\n"
-                    + "      --format=          - Output format (plain, emacs)\n"
-                    + "      --encoding=        - Input encoding\n"
+                    + "  script                 - Run rsense script from file or stdin.\n"
+                    + "      --prompt=          - Prompt string in interactive shell mode.\n"
                     + "\n"
                     + "  code-completion        - Code completion at specified position.\n"
                     + "      --file=            - File to analyze\n"
-                    + "      --encoding=        - File encoding\n"
                     + "      --offset=          - Offset where you want to complete\n"
                     + "\n"
                     + "  infer-type             - Infer type at specified position.\n"
                     + "      --file=            - File to analyze\n"
-                    + "      --encoding=        - File encoding\n"
                     + "      --offset=          - Offset where you want to complete\n"
                     + "\n"
-                    + "  help                   - Print this help."
+                    + "  help                   - Print this help.\n"
                     + "\n"
-                    + "  version                - Print version information.");
+                    + "  version                - Print version information.\n"
+                    + "\n"
+                    + "common-options:\n"
+                    + "  --debug                - Print debug messages\n"
+                    + "  --log=                 - Log file to output (default stderr)\n"
+                    + "  --format=              - Output format (plain, emacs)\n"
+                    + "  --encoding=            - Input encoding\n"
+            );
     }
 
     private void version() {
@@ -165,19 +216,44 @@ public class Main {
                 if (lr.length >= 1) {
                     options.put(lr[0], lr.length >= 2 ? lr[1] : "");
                 }
+            } else {
+                options.addRestArg(arg);
             }
         }
         return options;
     }
 
-    private void interactive(Options options) {
+    private void script(Options options) {
+        if (options.getRestArgs().isEmpty()) {
+            runScript(in, options);
+        } else {
+            try {
+                for (String file : options.getRestArgs()) {
+                    InputStream in = new FileInputStream(file);
+                    try {
+                        runScript(in, options);
+                    } finally {
+                        in.close();
+                    }
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    private void runScript(InputStream in, Options options) {
         String format = options.getFormat();
         String encoding = options.getEncoding();
+        String prompt = options.getPrompt();
         if (format == null) {
             format = options.defaultFormat();
         }
         if (encoding == null) {
             encoding = options.defaultEncoding();
+        }
+        if (prompt == null) {
+            prompt = options.defaultPrompt();
         }
 
         try {
@@ -187,7 +263,13 @@ public class Main {
             if (endMark != null && endMark.length() == 0) {
                 endMark = Options.defaultEndMark();
             }
-            while ((line = reader.readLine()) != null) {
+            while (true) {
+                out.print(prompt);
+                line = reader.readLine();
+                if (line == null) {
+                    break;
+                }
+                
                 String[] argv = line.split(" ");
                 if (argv.length > 0) {
                     String command = argv[0];

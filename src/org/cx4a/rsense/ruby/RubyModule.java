@@ -56,11 +56,15 @@ public class RubyModule extends RubyObject {
     }
 
     public IRubyObject getConstant(String name) {
-        IRubyObject constant = constants.get(name);
+        IRubyObject constant = getConstantUnder(name);
         if (constant == null && parent != null) {
             return parent.getConstant(name);
         }
         return constant;
+    }
+
+    public IRubyObject getConstantUnder(String name) {
+        return constants.get(name);
     }
 
     public boolean isConstantDefined(String name) {

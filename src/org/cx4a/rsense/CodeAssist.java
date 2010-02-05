@@ -17,19 +17,24 @@ import org.cx4a.rsense.ruby.Ruby;
 import org.cx4a.rsense.ruby.RubyClass;
 import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.ruby.Block;
+import org.cx4a.rsense.typing.Graph;
 import org.cx4a.rsense.typing.TypeSet;
 import org.cx4a.rsense.typing.vertex.Vertex;
 import org.cx4a.rsense.typing.runtime.SpecialMethod;
 import org.cx4a.rsense.util.Logger;
+import org.cx4a.rsense.util.NodeDiff;
 
 public class CodeAssist {
     public static final String TYPE_INFERENCE_METHOD_NAME = "__rsense_type_inference__";
 
-    public static class Context {
+    private static class Context {
         public Project project;
         public TypeSet typeSet;
     }
-    
+
+    private static class NodeDiffForTypeInference extends NodeDiff {
+    }
+
     private org.jruby.Ruby rubyRuntime;
     private final Config config;
     private final Context context;
@@ -67,7 +72,7 @@ public class CodeAssist {
         try {
             prepare(project);
             Node ast = parseString(readAll(reader));
-            project.getGraph().createVertex(ast);
+            project.getGraph().load(ast);
 
             LoadResult result = new LoadResult();
             result.setAST(ast);
@@ -94,7 +99,7 @@ public class CodeAssist {
         try {
             prepare(project);
             Node ast = parseString(readAndInjectCode(reader, offset, TYPE_INFERENCE_METHOD_NAME, "."));
-            project.getGraph().createVertex(ast);
+            project.getGraph().load(ast);
 
             TypeInferenceResult result = new TypeInferenceResult();
             result.setTypeSet(context.typeSet);
@@ -140,7 +145,9 @@ public class CodeAssist {
         context.project = project;
         context.typeSet = new TypeSet();
 
-        project.getGraph().addSpecialMethod(TYPE_INFERENCE_METHOD_NAME, typeInferenceMethod);
+        Graph graph = project.getGraph();
+        graph.addSpecialMethod(TYPE_INFERENCE_METHOD_NAME, typeInferenceMethod);
+        graph.setNodeDiff(new NodeDiffForTypeInference());
     }
 
     private String readAll(Reader reader) throws IOException {

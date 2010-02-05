@@ -2,13 +2,16 @@ JRUBY_HOME=../jruby-1.4.0/
 JRUBY_ORIG_HOME=../jruby-1.4.0-orig/
 ANTLR_JAR=build_lib/antlr-3.2.jar
 
-CLASSPATH=.:lib/rsense.jar:lib/jruby.jar:lib/antlr-runtime-3.2.jar
+BUILD_CLASSPATH=.:lib/jruby.jar:lib/antlr-runtime-3.2.jar
+CLASSPATH=$(BUILD_CLASSPATH):lib/rsense.jar
 
 all: rsense
 
 rsense:
 	mkdir -p build
-	javac -cp $(CLASSPATH) -d build \
+	javac -cp $(BUILD_CLASSPATH) \
+		-d build \
+		-Xlint:all \
 		src/org/cx4a/rsense/*.java \
 		src/org/cx4a/rsense/typing/*.java \
 		src/org/cx4a/rsense/typing/annotation/*.java \
@@ -19,8 +22,8 @@ rsense:
 		src/org/cx4a/rsense/util/*.java
 	jar cf lib/rsense.jar -C build org
 
-run-interactive:
-	java -cp $(CLASSPATH) org.cx4a.rsense.Main interactive
+run-script:
+	java -cp $(CLASSPATH) org.cx4a.rsense.Main script
 
 run-code-completion:
 	java -cp $(CLASSPATH) org.cx4a.rsense.Main code-completion --file=$(FILE) --encoding=UTF-8 --offset=$(OFFSET)

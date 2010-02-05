@@ -15,14 +15,28 @@ import org.cx4a.rsense.typing.TemplateAttribute;
 import org.cx4a.rsense.typing.annotation.MethodType;
 
 public class Method extends DynamicMethod {
+    private String name;
     private Map<TemplateAttribute, Template> templates;
     private List<MethodType> annotations;
 
-    public Method(RubyModule cbase, Node bodyNode, Node argsNode, Visibility visibility, ISourcePosition position) {
+    public Method(RubyModule cbase, String name, Node bodyNode, Node argsNode, Visibility visibility, ISourcePosition position) {
         super(cbase, bodyNode, argsNode, visibility, position);
+        this.name = name;
         templates = new HashMap<TemplateAttribute, Template>();
     }
 
+    public String getName() {
+        return name;
+    }
+
+    public Map<TemplateAttribute, Template> getTemplates() {
+        return templates;
+    }
+
+    public void setTemplates(Map<TemplateAttribute, Template> templates) {
+        this.templates = templates;
+    }
+    
     public Template getTemplate(TemplateAttribute key) {
         return templates.get(key);
     }

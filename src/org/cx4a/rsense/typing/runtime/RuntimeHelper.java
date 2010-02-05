@@ -49,6 +49,7 @@ import org.cx4a.rsense.typing.TemplateAttribute;
 import org.cx4a.rsense.typing.Graph;
 import org.cx4a.rsense.typing.runtime.TypeVarMap;
 import org.cx4a.rsense.typing.runtime.AnnotationHelper;
+import org.cx4a.rsense.typing.runtime.ClassTag;
 import org.cx4a.rsense.typing.annotation.TypeAnnotation;
 import org.cx4a.rsense.typing.annotation.TypeExpression;
 import org.cx4a.rsense.typing.annotation.TypeVariable;
@@ -472,7 +473,7 @@ public class RuntimeHelper {
             if (template == null) {
                 template = createTemplate(graph, vertex, name, method, attr);
             } else {
-                AnnotationHelper.mergeAffectedMap(template, receiver);
+                mergeAffectedMap(template, receiver);
                 Logger.debug("Template reused: %s", name);
             }
             return template.getReturnVertex();
@@ -572,7 +573,7 @@ public class RuntimeHelper {
             TemplateAttribute base = result.get(i);
             IRubyObject receiver = base.getReceiver();
             
-            TypeVarMap map = AnnotationHelper.getTypeVarMap(receiver);
+            TypeVarMap map = getTypeVarMap(receiver);
             if (map != null) {
                 // data polymorphic object
                 TypeVarMap[] tuples = map.generateTuples();
@@ -746,10 +747,72 @@ public class RuntimeHelper {
         context.popFrame();
     }
 
-    public static boolean isBoolean(Ruby runtime, IRubyObject object) {
-        RubyClass klass = object.getMetaClass();
-        return klass == runtime.getBoolean()
-            || klass == runtime.getTrueClass()
-            || klass == runtime.getFalseClass();
+    public static ClassTag getClassTag(RubyModule klass) {
+        if (klass.getTag() instanceof ClassTag) {
+            return (ClassTag) klass.getTag();
+        } else {
+            return null;
+        }
+    }
+
+    public static ClassType getClassAnnotation(RubyModule klass) {
+        ClassTag tag = getClassTag(klass);
+        return tag != null ? tag.getType() : null;
+    }
+    
+    public static void setClassTag(RubyModule klass, Node node, List<TypeAnnotation> annotations) {
+        for (TypeAnnotation annot : annotations) {
+            if (annot instanceof ClassType) {
+                if (klass.getTag() == null) {
+                    klass.setTag(new ClassTag(node, (ClassType) annot));
+                }
+                return;
+            }
+        }
+        klass.setTag(new ClassTag(node));
+    }
+
+    public static void setMethodTag(Method method, /*unused*/Node node, List<TypeAnnotation> annotations) {
+        if (!annotations.isEmpty()) {
+            List<MethodType> types = new ArrayList<MethodType>();
+            for (TypeAnnotation annot : annotations) {
+                if (annot instanceof MethodType) {
+                    types.add((MethodType) annot);
+                }
+            }
+            method.setAnnotations(types);
+        }
+    }
+
+    public static ClassTag getEnclosingClassTag(RubyModule module) {
+        ClassTag tag;
+        while (module != null) {
+            tag = getClassTag(module);
+            if (tag != null) {
+                return tag;
+            }
+            module = module.getParent();
+        }
+        return null;
+    }
+
+    public static ClassType getEnclosingClassAnnotation(RubyModule module) {
+        ClassTag tag = getEnclosingClassTag(module);
+        return tag != null ? tag.getType() : null;
+    }
+
+    public static TypeVarMap getTypeVarMap(IRubyObject object) {
+        if (object.getTag() instanceof TypeVarMap) {
+            return (TypeVarMap) object.getTag();
+        } else {
+            return null;
+        }
+    }
+
+    public static void mergeAffectedMap(Template template, IRubyObject receiver) {
+        TypeVarMap map = getTypeVarMap(receiver);
+        if (map != null && template.getAffectedMap() != null) {
+            map.putAll(template.getAffectedMap());
+        }
     }
 }

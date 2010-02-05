@@ -45,7 +45,7 @@ public class AnnotationResolver {
     public boolean resolveMethodAnnotation(Template template) {
         Method method = template.getMethod();
         if (method.getAnnotations() != null) {
-            ClassType classType = AnnotationHelper.getEnclosingClassAnnotation(method.getModule());
+            ClassType classType = RuntimeHelper.getEnclosingClassAnnotation(method.getModule());
             TemplateAttribute attr = template.getAttribute();
             IRubyObject receiver = attr.getReceiver();
             Vertex returnVertex = template.getReturnVertex();
@@ -94,7 +94,7 @@ public class AnnotationResolver {
 
     public boolean resolveReceiverClassConstraints(Template template, ClassType classType, IRubyObject receiver) {
         return receiver == null
-            || resolveClassConstraints(template, AnnotationHelper.getClassAnnotation(receiver.getMetaClass()), receiver);
+            || resolveClassConstraints(template, RuntimeHelper.getClassAnnotation(receiver.getMetaClass()), receiver);
     }
     
     public boolean resolveMethodArg(Template template, ClassType classType, TypeExpression argType, IRubyObject receiver, IRubyObject[] args) {
@@ -152,7 +152,7 @@ public class AnnotationResolver {
         switch (argType.getType()) {
         case VARIABLE: {
             TypeVariable var = (TypeVariable) argType;
-            TypeVarMap typeVarMap = AnnotationHelper.getTypeVarMap(receiver);
+            TypeVarMap typeVarMap = RuntimeHelper.getTypeVarMap(receiver);
             if (classType != null
                 && typeVarMap != null
                 && classType.containsType(var)) {
@@ -182,8 +182,8 @@ public class AnnotationResolver {
                 return false;
             } else if (ret != null && ret instanceof RubyClass) {
                 RubyClass klass = (RubyClass) ret;
-                ClassType klassType = AnnotationHelper.getClassAnnotation(klass);
-                TypeVarMap typeVarMap = AnnotationHelper.getTypeVarMap(arg);
+                ClassType klassType = RuntimeHelper.getClassAnnotation(klass);
+                TypeVarMap typeVarMap = RuntimeHelper.getTypeVarMap(arg);
                 if (classType != null && typeVarMap != null) {
                     List<TypeVariable> vars = classType.getTypes();
                     for (int i = 0; i < vars.size(); i++) {
@@ -340,7 +340,7 @@ public class AnnotationResolver {
                 result.add(runtime.getNil());
             } else {
                 VertexHolder holder = (VertexHolder) env.get(var);
-                TypeVarMap typeVarMap = AnnotationHelper.getTypeVarMap(receiver);
+                TypeVarMap typeVarMap = RuntimeHelper.getTypeVarMap(receiver);
                 if (holder != null) {
                     result.addAll(holder.getVertex().getTypeSet());
                 } else if (classType != null
@@ -364,8 +364,8 @@ public class AnnotationResolver {
             if (ret != null && ret instanceof RubyClass) {
                 RubyClass klass = (RubyClass) ret;
                 ret = graph.newInstanceOf(klass);
-                ClassType klassType = AnnotationHelper.getClassAnnotation(klass);
-                TypeVarMap typeVarMap = AnnotationHelper.getTypeVarMap(ret);
+                ClassType klassType = RuntimeHelper.getClassAnnotation(klass);
+                TypeVarMap typeVarMap = RuntimeHelper.getTypeVarMap(ret);
                 if (klassType != null && typeVarMap != null) {
                     List<TypeVariable> vars = klassType.getTypes();
                     for (int i = 0; i < vars.size(); i++) {

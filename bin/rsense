@@ -21,7 +21,7 @@ def start_server
     daemonize
     
     begin
-      io = IO.popen("java -cp #{$classpath} -Drsense.home=#{$rsense_home} org.cx4a.rsense.Main interactive --end-mark=#{$end_mark}", 'r+')
+      io = IO.popen("java -cp #{$classpath} -Drsense.home=#{$rsense_home} org.cx4a.rsense.Main script --end-mark=#{$end_mark}", 'r+')
       UNIXServer.open($socket_path) {|serv|
         begin
           loop do

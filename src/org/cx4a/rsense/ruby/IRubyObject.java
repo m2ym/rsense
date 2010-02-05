@@ -2,6 +2,8 @@ package org.cx4a.rsense.ruby;
 
 import java.util.List;
 
+import org.jruby.ast.Node;
+
 public interface IRubyObject {
     public Ruby getRuntime();
     public RubyClass getMetaClass();
