@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.FileInputStream;
 import java.io.PrintStream;
+import java.io.Reader;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
@@ -18,6 +19,7 @@ import org.jruby.ast.Node;
 
 import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.util.Logger;
+import org.cx4a.rsense.util.HereDocReader;
 
 public class Main {
     private static class Options extends HashMap<String, String> {
@@ -74,6 +76,14 @@ public class Main {
             return file == null ? null : new File(file);
         }
 
+        public boolean isFileStdin() {
+            return "-".equals(get("file"));
+        }
+
+        public HereDocReader getHereDocReader(Reader reader) {
+            return new HereDocReader(reader, "EOF");
+        }
+
         public Integer getOffset() {
             String offset = get("offset");
             return offset == null ? null : Integer.valueOf(offset);
@@ -110,6 +120,7 @@ public class Main {
 
     private InputStream in;
     private PrintStream out;
+    private Reader inReader;
     private Project sandbox;
     private Config config;
     private CodeAssist codeAssist;
@@ -121,6 +132,7 @@ public class Main {
     public void run(String[] args) throws Exception {
         in = System.in;
         out = System.out;
+        inReader = new InputStreamReader(in);
 
         if (args.length == 0 || args[0].equals("help")) {
             usage();
@@ -225,13 +237,13 @@ public class Main {
 
     private void script(Options options) {
         if (options.getRestArgs().isEmpty()) {
-            runScript(in, options);
+            runScript(in, options, false);
         } else {
             try {
                 for (String file : options.getRestArgs()) {
                     InputStream in = new FileInputStream(file);
                     try {
-                        runScript(in, options);
+                        runScript(in, options, true);
                     } finally {
                         in.close();
                     }
@@ -242,7 +254,7 @@ public class Main {
         }
     }
 
-    private void runScript(InputStream in, Options options) {
+    private void runScript(InputStream in, Options options, boolean noprompt) {
         String format = options.getFormat();
         String encoding = options.getEncoding();
         String prompt = options.getPrompt();
@@ -256,15 +268,19 @@ public class Main {
             prompt = options.defaultPrompt();
         }
 
+        Reader oldInReader = inReader;
         try {
             BufferedReader reader = new BufferedReader(new InputStreamReader(in, encoding));
+            inReader = reader;
             String line;
             String endMark = options.getEndMark();
             if (endMark != null && endMark.length() == 0) {
                 endMark = Options.defaultEndMark();
             }
             while (true) {
-                out.print(prompt);
+                if (!noprompt) {
+                    out.print(prompt);
+                }
                 line = reader.readLine();
                 if (line == null) {
                     break;
@@ -292,6 +308,8 @@ public class Main {
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
+        } finally {
+            this.inReader = oldInReader;
         }
     }
     
@@ -312,10 +330,17 @@ public class Main {
 
     private void commandCodeCompletion(Options options) {
         try {
-            CodeCompletionResult result = codeAssist.codeCompletion(sandbox,
-                                                                    options.getFile(),
-                                                                    options.getEncoding(),
-                                                                    options.getOffset());
+            CodeCompletionResult result;
+            if (options.isFileStdin()) {
+                result = codeAssist.codeCompletion(sandbox,
+                                                   options.getHereDocReader(inReader),
+                                                   options.getOffset());
+            } else {
+                result = codeAssist.codeCompletion(sandbox,
+                                                   options.getFile(),
+                                                   options.getEncoding(),
+                                                   options.getOffset());
+            }
             if (options.isEmacsFormat()) {
                 out.print("(");
                 out.print("(completion");
@@ -341,10 +366,17 @@ public class Main {
 
     private void commandTypeInference(Options options) {
         try {
-            TypeInferenceResult result = codeAssist.typeInference(sandbox,
-                                                                  options.getFile(),
-                                                                  options.getEncoding(),
-                                                                  options.getOffset());
+            TypeInferenceResult result;
+            if (options.isFileStdin()) {
+                result = codeAssist.typeInference(sandbox,
+                                                  options.getHereDocReader(inReader),
+                                                  options.getOffset());
+            } else {
+                result = codeAssist.typeInference(sandbox,
+                                                  options.getFile(),
+                                                  options.getEncoding(),
+                                                  options.getOffset());
+            }
             if (options.isEmacsFormat()) {
                 out.print("(");
                 out.print("(type");

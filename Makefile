@@ -23,7 +23,7 @@ rsense:
 	jar cf lib/rsense.jar -C build org
 
 run-script:
-	java -cp $(CLASSPATH) org.cx4a.rsense.Main script
+	java -cp $(CLASSPATH) org.cx4a.rsense.Main script $(SCRIPT)
 
 run-code-completion:
 	java -cp $(CLASSPATH) org.cx4a.rsense.Main code-completion --file=$(FILE) --encoding=UTF-8 --offset=$(OFFSET)
