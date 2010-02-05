@@ -22,102 +22,6 @@ import org.cx4a.rsense.util.Logger;
 import org.cx4a.rsense.util.HereDocReader;
 
 public class Main {
-    private static class Options extends HashMap<String, String> {
-        private static final long serialVersionUID = 0L;
-
-        private List<String> rest = new ArrayList<String>();
-
-        public void addRestArg(String arg) {
-            rest.add(arg);
-        }
-
-        public List<String> getRestArgs() {
-            return rest;
-        }
-
-        public boolean isFormatGiven() {
-            return containsKey("format");
-        }
-
-        public boolean isEncodingGiven() {
-            return containsKey("encoding");
-        }
-
-        public String getFormat() {
-            return get("format");
-        }
-
-        public void setFormat(String format) {
-            put("format", format);
-        }
-
-        public boolean isPlainFormat() {
-            return "plain".equals(getFormat());
-        }
-
-        public boolean isEmacsFormat() {
-            return "emacs".equals(getFormat());
-        }
-
-        public String getEncoding() {
-            return get("encoding");
-        }
-
-        public void setEncoding(String encoding) {
-            put("encoding", encoding);
-        }
-
-        public String getPrompt() {
-            return get("prompt");
-        }
-
-        public File getFile() {
-            String file = get("file");
-            return file == null ? null : new File(file);
-        }
-
-        public boolean isFileStdin() {
-            return "-".equals(get("file"));
-        }
-
-        public HereDocReader getHereDocReader(Reader reader) {
-            return new HereDocReader(reader, "EOF");
-        }
-
-        public Integer getOffset() {
-            String offset = get("offset");
-            return offset == null ? null : Integer.valueOf(offset);
-        }
-
-        public String getEndMark() {
-            return get("end-mark");
-        }
-
-        public boolean isDebug() {
-            return containsKey("debug");
-        }
-
-        public String getLog() {
-            return get("log");
-        }
-
-        public static String defaultFormat() {
-            return "plain";
-        }
-
-        public static String defaultEncoding() {
-            return "UTF-8";
-        }
-
-        public static String defaultEndMark() {
-            return "END";
-        }
-
-        public static String defaultPrompt() {
-            return "> ";
-        }
-    }
-
     private InputStream in;
     private PrintStream out;
     private Reader inReader;
@@ -193,11 +97,11 @@ public class Main {
                     + "\n"
                     + "  code-completion        - Code completion at specified position.\n"
                     + "      --file=            - File to analyze\n"
-                    + "      --offset=          - Offset where you want to complete\n"
+                    + "      --location=        - Location where you want to complete (pos, line:col, str)\n"
                     + "\n"
                     + "  infer-type             - Infer type at specified position.\n"
                     + "      --file=            - File to analyze\n"
-                    + "      --offset=          - Offset where you want to complete\n"
+                    + "      --location=        - Location where you want to complete (pos, line:col, str)\n"
                     + "\n"
                     + "  help                   - Print this help.\n"
                     + "\n"
@@ -334,12 +238,12 @@ public class Main {
             if (options.isFileStdin()) {
                 result = codeAssist.codeCompletion(sandbox,
                                                    options.getHereDocReader(inReader),
-                                                   options.getOffset());
+                                                   options.getLocation());
             } else {
                 result = codeAssist.codeCompletion(sandbox,
                                                    options.getFile(),
                                                    options.getEncoding(),
-                                                   options.getOffset());
+                                                   options.getLocation());
             }
             if (options.isEmacsFormat()) {
                 out.print("(");
@@ -370,12 +274,12 @@ public class Main {
             if (options.isFileStdin()) {
                 result = codeAssist.typeInference(sandbox,
                                                   options.getHereDocReader(inReader),
-                                                  options.getOffset());
+                                                  options.getLocation());
             } else {
                 result = codeAssist.typeInference(sandbox,
                                                   options.getFile(),
                                                   options.getEncoding(),
-                                                  options.getOffset());
+                                                  options.getLocation());
             }
             if (options.isEmacsFormat()) {
                 out.print("(");
