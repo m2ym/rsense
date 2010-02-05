@@ -5,3 +5,5 @@
 - callcc
 - exceptions
 - partial update
+- exception handling
+- require/load

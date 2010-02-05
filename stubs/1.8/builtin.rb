@@ -1365,7 +1365,187 @@ class Integer
 end
 
 module Kernel
+  ### Constants
   # FIXME
+  ARGF = nil
+  ARGV = ['']
+  DATA = File.new('')
+  # FIXME
+  ENV = nil
+  FALSE = false
+  NIL = nil
+  PLATFORM = ''
+  RELEASE_DATE = ''
+  RUBY_COPYRIGHT = ''
+  RUBY_DESCRIPTION = ''
+  RUBY_PATCHLEVEL = 0
+  RUBY_PLATFORM = ''
+  RUBY_RELEASE_DATE = ''
+  RUBY_VERSION = ''
+  SCRIPT_LINES__ = {}
+  STDERR = IO.new(0)
+  STDIN = IO.new(0)
+  STDOUT = IO.new(0)
+  TOPLEVEL_BINDING = Binding.new
+  TRUE = true
+  VERSION = ''
+
+  ### Global Variables
+  
+  
+
+  ### Module Methods
+  # FIXME to_ary
+  ##% Array<a | a <= Array>(a) -> a
+  ##% Array(a) -> a
+  def Array(arg) [] end
+  ##% Float(a) -> Float
+  def Float(arg) 0.0 end
+  ##% Integer(a) -> Integer
+  def Integer(arg) 0 end
+  ##% String(a) -> String
+  def String(arg) '' end
+  ##% __method__() -> Symbol
+  def __method__() :a end
+  ##% `(command) -> String
+  def `(command) '' end         # `
+  ##% abort(?String) -> nil
+  def abort(message = $!.message) end
+  ##% at_exit() {() -> ?} -> Proc
+  def at_exit() Proc.new end
+  ##% autoload(String or Symbol, String) -> nil
+  def autoload(const_name, feature) end
+  ##% autoload?(String or Symbol) -> String
+  def autoload?(const_name) '' end
+  ##% binding() -> Binding
+  def binding() Binding.new end
+  ##% block_given?() -> Boolean
+  def block_given() BOOLEAN end
+  alias :iterator? :block_given?
+  # FIXME
+  ##% callcc() {Continuation -> ?} -> ?
+  def callcc() end
+  ##% caller(?Integer) -> Array<String>
+  def caller(level_num = 1) [''] end
+  # FIXME
+  ##% catch(a) {a -> ?} -> ?
+  def catch(tag) yield tag end
+  ##% chomp(?String) -> String
+  def chomp(rs = $/) '' end
+  ##% chomp!(?String) -> String
+  def chomp!(rs = $/) '' end
+  ##% chop() -> String
+  def chop() '' end
+  ##% chop!() -> String
+  def chop() '' end
+  ##% eval(String, ?Proc or Binding, ?String, ?Integer) -> ?
+  def eval(expr, bind = nil, fname = __FILE__, lineno = 1) end
+  ##% exec(String) -> nil
+  ##% exec(String, *String) -> nil
+  def exec(command) end
+  ##% exit(Integer or Boolean) -> nil
+  def exit(status = true) end
+  ##% exit!(Integer or Boolean) -> nil
+  def exit!(status = true) end
+  # FIXME
+  ##% raise() -> nil
+  ##% raise(String) -> nil
+  ##% raise(?, ?String, Array<String>) -> nil
+  def raise() end
+  alias :fail :raise
+  ##% fork() -> Integer
+  ##% fork() {() -> ?} -> Integer
+  def fork() yield end
+  ##% sprintf(String, *a) -> String
+  def sprintf(format, *arg) '' end
+  alias :format :sprintf
+  ##% getc() -> Fixnum
+  def getc() 0 end
+  ##% gets(?String) -> String
+  def gets(rs = $/) '' end
+  ##% global_variables() -> Array<String>
+  def global_variables() [''] end
+  ##% gsub(String or Regexp, String) -> String
+  ##% gsub(String or Regexp) {String -> ?} -> String
+  ##% gsub(String or Regexp) -> Enumerator<String, String>
+  def gsub(pattern, replace = nil) '' end
+  ##% gsub!(String or Regexp, String) -> self
+  ##% gsub!(String or Regexp) {String -> ?} -> self
+  ##% gsub!(String or Regexp) -> Enumerator<String, self>
+  def gsub!(pattern, replace = nil) self end
+  # FIXME
+  ##% proc() {() -> ?} -> Proc
+  ##% proc() -> Proc
+  def proc() yield; Proc.new end
+  alias :lambda :proc
+  ##% load(String, ?Boolean) -> TrueClass
+  def load(file, priv = false) true end
+  ##% local_varaibles() -> Array<String>
+  def local_varaibles() [''] end
+  ##% loop() {() -> a} -> a
+  def loop() yield end
+  ##% open(String or Integer, ?a, ?Integer) -> IO
+  ##% open(String or Integer, ?a, ?Integer) {IO -> ?} -> nil
+  def open(name, mode = 'r', perm = nil) IO.new(0) end
+  ##% p(*a) -> nil
+  def p(*arg) end
+  ##% print(*a) -> nil
+  def p(*arg) end
+  ##% printf(String, *a) -> nil
+  ##% printf(IO, String, *a) -> nil
+  def printf(*) end
+  ##% putc<a | a <= Integer or String>(a) -> a
+  def putc(ch) ch end
+  ##% puts(*a) -> nil
+  def puts(*arg) end
+  ##% rand(?Numeric) -> Integer or Float
+  def rand(max = 0) 0 || 0.0 end
+  ##% readline(?String) -> String
+  def readline(rs = $/) '' end
+  ##% readlines(?String) -> Array<String>
+  def readlines(rs = $/) [''] end
+  ##% require(String) -> Boolean
+  def require(feature) BOOLEAN end
+  ##% require_relative(String) -> Boolean
+  def require_relative(feature) BOOLEAN end
+  ##% scan(String or Regexp) -> Array<String> or Array<Array<String> >
+  ##% scan(String or Regexp) {String -> ?} -> self
+  def scan(re) [''] || [['']] end
+  ##% select(Array<IO>, ?Array<IO>, ?Array<IO>, ?Integer) -> (Array<IO>, Array<IO>, Array<IO>)
+  def select(reads, writes = [], excepts = [], timeout = nil) [[IO.new(0)], [IO.new(0)], [IO.new(0)]] end
+  def set_trace_func(*) end
+  ##% sleep(?Numeric) -> Integer
+  def sleep(sec = 0) 0 end
+  ##% split(?String, ?Integer) -> Array<String> or Array<Array<String> >
+  def split(sep = $;, limit = 0) [''] || [['']] end
+  ##% srand(?a) -> Integer
+  def srand(seed = nil) 0 end
+  ##% sub(String or Regexp, String) -> String
+  ##% sub(String or Regexp) {String -> ?} -> String
+  ##% sub(String or Regexp) -> Enumerator<String, String>
+  def sub(pattern, replace = nil) '' end
+  ##% sub!(String or Regexp, String) -> self
+  ##% sub!(String or Regexp) {String -> ?} -> self
+  ##% sub!(String or Regexp) -> Enumerator<String, self>
+  def sub!(pattern, replace = nil) self end
+  ##% syscall(Integer, *String or Integer) -> Integer
+  def syscall(num, *arg) 0 end
+  ##% system(String) -> Boolean
+  ##% system(String, *String) -> Boolean
+  def system(*) BOOLEAN end
+  ##% test(String or Integer, File) -> Boolean or Time or Integer
+  ##% test(String or Integer, File, File) -> Boolean
+  def test(cmd, file1, file2 = nil) BOOLEAN or Time.new or 0 end
+  # FIXME
+  ##% throw(a, ?b) -> nil
+  def throw(tag, value = nil) end
+  def trace_var(*) end
+  ##% trap(String or Symbol or Integer, String or Process) -> ?
+  ##% trap(String or Symbol or Integer) {() -> ?} -> ?
+  def trap(signal, command = nil) end
+  def untrace_var(*) end
+  ##% warn(a) -> nil
+  def warn(message) end
 end
 
 module Marshal
@@ -1474,6 +1654,8 @@ class Numeric
 end
 
 class Object
+  include Kernel
+  
   # FIXME
 end
 
