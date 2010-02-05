@@ -2,6 +2,8 @@ package org.cx4a.rsense;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Set;
+import java.util.HashSet;
 
 import java.io.File;
 import java.io.InputStream;
@@ -188,6 +190,9 @@ public class Main {
                 line = reader.readLine();
                 if (line == null) {
                     break;
+                } else if (line.matches("^\\s*#.*")) {
+                    // comment
+                    continue;
                 }
                 
                 String[] argv = line.split(" ");
@@ -228,7 +233,7 @@ public class Main {
             commandVersion(options);
         } else if (command.length() == 0) {
         } else {
-            commandUnknown(options);
+            commandUnknown(command, options);
         }
     }
 
@@ -245,23 +250,38 @@ public class Main {
                                                    options.getEncoding(),
                                                    options.getLocation());
             }
-            if (options.isEmacsFormat()) {
-                out.print("(");
-                out.print("(completion");
+            if (options.isTest()) {
+                List<String> shouldContain = options.getShouldContain();
+                Set<String> data = new HashSet<String>();
                 for (CodeCompletionResult.CompletionCandidate completion : result.getCandidates()) {
-                    out.print(" \"");
-                    out.print(completion);
-                    out.print("\"");
+                    data.add(completion.getCompletion());
                 }
-                out.println(")");
-                codeAssistError(result, options);
-                out.println(")");
+                for (String name : shouldContain) {
+                    if (data.contains(name)) {
+                        out.printf("SUCCESS: %s\n", options.getTest());
+                    } else {
+                        out.printf("FAILURE: %s (%s is not in %s)\n", options.getTest(), name, data);
+                    }
+                }
             } else {
-                for (CodeCompletionResult.CompletionCandidate completion : result.getCandidates()) {
-                    out.print("completion: ");
-                    out.println(completion);
+                if (options.isEmacsFormat()) {
+                    out.print("(");
+                    out.print("(completion");
+                    for (CodeCompletionResult.CompletionCandidate completion : result.getCandidates()) {
+                        out.print(" \"");
+                        out.print(completion);
+                        out.print("\"");
+                    }
+                    out.println(")");
+                    codeAssistError(result, options);
+                    out.println(")");
+                } else {
+                    for (CodeCompletionResult.CompletionCandidate completion : result.getCandidates()) {
+                        out.print("completion: ");
+                        out.println(completion);
+                    }
+                    codeAssistError(result, options);
                 }
-                codeAssistError(result, options);
             }
         } catch (Exception e) {
             commandException(e, options);
@@ -281,23 +301,38 @@ public class Main {
                                                   options.getEncoding(),
                                                   options.getLocation());
             }
-            if (options.isEmacsFormat()) {
-                out.print("(");
-                out.print("(type");
+            if (options.isTest()) {
+                List<String> shouldContain = options.getShouldContain();
+                Set<String> data = new HashSet<String>();
                 for (IRubyObject klass : result.getTypeSet()) {
-                    out.print(" \"");
-                    out.print(klass);
-                    out.print("\"");
+                    data.add(klass.toString());
                 }
-                out.println(")");
-                codeAssistError(result, options);
-                out.println(")");
+                for (String name : shouldContain) {
+                    if (data.contains(name)) {
+                        out.printf("SUCCESS: %s\n", options.getTest());
+                    } else {
+                        out.printf("FAILURE: %s (%s is not in %s)\n", options.getTest(), name, data);
+                    }
+                }
             } else {
-                for (IRubyObject klass : result.getTypeSet()) {
-                    out.print("type: ");
-                    out.println(klass);
+                if (options.isEmacsFormat()) {
+                    out.print("(");
+                    out.print("(type");
+                    for (IRubyObject klass : result.getTypeSet()) {
+                        out.print(" \"");
+                        out.print(klass);
+                        out.print("\"");
+                    }
+                    out.println(")");
+                    codeAssistError(result, options);
+                    out.println(")");
+                } else {
+                    for (IRubyObject klass : result.getTypeSet()) {
+                        out.print("type: ");
+                        out.println(klass);
+                    }
+                    codeAssistError(result, options);
                 }
-                codeAssistError(result, options);
             }
         } catch (Exception e) {
             commandException(e, options);
@@ -324,11 +359,11 @@ public class Main {
         }
     }
 
-    private void commandUnknown(Options options) {
+    private void commandUnknown(String command, Options options) {
         if (options.isEmacsFormat()) {
-            out.println("((error . \"Unknown command\"))");
+            out.printf("((error . \"Unknown command: %s\"))\n", command);
         } else {
-            out.println("Unknown command");
+            out.printf("Unknown command: %s\n", command);
         }
     }
 

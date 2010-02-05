@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Arrays;
+import java.util.Collections;
 
 import org.cx4a.rsense.util.HereDocReader;
 
@@ -99,6 +101,22 @@ public class Options extends HashMap<String, String> {
 
     public String getLog() {
         return get("log");
+    }
+
+    public boolean isTest() {
+        return containsKey("test");
+    }
+
+    public String getTest() {
+        return get("test");
+    }
+
+    public List<String> getShouldContain() {
+        String str = get("should-contain");
+        if (str == null) {
+            return Collections.<String>emptyList();
+        }
+        return Arrays.asList(str.split(","));
     }
 
     public static String defaultFormat() {

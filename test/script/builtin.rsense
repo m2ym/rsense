@@ -1,0 +1,8 @@
+type-inference --test=Fixnum --should-contain=Fixnum
+1_|_
+EOF
+
+type-inference --test=String --should-contain=String
+''_|_
+EOF
+

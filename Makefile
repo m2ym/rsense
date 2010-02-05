@@ -23,13 +23,13 @@ rsense:
 	jar cf lib/rsense.jar -C build org
 
 run-script:
-	java -cp $(CLASSPATH) org.cx4a.rsense.Main script $(SCRIPT)
+	java -cp $(CLASSPATH) org.cx4a.rsense.Main script $(SCRIPT) $(OPTIONS)
 
 run-code-completion:
-	java -cp $(CLASSPATH) org.cx4a.rsense.Main code-completion --file=$(FILE) --encoding=UTF-8 --offset=$(OFFSET)
+	java -cp $(CLASSPATH) org.cx4a.rsense.Main code-completion --file=$(FILE) --encoding=UTF-8 --offset=$(OFFSET) $(OPTIONS)
 
 run-type-inference:
-	java -cp $(CLASSPATH) org.cx4a.rsense.Main type-inference --file=$(FILE) --encoding=UTF-8 --offset=$(OFFSET)
+	java -cp $(CLASSPATH) org.cx4a.rsense.Main type-inference --file=$(FILE) --encoding=UTF-8 --offset=$(OFFSET) $(OPTIONS)
 
 run-help:
 	java -cp $(CLASSPATH) org.cx4a.rsense.Main help
