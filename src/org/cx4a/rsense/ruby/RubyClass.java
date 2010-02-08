@@ -83,9 +83,12 @@ public class RubyClass extends RubyModule {
 
     @Override
     public DynamicMethod searchMethod(String name) {
-        DynamicMethod method = super.searchMethod(name);
+        DynamicMethod method = super.getMethod(name);
         if (method == null && superClass != null) {
             method = superClass.searchMethod(name);
+        }
+        if (method == null) {
+            method = super.searchMethod(name);
         }
         return method;
     }

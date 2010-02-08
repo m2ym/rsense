@@ -24,6 +24,7 @@ import org.cx4a.rsense.typing.annotation.TypeTuple;
 import org.cx4a.rsense.typing.annotation.TypeSplat;
 import org.cx4a.rsense.typing.annotation.TypeApplication;
 import org.cx4a.rsense.typing.annotation.TypeConstraint;
+import org.cx4a.rsense.typing.annotation.TypePragma;
 }
 
 @lexer::header {
@@ -65,8 +66,8 @@ method_name
     ;
 
 class_type returns [ClassType value]
-    : CONST_ID ('<' type_var_list? ('|' constraint_list)? '>')? {
-            $value = new ClassType($CONST_ID.text, $type_var_list.value, $constraint_list.value);
+    : CONST_ID ('<' type_var_list? ('|' constraint_list)? '>')? pragma_list? {
+            $value = new ClassType($CONST_ID.text, $type_var_list.value, $constraint_list.value, $pragma_list.value);
         }
     ;
 
@@ -78,6 +79,20 @@ constraint_list returns [List<TypeConstraint> value]
                 $value.addAll($rest.value);
             }
         }
+    ;
+
+pragma_list returns [List<TypePragma> value]
+    : pragma (',' rest=pragma_list)? {
+            $value = new ArrayList<TypePragma>();
+            $value.add($pragma.value);
+            if ($rest.value != null) {
+                $value.addAll($rest.value);
+            }
+        }
+    ;
+
+pragma returns [TypePragma value]
+    : '!nobody' { $value = new TypePragma(TypeExpression.Type.NOBODY_PRAGMA); }
     ;
 
 type_expr returns [TypeExpression value]

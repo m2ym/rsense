@@ -12,7 +12,7 @@ module File::Constants; end
 # FIXME
 ARGS = nil
 
-##% Array<t>
+##% Array<t> !nobody
 class Array
   # FIXME to_ary for +, -, &
 
@@ -204,6 +204,7 @@ class Array
   def |(other) self || other end
 end
 
+##% Bignum !nobody
 class Bignum
   ### Precision
   ##% self.induced_from(a) -> Bignum
@@ -261,10 +262,12 @@ class Bignum
   def zero?() BOOLEAN end
 end
 
+##% Binding !nobody
 class Binding
   def eval(*) end
 end
 
+##% Class !nobody
 class Class
   # FIXME self.new
 
@@ -289,14 +292,16 @@ module Comparable
   def between?(min, max) BOOLEAN end
 end
 
+##% Continuation !nobody
 class Continuation
   # FIXME
 end
 
+##% Data !nobody
 class Data
 end
 
-##% Dir<| t <= String>
+##% Dir<| t <= String> !nobody
 class Dir
   include Enumerable
 
@@ -470,7 +475,7 @@ module Enumerable
   def zip(*) [[_e]] end
 end
 
-##% Enumerator<s, t>
+##% Enumerator<s, t> !nobody
 class Enumerator
   include Enumerable
 
@@ -506,6 +511,7 @@ class FalseClass
   def |(other) BOOLEAN end
 end
 
+##% File !nobody
 class File
   ALT_SEPARATOR = ''
   PATH_SEPARATOR = ''
@@ -665,6 +671,7 @@ module File::Constants
   WRONLY = 0
 end
 
+##% File::Stat !nobody
 class File::Stat
   include Comparable
 
@@ -794,6 +801,7 @@ module FileTest
   def self.zero?(path) BOOLEAN end
 end
 
+##% Fixnum !nobody
 class Fixnum
   ### Numeric
   ##% +@() -> self
@@ -851,6 +859,7 @@ class Fixnum
   def to_sym() :a end
 end
 
+##% Float !nobody
 class Float
   DIG = 0
   EPSILONG = 0.0
@@ -961,7 +970,7 @@ module GC
   def garbase_collect() end
 end
 
-##% Hash<k, v, z | (k, v) <= t>
+##% Hash<k, v, z | (k, v) <= t> !nobody
 class Hash
   include Enumerable
   
@@ -1088,7 +1097,7 @@ class Hash
   def values_at(*key) [_v] end
 end
 
-##% IO<| t <= String>
+##% IO<| t <= String> !nobody
 class IO
   SEEK_CUR = 0
   SEEK_END = 0
@@ -1238,6 +1247,7 @@ class IO
   def write_nonblock(str) 0 end
 end
 
+##% Integer !nobody
 class Integer
   include Precision
 
@@ -1640,6 +1650,7 @@ class NilClass
   def |(other) BOOLEAN end
 end
 
+##% Numeric !nobody
 class Numeric
   include Comparable
 
@@ -1706,6 +1717,7 @@ class Numeric
   def zero?() BOOLEAN end
 end
 
+##% Object !nobody
 class Object
   include Kernel
   
@@ -1749,7 +1761,7 @@ end
 module Process::UID
 end
 
-##% Range<_>
+##% Range<_> !nobody
 class Range
   include Enumerable
 
@@ -1792,7 +1804,7 @@ module Signal
   # FIXME
 end
 
-##% String<| String <= t>
+##% String<| String <= t> !nobody
 class String
   include Enumerable
   include Comparable
@@ -2003,6 +2015,7 @@ class Struct::Tms
   # FIXME
 end
 
+##% Symbol !nobody
 class Symbol
   ##% self.all_symbols() -> Array<Symbol>
   def all_symbols() [:a] end

@@ -501,14 +501,14 @@ public class RuntimeHelper {
         Vertex returnVertex = template.getReturnVertex();
         setFrameTemplate(context.getCurrentFrame(), template);
 
-        boolean noReturn = AnnotationHelper.resolveMethodAnnotation(graph, template);
-        
-        argsAssign(graph, (ArgsNode) method.getArgsNode(), argVertices);
-
-        if (method.getBodyNode() != null) {
-            Vertex result = graph.createVertex(method.getBodyNode());
-            if (result != null && !noReturn) {
-                graph.addEdgeAndCopyTypeSet(result, returnVertex);
+        AnnotationResolver.Result result = AnnotationHelper.resolveMethodAnnotation(graph, template);
+        if (result != AnnotationResolver.Result.NOBODY) {
+            argsAssign(graph, (ArgsNode) method.getArgsNode(), argVertices);
+            if (method.getBodyNode() != null) {
+                Vertex ret = graph.createVertex(method.getBodyNode());
+                if (ret != null && result != AnnotationResolver.Result.NORETURN) {
+                    graph.addEdgeAndCopyTypeSet(ret, returnVertex);
+                }
             }
         }
 

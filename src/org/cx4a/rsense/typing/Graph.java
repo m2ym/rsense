@@ -319,13 +319,13 @@ public class Graph implements NodeVisitor {
 
         addSpecialMethod("protected", new SpecialMethod() {
                 public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
-                    runtime.getContext().getCurrentFrame().setVisibility(Visibility.PRIVATE);
+                    runtime.getContext().getCurrentFrame().setVisibility(Visibility.PROTECTED);
                 }
             });
 
         addSpecialMethod("public", new SpecialMethod() {
                 public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
-                    runtime.getContext().getCurrentFrame().setVisibility(Visibility.PRIVATE);
+                    runtime.getContext().getCurrentFrame().setVisibility(Visibility.PUBLIC);
                 }
             });
     }

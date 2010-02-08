@@ -32,6 +32,10 @@ import org.cx4a.rsense.typing.vertex.Vertex;
 import org.cx4a.rsense.util.Logger;
 
 public class AnnotationResolver {
+    public enum Result {
+        UNRESOLVED, NORETURN, NOBODY,
+    };
+    
     private Graph graph;
     private Ruby runtime;
     private TypeVarMap env;
@@ -42,7 +46,7 @@ public class AnnotationResolver {
         env = new TypeVarMap();
     }
 
-    public boolean resolveMethodAnnotation(Template template) {
+    public Result resolveMethodAnnotation(Template template) {
         Method method = template.getMethod();
         if (method.getAnnotations() != null) {
             ClassType classType = RuntimeHelper.getEnclosingClassAnnotation(method.getModule());
@@ -72,14 +76,14 @@ public class AnnotationResolver {
                         && resolveMethodBlock(template, classType, block, receiver)
                         && resolveMethodConstraints(template, classType, constraints, receiver)
                         && resolveMethodReturn(template, classType, returnType, receiver)) {
-                        return true;
+                        return (classType != null && classType.isNoBody()) ? Result.NOBODY : Result.NORETURN;
                     }
                 }
             }
 
-            Logger.warn("Cannot resolve method annotation of %s", template.getFrame().getName());
+            Logger.warn("annotation unmatched: %s", template.getMethod().getName());
         }
-        return false;
+        return Result.UNRESOLVED;
     }
 
     public boolean resolveClassConstraints(Template template, ClassType classType, IRubyObject receiver) {

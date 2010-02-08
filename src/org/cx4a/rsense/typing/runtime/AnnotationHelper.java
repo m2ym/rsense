@@ -70,7 +70,7 @@ public class AnnotationHelper {
         return annots;
     }
 
-    public static boolean resolveMethodAnnotation(Graph graph, Template template) {
+    public static AnnotationResolver.Result resolveMethodAnnotation(Graph graph, Template template) {
         return new AnnotationResolver(graph).resolveMethodAnnotation(template);
     }
 }
