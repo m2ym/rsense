@@ -90,31 +90,34 @@ public class Main {
     }
 
     private void usage() {
-        out.println("RSense: Ruby development tools\n"
-                    + "\n"
-                    + "Usage: java -jar rsense.jar org.cx4a.rsense.Main command option...\n"
-                    + "\n"
-                    + "command:\n"
-                    + "  script                 - Run rsense script from file or stdin.\n"
-                    + "      --prompt=          - Prompt string in interactive shell mode.\n"
-                    + "\n"
-                    + "  code-completion        - Code completion at specified position.\n"
-                    + "      --file=            - File to analyze\n"
-                    + "      --location=        - Location where you want to complete (pos, line:col, str)\n"
-                    + "\n"
-                    + "  infer-type             - Infer type at specified position.\n"
-                    + "      --file=            - File to analyze\n"
-                    + "      --location=        - Location where you want to complete (pos, line:col, str)\n"
-                    + "\n"
-                    + "  help                   - Print this help.\n"
-                    + "\n"
-                    + "  version                - Print version information.\n"
-                    + "\n"
-                    + "common-options:\n"
-                    + "  --debug                - Print debug messages\n"
-                    + "  --log=                 - Log file to output (default stderr)\n"
-                    + "  --format=              - Output format (plain, emacs)\n"
-                    + "  --encoding=            - Input encoding\n"
+        out.print("RSense: Ruby development tools\n"
+                  + "\n"
+                  + "Usage: java -jar rsense.jar org.cx4a.rsense.Main command option...\n"
+                  + "\n"
+                  + "command:\n"
+                  + "  script                 - Run rsense script from file or stdin.\n"
+                  + "      --prompt=          - Prompt string in interactive shell mode.\n"
+                  + "\n"
+                  + "  code-completion        - Code completion at specified position.\n"
+                  + "      --file=            - File to analyze\n"
+                  + "      --location=        - Location where you want to complete (pos, line:col, str)\n"
+                  + "\n"
+                  + "  infer-type             - Infer type at specified position.\n"
+                  + "      --file=            - File to analyze\n"
+                  + "      --location=        - Location where you want to complete (pos, line:col, str)\n"
+                  + "\n"
+                  + "  help                   - Print this help.\n"
+                  + "\n"
+                  + "  version                - Print version information.\n"
+                  + "\n"
+                  + "common-options:\n"
+                  + "  --debug                - Print debug messages\n"
+                  + "  --log=                 - Log file to output (default stderr)\n"
+                  + "  --format=              - Output format (plain, emacs)\n"
+                  + "  --encoding=            - Input encoding\n"
+                  + "\n"
+                  + "debug-options:\n"
+                  + "  --print-ast            - Print parsed AST\n"
             );
     }
 
@@ -251,6 +254,13 @@ public class Main {
                                                    options.getEncoding(),
                                                    options.getLocation());
             }
+
+            if (options.isPrintAST()) {
+                out.println("AST:");
+                out.println(result.getAST());
+            }
+            Logger.debug("AST:\n%s", result.getAST());
+
             if (options.isTest()) {
                 List<String> shouldContain = options.getShouldContain();
                 Set<String> data = new HashSet<String>();
@@ -302,6 +312,13 @@ public class Main {
                                                   options.getEncoding(),
                                                   options.getLocation());
             }
+
+            if (options.isPrintAST()) {
+                out.println("AST:");
+                out.println(result.getAST());
+            }
+            Logger.debug("AST:\n%s", result.getAST());
+            
             if (options.isTest()) {
                 List<String> shouldContain = options.getShouldContain();
                 Set<String> data = new HashSet<String>();

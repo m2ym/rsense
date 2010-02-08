@@ -31,6 +31,15 @@ public class CallVertex extends Vertex {
         }
     }
 
+    public void cutout() {
+        if (argVertices != null) {
+            for (Vertex v : argVertices) {
+                v.removeEdge(this);
+            }
+        }
+        receiverVertex.removeEdge(this);
+    }
+
     public String getName() {
         return name == null ? ((INameNode) node).getName() : name;
     }

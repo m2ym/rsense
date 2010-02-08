@@ -14,12 +14,14 @@ public abstract class SpecialMethod {
         private Result prev;
         private TypeSet accumulator;
         private TypeSet resultTypeSet;
+        private boolean noReturn;
         private boolean callNextMethod;
         private boolean nextMethodChange;
         private String nextMethodName;
         private TypeSet nextMethodReceivers;
         private Block nextMethodBlock;
         private boolean nextMethodNoReturn;
+        private boolean neverCallAgain;
 
         public Result(Result prev, TypeSet accumulator) {
             this.prev = prev;
@@ -95,6 +97,14 @@ public abstract class SpecialMethod {
 
         public boolean isNextMethodNoReturn() {
             return nextMethodNoReturn;
+        }
+
+        public void setNeverCallAgain(boolean neverCallAgain) {
+            this.neverCallAgain = neverCallAgain;
+        }
+
+        public boolean isNeverCallAgain() {
+            return neverCallAgain;
         }
     }
 

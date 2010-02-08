@@ -65,6 +65,10 @@ public class Vertex {
         edges.add(dest);
     }
 
+    public void removeEdge(Vertex dest) {
+        edges.remove(dest);
+    }
+
     public boolean accept(Propagation propagation, Vertex src) {
         return propagation.getGraph().propagateVertex(propagation, this, src);
     }

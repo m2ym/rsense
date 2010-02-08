@@ -146,9 +146,9 @@ public class CodeAssist {
             public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
                 for (IRubyObject receiver : receivers) {
                     context.typeSet.add(receiver.getMetaClass());
-                    //context.typeSet.add(receiver);
                 }
                 result.setResultTypeSet(receivers);
+                result.setNeverCallAgain(true); // cutout vertex
             }
         };
 
@@ -205,6 +205,7 @@ public class CodeAssist {
             project.getGraph().load(ast);
 
             TypeInferenceResult result = new TypeInferenceResult();
+            result.setAST(ast);
             result.setTypeSet(context.typeSet);
             return result;
         } catch (IOException e) {
@@ -228,6 +229,7 @@ public class CodeAssist {
     public CodeCompletionResult codeCompletion(Project project, Reader reader, Location loc) {
         CodeCompletionResult result = new CodeCompletionResult();
         TypeInferenceResult r = typeInference(project, reader, loc);
+        result.setAST(r.getAST());
         if (r.hasError()) {
             result.setErrors(r.getErrors());
             return result;

@@ -448,8 +448,7 @@ public class Graph implements NodeVisitor {
         }
         
         CallVertex vertex = new CallVertex(node, receiverVertex, argVertices, null);
-        RuntimeHelper.call(this, vertex);
-        return vertex;
+        return RuntimeHelper.call(this, vertex);
     }
     
     public Object visitBackRefNode(BackRefNode node) {
@@ -525,8 +524,7 @@ public class Graph implements NodeVisitor {
             block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), scope);
         }
         CallVertex vertex = new CallVertex(node, receiverVertex, argVertices, block);
-        RuntimeHelper.call(this, vertex);
-        return vertex;
+        return RuntimeHelper.call(this, vertex);
     }
     
     public Object visitCaseNode(CaseNode node) {
@@ -794,8 +792,7 @@ public class Graph implements NodeVisitor {
             block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), context.getCurrentScope());
         }
         CallVertex vertex = new CallVertex(node, createFreeSingleTypeVertex(context.getFrameSelf()), argVertices, block);
-        RuntimeHelper.call(this, vertex);
-        return vertex;
+        return RuntimeHelper.call(this, vertex);
     }
     
     public Object visitFalseNode(FalseNode node) {
@@ -1141,8 +1138,7 @@ public class Graph implements NodeVisitor {
             block = context.getFrameBlock();
         }
         CallVertex vertex = new CallVertex(node, context.getCurrentFrame().getName(), receiverVertex, argVertices, block);
-        RuntimeHelper.callSuper(this, vertex);
-        return vertex;
+        return RuntimeHelper.callSuper(this, vertex);
     }
     
     public Object visitSValueNode(SValueNode node) {
@@ -1241,8 +1237,7 @@ public class Graph implements NodeVisitor {
             }
             
             CallVertex vertex = new CallVertex(node, context.getCurrentFrame().getName(), receiverVertex, argVertices, block);
-            RuntimeHelper.callSuper(this, vertex);
-            return vertex;
+            return RuntimeHelper.callSuper(this, vertex);
         }
         return NULL_VERTEX;
     }

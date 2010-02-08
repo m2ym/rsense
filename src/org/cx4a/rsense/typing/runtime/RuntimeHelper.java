@@ -418,7 +418,9 @@ public class RuntimeHelper {
                     if (result.getResultTypeSet() != null) {
                         accumulator.addAll(result.getResultTypeSet());
                     }
-                    if (!result.isCallNextMethod()) {
+                    if (result.isNeverCallAgain()) {
+                        vertex.cutout();
+                    } else if (!result.isCallNextMethod()) {
                         break;
                     }
                 }

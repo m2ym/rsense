@@ -119,6 +119,10 @@ public class Options extends HashMap<String, String> {
         return Arrays.asList(str.split(","));
     }
 
+    public boolean isPrintAST() {
+        return containsKey("print-ast");
+    }
+
     public static String defaultFormat() {
         return "plain";
     }
