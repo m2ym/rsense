@@ -474,7 +474,7 @@ public class RuntimeHelper {
                 template = createTemplate(graph, vertex, name, method, attr);
             } else {
                 mergeAffectedMap(template, receiver);
-                Logger.debug("Template reused: %s", name);
+                Logger.debug("template reused: %s", name);
             }
             return template.getReturnVertex();
         }
@@ -813,6 +813,7 @@ public class RuntimeHelper {
         TypeVarMap map = getTypeVarMap(receiver);
         if (map != null && template.getAffectedMap() != null) {
             map.putAll(template.getAffectedMap());
+            map.setModified(true);
         }
     }
 }
