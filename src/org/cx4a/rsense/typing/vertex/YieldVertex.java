@@ -13,7 +13,9 @@ public class YieldVertex extends Vertex {
         super(node);
         this.block = block;
         this.argsVertex = argsVertex;
-        argsVertex.addEdge(this);
+        if (argsVertex != null) {
+            argsVertex.addEdge(this);
+        }
     }
 
     public Block getBlock() {

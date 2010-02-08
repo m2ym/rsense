@@ -693,11 +693,8 @@ public class Graph implements NodeVisitor {
         }
 
         if (newMethod.getTemplates().isEmpty()) {
-            // FIXME more effective way?
-            // dummy template
-            IRubyObject dummyReceiver = newInstanceOf(runtime.getObject());
-            CallVertex dummyCallVertex = new CallVertex(node, createFreeSingleTypeVertex(dummyReceiver), null, null);
-            RuntimeHelper.call(this, dummyCallVertex);
+            IRubyObject receiver = newInstanceOf((cbase instanceof RubyClass) ? (RubyClass) cbase : runtime.getObject());
+            RuntimeHelper.dummyCall(this, node, receiver);
         }
 
         RuntimeHelper.setMethodTag(newMethod, node, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
@@ -733,11 +730,7 @@ public class Graph implements NodeVisitor {
             }
 
             if (newMethod.getTemplates().isEmpty()) {
-                // FIXME more effective way?
-                // dummy template
-                IRubyObject dummyReceiver = newInstanceOf(runtime.getObject());
-                CallVertex dummyCallVertex = new CallVertex(node, createFreeSingleTypeVertex(dummyReceiver), null, null);
-                RuntimeHelper.call(this, dummyCallVertex);
+                RuntimeHelper.dummyCall(this, node, receiver);
             }
 
             RuntimeHelper.setMethodTag(newMethod, node, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
@@ -1205,7 +1198,10 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitYieldNode(YieldNode node) {
-        Vertex argsVertex = createVertex(node.getArgsNode());
+        Vertex argsVertex = null;
+        if (node.getArgsNode() != null) {
+            argsVertex = createVertex(node.getArgsNode());
+        }
         YieldVertex vertex = new YieldVertex(node, context.getFrameBlock(), argsVertex);
         return RuntimeHelper.yield(this, vertex);
     }

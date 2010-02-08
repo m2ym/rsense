@@ -28,6 +28,7 @@ import org.jruby.ast.Colon3Node;
 import org.jruby.ast.AssignableNode;
 import org.jruby.ast.YieldNode;
 import org.jruby.ast.ZeroArgNode;
+import org.jruby.ast.MethodDefNode;
 import org.jruby.ast.NodeType;
 import org.jruby.ast.types.INameNode;
 
@@ -454,6 +455,17 @@ public class RuntimeHelper {
         return vertex;
     }
 
+    public static void dummyCall(Graph graph, MethodDefNode node, IRubyObject receiver) {
+        if (node.getBodyNode() != null) {
+            Context context = graph.getRuntime().getContext();
+            context.pushFrame(context.getFrameModule(), node.getName(), receiver, null, Visibility.PUBLIC);
+            context.pushScope(new LocalScope(context.getCurrentScope().getModule()));
+            graph.createVertex(node.getBodyNode());
+            context.popScope();
+            context.popFrame();
+        }
+    }
+
     private static Vertex applyTemplateAttribute(Graph graph, CallVertex vertex, String name, TemplateAttribute attr, boolean callSuper) {
         IRubyObject receiver = attr.getReceiver();
         RubyClass receiverType;
@@ -660,7 +672,8 @@ public class RuntimeHelper {
     public static Vertex yield(Graph graph, YieldVertex vertex) {
         YieldNode node = (YieldNode) vertex.getNode();
         Block block = vertex.getBlock();
-        Vertex returnVertex = yield(graph, block, vertex.getArgsVertex().getTypeSet(), node.getExpandArguments());
+        Vertex argsVertex = vertex.getArgsVertex();
+        Vertex returnVertex = yield(graph, block, (argsVertex != null ? argsVertex.getTypeSet() : TypeSet.EMPTY), node.getExpandArguments());
         if (returnVertex != null) {
             graph.addEdgeAndCopyTypeSet(returnVertex, vertex);
         }
