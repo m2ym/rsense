@@ -513,6 +513,7 @@ public class RuntimeHelper {
             graph.createVertex(node.getBodyNode());
             context.popScope();
             context.popFrame();
+            Logger.debug("dummy call: %s", node.getName());
         }
     }
 
@@ -521,6 +522,7 @@ public class RuntimeHelper {
         for (TemplateAttribute attr : templates.keySet()) {
             createTemplate(graph, name, method, attr);
         }
+        Logger.debug("dummy call for templates: %s", name);
     }
 
     private static Vertex applyTemplateAttribute(Graph graph, CallVertex vertex, String name, TemplateAttribute attr, boolean callSuper) {

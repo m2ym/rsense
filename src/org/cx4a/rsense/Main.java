@@ -256,10 +256,8 @@ public class Main {
             }
 
             if (options.isPrintAST()) {
-                out.println("AST:");
-                out.println(result.getAST());
+                Logger.debug("AST:\n%s", result.getAST());
             }
-            Logger.debug("AST:\n%s", result.getAST());
 
             if (options.isTest()) {
                 List<String> shouldContain = options.getShouldContain();
@@ -314,10 +312,8 @@ public class Main {
             }
 
             if (options.isPrintAST()) {
-                out.println("AST:");
-                out.println(result.getAST());
+                Logger.debug("AST:\n%s", result.getAST());
             }
-            Logger.debug("AST:\n%s", result.getAST());
             
             if (options.isTest()) {
                 List<String> shouldContain = options.getShouldContain();
