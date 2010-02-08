@@ -2,6 +2,7 @@ package org.cx4a.rsense.typing.runtime;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Collections;
@@ -459,23 +460,28 @@ public class RuntimeHelper {
     }
 
     public static void methodPartialUpdate(Graph graph, MethodDefNode node, Method newMethod, DynamicMethod oldMethod, IRubyObject receiver) {
-        Node bodyNode = node.getBodyNode();
         NodeDiff nodeDiff = graph.getNodeDiff();
+        Map<TemplateAttribute, Template> oldTemplates = null;
         boolean templateShared = false;
         
-        if (oldMethod instanceof Method && nodeDiff != null) {
-            if (nodeDiff.noDiff(bodyNode, oldMethod.getBodyNode())) { // XXX nested class, defn
-                Logger.debug("method reused: %s", node.getName());
+        if (oldMethod instanceof Method) {
+            oldTemplates = ((Method) oldMethod).getTemplates();
+            if (nodeDiff != null
+                && nodeDiff.noDiff(node.getArgsNode(), oldMethod.getArgsNode())
+                && nodeDiff.noDiff(node.getBodyNode(), oldMethod.getBodyNode())) { // XXX nested class, defn
+                Logger.debug("template shared: %s", node.getName());
                 // FIXME annotation diff
-                newMethod.setTemplates(((Method) oldMethod).getTemplates());
+                newMethod.setTemplates(oldTemplates);
                 templateShared = true;
             }
         }
 
-        if (templateShared) {
-            //
-        } else {
-            RuntimeHelper.dummyCall(graph, node, receiver);
+        if (!templateShared) {
+            if (oldTemplates != null && !oldTemplates.isEmpty()) {
+                dummyCallForTemplates(graph, node, newMethod, oldTemplates);
+            } else {
+                dummyCall(graph, node, receiver);
+            }
         }
     }
 
@@ -499,7 +505,7 @@ public class RuntimeHelper {
         }
     }
 
-    public static void dummyCall(Graph graph, MethodDefNode node, IRubyObject receiver) {
+    private static void dummyCall(Graph graph, MethodDefNode node, IRubyObject receiver) {
         if (node.getBodyNode() != null) {
             Context context = graph.getRuntime().getContext();
             context.pushFrame(context.getFrameModule(), node.getName(), receiver, null, Visibility.PUBLIC);
@@ -507,6 +513,13 @@ public class RuntimeHelper {
             graph.createVertex(node.getBodyNode());
             context.popScope();
             context.popFrame();
+        }
+    }
+
+    private static void dummyCallForTemplates(Graph graph, MethodDefNode node, Method method, Map<TemplateAttribute, Template> templates) {
+        String name = node.getName();
+        for (TemplateAttribute attr : templates.keySet()) {
+            createTemplate(graph, name, method, attr);
         }
     }
 
@@ -525,21 +538,23 @@ public class RuntimeHelper {
         } else {
             receiverType = receiver.getMetaClass();
         }
-        Method method = (Method) receiverType.searchMethod(name);
-        if (method != null) {
-            Template template = method.getTemplate(attr);
-            if (template == null) {
-                template = createTemplate(graph, vertex, name, method, attr);
-            } else {
-                mergeAffectedMap(template, receiver);
-                Logger.debug("template reused: %s", name);
+        if (receiverType != null) {
+            Method method = (Method) receiverType.searchMethod(name);
+            if (method != null) {
+                Template template = method.getTemplate(attr);
+                if (template == null) {
+                    template = createTemplate(graph, name, method, attr);
+                } else {
+                    mergeAffectedMap(template, receiver);
+                    Logger.debug("template reused: %s", name);
+                }
+                return template.getReturnVertex();
             }
-            return template.getReturnVertex();
         }
         return null;
     }
 
-    public static Template createTemplate(Graph graph, CallVertex vertex, String name, Method method, TemplateAttribute attr) {
+    private static Template createTemplate(Graph graph, String name, Method method, TemplateAttribute attr) {
         IRubyObject receiver = attr.getReceiver();
         Vertex[] argVertices = new Vertex[attr.getArgs().length];
         for (int i = 0; i < argVertices.length; i++) {

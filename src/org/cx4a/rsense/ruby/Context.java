@@ -10,8 +10,6 @@ public class Context {
     public Context(Ruby runtime) {
         this.runtime = runtime;
         this.scopes = new Stack<Scope>();
-        pushScope(new LocalScope(runtime.getObject()));
-        pushFrame(runtime.getObject(), "main", runtime.getTopSelf(), null, Visibility.PRIVATE);
     }
 
     public void pushScope(Scope scope) {
@@ -35,6 +33,16 @@ public class Context {
         Frame frame = this.frame;
         this.frame = frame.getPrevious();
         return frame;
+    }
+
+    public void pushMain() {
+        pushScope(new LocalScope(runtime.getObject()));
+        pushFrame(runtime.getObject(), "main", runtime.getTopSelf(), null, Visibility.PRIVATE);
+    }
+
+    public void popMain() {
+        popFrame();
+        popScope();
     }
 
     public Scope getCurrentScope() {

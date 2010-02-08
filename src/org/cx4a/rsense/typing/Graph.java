@@ -4,10 +4,12 @@ import java.util.Iterator;
 import java.util.Collection;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Queue;
 import java.util.Collections;
 
 import org.jruby.ast.AliasNode;
@@ -107,6 +109,7 @@ import org.jruby.ast.XStrNode;
 import org.jruby.ast.YieldNode;
 import org.jruby.ast.ZArrayNode;
 import org.jruby.ast.ZSuperNode;
+import org.jruby.ast.MethodDefNode;
 
 import org.jruby.ast.NodeType;
 import org.jruby.ast.Node;
@@ -158,12 +161,31 @@ import org.cx4a.rsense.typing.annotation.MethodType;
 public class Graph implements NodeVisitor {
     public static final Vertex NULL_VERTEX = new Vertex();
 
+    protected static class DelayedMethodPartialUpdate {
+        private MethodDefNode node;
+        private Method newMethod;
+        private DynamicMethod oldMethod;
+        private IRubyObject receiver;
+
+        public DelayedMethodPartialUpdate(MethodDefNode node, Method newMethod, DynamicMethod oldMethod, IRubyObject receiver) {
+            this.node = node;
+            this.newMethod = newMethod;
+            this.oldMethod = oldMethod;
+            this.receiver = receiver;
+        }
+
+        public void force(Graph graph) {
+            RuntimeHelper.methodPartialUpdate(graph, node, newMethod, oldMethod, receiver);
+        }
+    }
+
     protected Ruby runtime;
     protected Context context;
     protected InstanceFactory instanceFactory;
     protected Map<String, SpecialMethod> specialMethods;
     protected NodeDiff nodeDiff;
-
+    protected Queue<DelayedMethodPartialUpdate> methodPartialUpdateQueue = new LinkedList<DelayedMethodPartialUpdate>();
+    
     public Graph(Ruby runtime) {
         this.runtime = runtime;
         this.context = runtime.getContext();
@@ -335,16 +357,27 @@ public class Graph implements NodeVisitor {
     }
 
     public void load(Node newAST, Node oldAST) {
+        context.pushMain();
+
+        List<Node> partialDiff = null;
         if (oldAST != null && nodeDiff != null) {
-            List<Node> partialDiff = nodeDiff.diff(newAST, oldAST);
+            partialDiff = nodeDiff.diff(newAST, oldAST);
             if (partialDiff != null) {
                 for (Node dirty : partialDiff) {
                     createVertex(dirty);
                 }
-                return;
             }
         }
-        createVertex(newAST);
+        if (partialDiff == null) {
+            createVertex(newAST);
+        }
+
+        DelayedMethodPartialUpdate entry;
+        while ((entry = methodPartialUpdateQueue.poll()) != null) {
+            entry.force(this);
+        }
+
+        context.popMain();
     }
 
     public Vertex createVertex(Node node) {
@@ -667,7 +700,8 @@ public class Graph implements NodeVisitor {
         cbase.addMethod(name, newMethod);
 
         IRubyObject receiver = newInstanceOf((cbase instanceof RubyClass) ? (RubyClass) cbase : runtime.getObject());
-        RuntimeHelper.methodPartialUpdate(this, node, newMethod, oldMethod, receiver);
+        
+        methodPartialUpdateQueue.offer(new DelayedMethodPartialUpdate(node, newMethod, oldMethod, receiver));
         RuntimeHelper.setMethodTag(newMethod, node, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
 
         return NULL_VERTEX;
@@ -690,7 +724,7 @@ public class Graph implements NodeVisitor {
             Method newMethod = new Method(rubyClass, name, bodyNode, argsNode, Visibility.PUBLIC, node.getPosition());
             rubyClass.addMethod(name, newMethod);
 
-            RuntimeHelper.methodPartialUpdate(this, node, newMethod, oldMethod, receiver);
+            methodPartialUpdateQueue.offer(new DelayedMethodPartialUpdate(node, newMethod, oldMethod, receiver));
             RuntimeHelper.setMethodTag(newMethod, node, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
         }
 
