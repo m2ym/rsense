@@ -571,30 +571,14 @@ public class Graph implements NodeVisitor {
         context.pushFrame(klass, name, klass, null, Visibility.PUBLIC);
         context.pushScope(new LocalScope(module));
 
-        Vertex result = null;
-        Node bodyNode = node.getBodyNode();
-        if (bodyNode != null) {
-            ClassTag oldTag = RuntimeHelper.getClassTag(klass);
-            if (nodeDiff != null && oldTag != null) {
-                List<Node> partialDiff = nodeDiff.diff(bodyNode, oldTag.getBodyNode());
-                if (partialDiff != null) {
-                    for (Node dirty : partialDiff) {
-                        result = createVertex(dirty);
-                    }
-                } else {
-                    result = createVertex(node.getBodyNode());
-                }
-            } else {
-                result = createVertex(node.getBodyNode());
-            }
-        }
+        RuntimeHelper.classPartialUpdate(this, klass, node.getBodyNode());
 
         context.popScope();
         context.popFrame();
 
-        RuntimeHelper.setClassTag(klass, bodyNode, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
+        RuntimeHelper.setClassTag(klass, node.getBodyNode(), AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
         
-        return result != null ? result : NULL_VERTEX;
+        return NULL_VERTEX;
     }
     
     public Object visitColon2Node(Colon2Node node) {
@@ -682,21 +666,8 @@ public class Graph implements NodeVisitor {
         Method newMethod = new Method(cbase, name, bodyNode, argsNode, visibility, node.getPosition());
         cbase.addMethod(name, newMethod);
 
-        // partial update
-        if (oldMethod instanceof Method && nodeDiff != null) {
-            if (nodeDiff.noDiff(bodyNode, oldMethod.getBodyNode())) { // XXX nested class, defn
-                Logger.debug("Method reused");
-                
-                // FIXME annotation diff
-                newMethod.setTemplates(((Method) oldMethod).getTemplates());
-            }
-        }
-
-        if (newMethod.getTemplates().isEmpty()) {
-            IRubyObject receiver = newInstanceOf((cbase instanceof RubyClass) ? (RubyClass) cbase : runtime.getObject());
-            RuntimeHelper.dummyCall(this, node, receiver);
-        }
-
+        IRubyObject receiver = newInstanceOf((cbase instanceof RubyClass) ? (RubyClass) cbase : runtime.getObject());
+        RuntimeHelper.methodPartialUpdate(this, node, newMethod, oldMethod, receiver);
         RuntimeHelper.setMethodTag(newMethod, node, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
 
         return NULL_VERTEX;
@@ -719,20 +690,7 @@ public class Graph implements NodeVisitor {
             Method newMethod = new Method(rubyClass, name, bodyNode, argsNode, Visibility.PUBLIC, node.getPosition());
             rubyClass.addMethod(name, newMethod);
 
-            // partial update
-            if (oldMethod instanceof Method && nodeDiff != null) {
-                if (nodeDiff.noDiff(bodyNode, oldMethod.getBodyNode())) { // XXX nested class, defn
-                    Logger.debug("Method reused");
-
-                    // FIXME annotation diff
-                    newMethod.setTemplates(((Method) oldMethod).getTemplates());
-                }
-            }
-
-            if (newMethod.getTemplates().isEmpty()) {
-                RuntimeHelper.dummyCall(this, node, receiver);
-            }
-
+            RuntimeHelper.methodPartialUpdate(this, node, newMethod, oldMethod, receiver);
             RuntimeHelper.setMethodTag(newMethod, node, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
         }
 
@@ -904,30 +862,14 @@ public class Graph implements NodeVisitor {
         context.pushFrame(module, name, module, null, Visibility.PUBLIC);
         context.pushScope(new LocalScope(enclosingModule));
 
-        Vertex result = null;
-        Node bodyNode = node.getBodyNode();
-        if (bodyNode != null) {
-            ClassTag oldTag = RuntimeHelper.getClassTag(module);
-            if (nodeDiff != null && oldTag != null) {
-                List<Node> partialDiff = nodeDiff.diff(bodyNode, oldTag.getBodyNode());
-                if (partialDiff != null) {
-                    for (Node dirty : partialDiff) {
-                        result = createVertex(dirty);
-                    }
-                } else {
-                    result = createVertex(node.getBodyNode());
-                }
-            } else {
-                result = createVertex(node.getBodyNode());
-            }
-        }
+        RuntimeHelper.classPartialUpdate(this, module, node.getBodyNode());
 
         context.popScope();
         context.popFrame();
         
-        RuntimeHelper.setClassTag(module, bodyNode, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
+        RuntimeHelper.setClassTag(module, node.getBodyNode(), AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
 
-        return result != null ? result : NULL_VERTEX;
+        return NULL_VERTEX;
     }
     
     public Object visitNewlineNode(NewlineNode node) {

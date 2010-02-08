@@ -43,7 +43,9 @@ import org.cx4a.rsense.ruby.Visibility;
 import org.cx4a.rsense.ruby.RubyModule;
 import org.cx4a.rsense.ruby.RubyClass;
 import org.cx4a.rsense.ruby.IRubyObject;
+import org.cx4a.rsense.ruby.DynamicMethod;
 import org.cx4a.rsense.util.Logger;
+import org.cx4a.rsense.util.NodeDiff;
 import org.cx4a.rsense.typing.TypeSet;
 import org.cx4a.rsense.typing.Template;
 import org.cx4a.rsense.typing.TemplateAttribute;
@@ -51,6 +53,7 @@ import org.cx4a.rsense.typing.Graph;
 import org.cx4a.rsense.typing.runtime.TypeVarMap;
 import org.cx4a.rsense.typing.runtime.AnnotationHelper;
 import org.cx4a.rsense.typing.runtime.ClassTag;
+import org.cx4a.rsense.typing.runtime.Method;
 import org.cx4a.rsense.typing.annotation.TypeAnnotation;
 import org.cx4a.rsense.typing.annotation.TypeExpression;
 import org.cx4a.rsense.typing.annotation.TypeVariable;
@@ -453,6 +456,47 @@ public class RuntimeHelper {
             vertex.getTypeSet().addAll(accumulator);
         }
         return vertex;
+    }
+
+    public static void methodPartialUpdate(Graph graph, MethodDefNode node, Method newMethod, DynamicMethod oldMethod, IRubyObject receiver) {
+        Node bodyNode = node.getBodyNode();
+        NodeDiff nodeDiff = graph.getNodeDiff();
+        boolean templateShared = false;
+        
+        if (oldMethod instanceof Method && nodeDiff != null) {
+            if (nodeDiff.noDiff(bodyNode, oldMethod.getBodyNode())) { // XXX nested class, defn
+                Logger.debug("method reused: %s", node.getName());
+                // FIXME annotation diff
+                newMethod.setTemplates(((Method) oldMethod).getTemplates());
+                templateShared = true;
+            }
+        }
+
+        if (templateShared) {
+            //
+        } else {
+            RuntimeHelper.dummyCall(graph, node, receiver);
+        }
+    }
+
+    public static void classPartialUpdate(Graph graph, RubyModule klass, Node bodyNode) {
+        NodeDiff nodeDiff = graph.getNodeDiff();
+
+        if (bodyNode != null) {
+            ClassTag oldTag = getClassTag(klass);
+            if (nodeDiff != null && oldTag != null) {
+                List<Node> partialDiff = nodeDiff.diff(bodyNode, oldTag.getBodyNode());
+                if (partialDiff != null) {
+                    for (Node dirty : partialDiff) {
+                        graph.createVertex(dirty);
+                    }
+                } else {
+                    graph.createVertex(bodyNode);
+                }
+            } else {
+                graph.createVertex(bodyNode);
+            }
+        }
     }
 
     public static void dummyCall(Graph graph, MethodDefNode node, IRubyObject receiver) {

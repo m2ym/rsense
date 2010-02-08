@@ -76,5 +76,5 @@ UNIXSocket.open($socket_path) {|sock|
     break if l =~ /^#{$end_mark}/
     ret << l
   end
-  puts ret
+  puts ret unless ret.empty?
 }
