@@ -10,3 +10,5 @@
 - cut branches
 - recursive call
 - pobj instances
+- data polymorphic object's cartesian product
+- refactoring tvmap (replaced by TypeSet)

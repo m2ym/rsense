@@ -529,6 +529,7 @@ public class RuntimeHelper {
 
     private static Vertex applyTemplateAttribute(Graph graph, CallVertex vertex, String name, TemplateAttribute attr, boolean callSuper) {
         IRubyObject receiver = attr.getReceiver();
+        IRubyObject[] args = attr.getArgs();
         RubyClass receiverType;
         if (callSuper) {
             RubyModule module = graph.getRuntime().getContext().getFrameModule();
@@ -548,8 +549,9 @@ public class RuntimeHelper {
                 Template template = method.getTemplate(attr);
                 if (template == null) {
                     template = createTemplate(graph, vertex, name, method, attr);
+                    template.rememberSideEffect(receiver, args);
                 } else {
-                    mergeAffectedMap(template, receiver);
+                    template.reproduceSideEffect(receiver, args);
                     Logger.debug(SourceLocation.of(vertex), "template reused: %s", method);
                 }
                 return template.getReturnVertex();
@@ -640,33 +642,17 @@ public class RuntimeHelper {
             base.setReceiver(ite.next());
             base.setBlock(block);
             for (int j = 0; j < receivers.size() - 1; j++) {
-                TemplateAttribute attr = new TemplateAttribute(base.getArgs());
+                TemplateAttribute attr = base.clone();
                 attr.setReceiver(ite.next());
-                attr.setBlock(block);
                 result.add(attr);
             }
         }
 
-        // handle data polymorphic receivers
-        resultSize = result.size();
-        for (int i = 0; i < resultSize; i++) {
-            TemplateAttribute base = result.get(i);
-            IRubyObject receiver = base.getReceiver();
-            
-            TypeVarMap map = getTypeVarMap(receiver);
-            if (map != null) {
-                // data polymorphic object
-                TypeVarMap[] tuples = map.generateTuples();
-                if (tuples.length > 0) {
-                    base.setTypeVarMap(tuples[0]);
-                    for (int j = 1; j < tuples.length; j++) {
-                        TemplateAttribute attr = new TemplateAttribute(base.getArgs());
-                        attr.setReceiver(base.getReceiver());
-                        attr.setTypeVarMap(tuples[j]);
-                        attr.setBlock(base.getBlock());
-                        result.add(attr);
-                    }
-                }
+        // handle data polymorphic for receivers and arguments
+        for (TemplateAttribute attr : result) {
+            attr.setReceiverTypeVarMap(getTypeVarMap(attr.getReceiver()));
+            for (int i = 0; i < args.size(); i++) {
+                attr.setArgTypeVarMap(i, getTypeVarMap(attr.getArgs()[i]));
             }
         }
         
@@ -891,14 +877,6 @@ public class RuntimeHelper {
             return (TypeVarMap) object.getTag();
         } else {
             return null;
-        }
-    }
-
-    public static void mergeAffectedMap(Template template, IRubyObject receiver) {
-        TypeVarMap map = getTypeVarMap(receiver);
-        if (map != null && template.getAffectedMap() != null) {
-            map.putAll(template.getAffectedMap());
-            map.setModified(true);
         }
     }
 }

@@ -22,6 +22,10 @@ public class TypeVarMap extends HashMap<TypeVariable, IRubyObject> {
         super(initialCapacity);
     }
 
+    public TypeVarMap(TypeVarMap other) {
+        super(other);
+    }
+
     public boolean isModified() {
         return modified;
     }

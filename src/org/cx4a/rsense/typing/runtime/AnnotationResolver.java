@@ -165,7 +165,6 @@ public class AnnotationResolver {
                     holder = graph.createFreeVertexHolder();
                     typeVarMap.put(var, holder);
                 }
-                template.setAffectedVar(var, holder);
                 holder.getVertex().addType(arg);
                 typeVarMap.setModified(true);
             } else {
