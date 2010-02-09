@@ -8,9 +8,11 @@ import org.cx4a.rsense.typing.vertex.Vertex;
 public class Propagation {
     private Graph graph;
     private Set<Vertex> visited;
+    private int refCount;
 
     public Propagation(Graph graph) {
         this.graph = graph;
+        this.refCount = 0;
     }
 
     public Graph getGraph() {
@@ -36,5 +38,13 @@ public class Propagation {
             addVisited(vertex);
             return false;
         }
+    }
+
+    public void retain() {
+        refCount++;
+    }
+
+    public boolean release() {
+        return --refCount == 0;
     }
 }

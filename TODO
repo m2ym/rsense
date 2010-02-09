@@ -12,3 +12,4 @@
 - pobj instances
 - data polymorphic object's cartesian product
 - refactoring tvmap (replaced by TypeSet)
+- refactoring frame module and scope module

@@ -57,4 +57,13 @@ public class Frame {
     public void setTag(Object tag) {
         this.tag = tag;
     }
+
+    @Override
+    public String toString() {
+        String s = "[" + name + " " + cbase + "]";
+        if (prev != null) {
+            s += " < " + prev.toString();
+        }
+        return s;
+    }
 }

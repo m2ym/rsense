@@ -510,8 +510,8 @@ public class RuntimeHelper {
     private static void dummyCall(Graph graph, MethodDefNode node, Method method, IRubyObject receiver) {
         if (node.getBodyNode() != null) {
             Context context = graph.getRuntime().getContext();
-            context.pushFrame(context.getFrameModule(), node.getName(), receiver, null, Visibility.PUBLIC);
-            context.pushScope(new LocalScope(context.getCurrentScope().getModule()));
+            context.pushFrame(method.getModule(), node.getName(), receiver, null, Visibility.PUBLIC);
+            context.pushScope(new LocalScope(method.getModule()));
             graph.createVertex(node.getBodyNode());
             context.popScope();
             context.popFrame();
@@ -691,37 +691,50 @@ public class RuntimeHelper {
             pre = masgn.getPre();
         }
         
-        for (IRubyObject value : args) {
+        if (args != null && !args.isEmpty()) {
+            for (IRubyObject value : args) {
+                pushLoopFrame(context, block.getFrame(), returnVertex, vertex);
+                context.pushScope(block.getScope());
+
+                if (noargblock) {}
+                else if (masgn != null) {
+                    Tuple tuple;
+                    if (!expanded) {
+                        // FIXME to_ary
+                        if (value instanceof Tuple) {
+                            tuple = (Tuple) value;
+                        } else {
+                            tuple = new Tuple(runtime, new IRubyObject[] {value});
+                        }
+                    } else {
+                        if (value instanceof Tuple) {
+                            tuple = (Tuple) value;
+                        } else {
+                            tuple = new Tuple(runtime, new IRubyObject[] {value});
+                        }
+                    }
+                    multipleAssign(graph, masgn, tuple);
+                } else {
+                    assign(graph, varNode, graph.createFreeSingleTypeVertex(value));
+                }
+
+                if (block.getBodyNode() != null) {
+                    Vertex v = graph.createVertex(block.getBodyNode());
+                    graph.addEdgeAndPropagate(v, vertex);
+                }
+
+                context.popScope();
+                popLoopFrame(context);
+            }
+        } else {
             pushLoopFrame(context, block.getFrame(), returnVertex, vertex);
             context.pushScope(block.getScope());
-
-            if (noargblock) {}
-            else if (masgn != null) {
-                Tuple tuple;
-                if (!expanded) {
-                    // FIXME to_ary
-                    if (value instanceof Tuple) {
-                        tuple = (Tuple) value;
-                    } else {
-                        tuple = new Tuple(runtime, new IRubyObject[] {value});
-                    }
-                } else {
-                    if (value instanceof Tuple) {
-                        tuple = (Tuple) value;
-                    } else {
-                        tuple = new Tuple(runtime, new IRubyObject[] {value});
-                    }
-                }
-                multipleAssign(graph, masgn, tuple);
-            } else {
-                assign(graph, varNode, graph.createFreeSingleTypeVertex(value));
-            }
 
             if (block.getBodyNode() != null) {
                 Vertex v = graph.createVertex(block.getBodyNode());
                 graph.addEdgeAndPropagate(v, vertex);
             }
-
+            
             context.popScope();
             popLoopFrame(context);
         }
@@ -785,15 +798,14 @@ public class RuntimeHelper {
 
     public static Template getFrameTemplate(Frame frame) {
         Object tag;
-        while (true) {
+        while (frame != null) {
             tag = frame.getTag();
             if (tag instanceof Template) {
                 return (Template) tag;
-            } else if (tag instanceof Vertex) {
-            } else {
-                return null;
             }
+            frame = frame.getPrevious();
         }
+        return null;
     }
 
     public static void setFrameTemplate(Frame frame, Template template) {

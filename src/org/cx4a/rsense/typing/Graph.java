@@ -123,6 +123,7 @@ import org.cx4a.rsense.ruby.Ruby;
 import org.cx4a.rsense.ruby.Context;
 import org.cx4a.rsense.ruby.RubyClass;
 import org.cx4a.rsense.ruby.RubyModule;
+import org.cx4a.rsense.ruby.MetaClass;
 import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.ruby.RubyObject;
 import org.cx4a.rsense.ruby.Visibility;
@@ -134,6 +135,7 @@ import org.cx4a.rsense.ruby.DynamicScope;
 import org.cx4a.rsense.ruby.DynamicMethod;
 import org.cx4a.rsense.util.Logger;
 import org.cx4a.rsense.util.NodeDiff;
+import org.cx4a.rsense.util.SourceLocation;
 import org.cx4a.rsense.typing.runtime.InstanceFactory;
 import org.cx4a.rsense.typing.runtime.VertexHolder;
 import org.cx4a.rsense.typing.runtime.Tuple;
@@ -422,8 +424,18 @@ public class Graph implements NodeVisitor {
         dest.copyTypeSet(src);
     }
 
+    private Propagation propagation;
+
     public boolean propagate(Vertex src, Vertex dest) {
-        return dest.accept(new Propagation(this), src);
+        if (propagation == null) {
+            propagation = new Propagation(this);
+        }
+        propagation.retain();
+        boolean result = dest.accept(propagation, src);
+        if (propagation.release()) {
+            propagation = null;
+        }
+        return result;
     }
 
     public IRubyObject newInstanceOf(RubyClass klass) {
@@ -488,7 +500,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitBackRefNode(BackRefNode node) {
-        throw new UnsupportedOperationException();
+        return createSingleTypeVertex(node, newInstanceOf(runtime.getString()));
     }
     
     public Object visitBeginNode(BeginNode node) {
@@ -569,7 +581,9 @@ public class Graph implements NodeVisitor {
     public Object visitCaseNode(CaseNode node) {
         // FIXME eval ===
         Vertex vertex = createEmptyVertex(node);
-        createVertex(node.getCaseNode());
+        if (node.getCaseNode() != null) {
+            createVertex(node.getCaseNode());
+        }
         ListNode cases = node.getCases();
         if (cases != null) {
             for (int i = 0; i < cases.size(); i++) {
@@ -727,7 +741,7 @@ public class Graph implements NodeVisitor {
             Node argsNode = node.getArgsNode();
 
             DynamicMethod oldMethod = rubyClass.getMethod(name);
-            Method newMethod = new Method(rubyClass, name, bodyNode, argsNode, Visibility.PUBLIC, node.getPosition());
+            Method newMethod = new Method(context.getFrameModule(), name, bodyNode, argsNode, Visibility.PUBLIC, node.getPosition());
             rubyClass.addMethod(name, newMethod);
 
             methodPartialUpdateQueue.offer(new DelayedMethodPartialUpdate(node, newMethod, oldMethod, receiver));
@@ -778,12 +792,17 @@ public class Graph implements NodeVisitor {
         }
         
         Block block = null;
-        if (node.getIterNode() instanceof IterNode) {
-            IterNode iterNode = (IterNode) node.getIterNode();
-            block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), context.getCurrentScope());
-        } else if (node.getIterNode() != null) {
-            // FIXME
-            Logger.debug("unknnown iternode: %s", node.getIterNode());
+        if (node.getIterNode() != null) {
+            switch (node.getIterNode().getNodeType()) {
+            case ITERNODE: {
+                IterNode iterNode = (IterNode) node.getIterNode();
+                block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), context.getCurrentScope());
+                break;
+            }
+            case BLOCKPASSNODE:
+                block = context.getFrameBlock();
+                break;
+            }
         }
         CallVertex vertex = new CallVertex(node, createFreeSingleTypeVertex(context.getFrameSelf()), argVertices, block);
         return RuntimeHelper.call(this, vertex);
@@ -1075,9 +1094,29 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitSClassNode(SClassNode node) {
-        // FIXME
-        //throw new UnsupportedOperationException();
-        Logger.debug("SClass is not supported");
+        Vertex receiverVertex = createVertex(node.getReceiverNode());
+
+        if (receiverVertex != null) {
+            for (IRubyObject object : receiverVertex.getTypeSet()) {
+                RubyClass klass = object.getMetaClass();
+                if (klass.isSingleton()) {
+                    context.pushFrame(klass, "sclass", klass, null, Visibility.PUBLIC);
+                    context.pushScope(new LocalScope((RubyModule) ((MetaClass) klass).getAttached()));
+
+                    if (node.getBodyNode() != null) {
+                        createVertex(node.getBodyNode());
+                    }
+
+                    context.popScope();
+                    context.popFrame();
+        
+                    return NULL_VERTEX;
+                } else {
+                    Logger.warn(SourceLocation.of(node), "singleton class of objects is not supported.");
+                }
+            }
+        }
+
         return NULL_VERTEX;
     }
     
