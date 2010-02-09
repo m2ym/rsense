@@ -312,7 +312,7 @@ public class AnnotationResolver {
     }
 
     public TypeSet[] processMethodBlockArg(Template template, ClassType classType, TypeExpression argType, IRubyObject receiver) {
-        if (argType == null) { Collections.<IRubyObject>emptyList(); }
+        if (argType == null) { return new TypeSet[0]; }
 
         List<TypeSet> args = new ArrayList<TypeSet>();
         switch (argType.getType()) {

@@ -699,10 +699,18 @@ public class RuntimeHelper {
             else if (masgn != null) {
                 Tuple tuple;
                 if (!expanded) {
-                    // FIXME
-                    tuple = (Tuple) value;
+                    // FIXME to_ary
+                    if (value instanceof Tuple) {
+                        tuple = (Tuple) value;
+                    } else {
+                        tuple = new Tuple(runtime, new IRubyObject[] {value});
+                    }
                 } else {
-                    tuple = (Tuple) value;
+                    if (value instanceof Tuple) {
+                        tuple = (Tuple) value;
+                    } else {
+                        tuple = new Tuple(runtime, new IRubyObject[] {value});
+                    }
                 }
                 multipleAssign(graph, masgn, tuple);
             } else {

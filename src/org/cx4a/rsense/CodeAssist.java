@@ -11,6 +11,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Map;
+import java.util.HashMap;
 
 import org.jruby.ast.Node;
 import org.jruby.ast.NodeType;
@@ -139,8 +141,10 @@ public class CodeAssist {
     }
 
     private org.jruby.Ruby rubyRuntime;
-    private final Config config;
+    private final Options options;
     private final Context context;
+    private Map<File, Project> projects;
+    private Project sandbox;
 
     private SpecialMethod typeInferenceMethod = new SpecialMethod() {
             public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
@@ -152,17 +156,63 @@ public class CodeAssist {
             }
         };
 
-    public CodeAssist(Config config) {
+    private SpecialMethod requireMethod = new SpecialMethod() {
+            public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                if (args != null && args.length > 0) {
+                    String feature = Vertex.getString(args[0]);
+                    if (feature != null) {
+                        require(context.project, feature, "UTF-8");
+                    }
+                }
+            }
+        };
+
+    public CodeAssist(Options options) {
         rubyRuntime = org.jruby.Ruby.newInstance(); // for parse
-        this.config = config;
-        context = new Context();
+        this.context = new Context();
+        this.options = options;
+        this.projects = new HashMap<File, Project>();
+        this.sandbox = new Project("(sandbox)", null);
+        this.sandbox.setLoadPath(options.getLoadPath());
+    }
+
+    public Project getProject(Options options) {
+        Project project = projects.get(options.getProject());
+        if (!options.isFileStdin()) {
+            File file = options.getFile();
+            if (project == null && options.isDetectProject()) {
+                File parent;
+                while ((parent = file.getParentFile()) != null) {
+                    File config = new File(parent, ".rsense");
+                    if (config.exists()) {
+                        // found config file
+                        project = newProjectFromConfig(config, options);
+                        break;
+                    }
+                }
+            }
+        }
+
+        return project != null ? project : sandbox;
+    }
+
+    private Project newProjectFromConfig(File config, Options options) {
+        File path = config.getParentFile();
+        Project project = new Project(path.getName(), path);
+        project.setLoadPath(options.getLoadPath());
+        return project;
     }
 
     public LoadResult load(Project project, File file, String encoding) {
+        if (project.isLoaded(file)) {
+            return LoadResult.alreadyLoaded();
+        }
+        project.setLoaded(file);
+        
         try {
             InputStream in = new FileInputStream(file);
             try {
-                return load(project, file.getPath(), new InputStreamReader(in, encoding));
+                return load(project, file, new InputStreamReader(in, encoding));
             } finally {
                 in.close();
             }
@@ -171,7 +221,7 @@ public class CodeAssist {
         } 
     }
 
-    public LoadResult load(Project project, String file, Reader reader) {
+    public LoadResult load(Project project, File file, Reader reader) {
         try {
             prepare(project);
             Node ast = parseFileContents(file, readAll(reader));
@@ -185,11 +235,22 @@ public class CodeAssist {
         }
     }
 
+    public LoadResult require(Project project, String feature, String encoding) {
+        for (String pathElement : project.getLoadPath()) {
+            File file = new File(pathElement, feature + ".rb");
+            if (file.exists()) {
+                return load(project, file, encoding);
+            }
+        }
+        Logger.debug("require failed: %s", feature);
+        return LoadResult.failWithNotFound();
+    }
+
     public TypeInferenceResult typeInference(Project project, File file, String encoding, Location loc) {
         try {
             InputStream in = new FileInputStream(file);
             try {
-                return typeInference(project, file.getPath(), new InputStreamReader(in, encoding), loc);
+                return typeInference(project, file, new InputStreamReader(in, encoding), loc);
             } finally {
                 in.close();
             }
@@ -198,7 +259,7 @@ public class CodeAssist {
         } 
     }
 
-    public TypeInferenceResult typeInference(Project project, String file, Reader reader, Location loc) {
+    public TypeInferenceResult typeInference(Project project, File file, Reader reader, Location loc) {
         try {
             prepare(project);
             Node ast = parseFileContents(file, readAndInjectCode(reader, loc, TYPE_INFERENCE_METHOD_NAME, "."));
@@ -217,7 +278,7 @@ public class CodeAssist {
         try {
             InputStream in = new FileInputStream(file);
             try {
-                return codeCompletion(project, file.getPath(), new InputStreamReader(in, encoding), loc);
+                return codeCompletion(project, file, new InputStreamReader(in, encoding), loc);
             } finally {
                 in.close();
             }
@@ -226,7 +287,7 @@ public class CodeAssist {
         } 
     }
 
-    public CodeCompletionResult codeCompletion(Project project, String file, Reader reader, Location loc) {
+    public CodeCompletionResult codeCompletion(Project project, File file, Reader reader, Location loc) {
         CodeCompletionResult result = new CodeCompletionResult();
         TypeInferenceResult r = typeInference(project, file, reader, loc);
         result.setAST(r.getAST());
@@ -252,7 +313,10 @@ public class CodeAssist {
 
         Graph graph = project.getGraph();
         graph.addSpecialMethod(TYPE_INFERENCE_METHOD_NAME, typeInferenceMethod);
+        graph.addSpecialMethod("require", requireMethod);
         graph.setNodeDiff(new NodeDiffForTypeInference());
+
+        load(project, new File(options.getRsenseHome() + "/stubs/1.8/builtin.rb"), "UTF-8");
     }
 
     private String readAll(Reader reader) throws IOException {
@@ -295,8 +359,8 @@ public class CodeAssist {
         return buffer.toString();
     }
 
-    public Node parseFileContents(String file, String string) {
+    public Node parseFileContents(File file, String string) {
         ByteArrayInputStream in = new ByteArrayInputStream(string.getBytes());
-        return rubyRuntime.parseFromMain(in, file);
+        return rubyRuntime.parseFromMain(in, file.getPath());
     }
 }

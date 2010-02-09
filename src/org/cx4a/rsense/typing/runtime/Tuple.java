@@ -40,11 +40,14 @@ public class Tuple extends PolymorphicObject {
     }
 
     public IRubyObject safeGet(int index) {
-        if (elements != null && index < elements.length) {
-            return elements[index];
-        } else {
-            return runtime.getNil();
+        if (elements != null) {
+            if (index < 0 && (elements.length + index) >= 0) {
+                return elements[elements.length + index];
+            } else if (0 <= index && index < elements.length) {
+                return elements[index];
+            }
         }
+        return runtime.getNil();
     }
 
     public int getLength() {

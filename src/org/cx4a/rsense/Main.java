@@ -28,8 +28,6 @@ public class Main {
     private InputStream in;
     private PrintStream out;
     private Reader inReader;
-    private Project sandbox;
-    private Config config;
     private CodeAssist codeAssist;
     
     public static void main(String[] args) throws Exception {
@@ -49,10 +47,11 @@ public class Main {
             return;
         }
 
-        init();
-
         String command = args[0];
         Options options = parseOptions(args, 1);
+
+        init(options);
+
         if (options.isDebug()) {
             Logger.getInstance().setLevel(Logger.Level.DEBUG);
         }
@@ -69,16 +68,8 @@ public class Main {
         }
     }
 
-    private void init() {
-        String rsenseHome = System.getProperty("rsense.home");
-        if (rsenseHome == null) {
-            rsenseHome = ".";
-        }
-
-        sandbox = new Project("<sandbox>", null);
-        config = new Config(rsenseHome);
-        codeAssist = new CodeAssist(config);
-        codeAssist.load(sandbox, new File(config.rsenseHome + "/stubs/1.8/builtin.rb"), "UTF-8");
+    private void init(Options options) {
+        codeAssist = new CodeAssist(options);
     }
 
     private void start(String command, Options options) {
@@ -244,13 +235,14 @@ public class Main {
     private void commandCodeCompletion(Options options) {
         try {
             CodeCompletionResult result;
+            Project project = codeAssist.getProject(options);
             if (options.isFileStdin()) {
-                result = codeAssist.codeCompletion(sandbox,
-                                                   "<stdin>",
+                result = codeAssist.codeCompletion(project,
+                                                   new File("(stdin)"),
                                                    options.getHereDocReader(inReader),
                                                    options.getLocation());
             } else {
-                result = codeAssist.codeCompletion(sandbox,
+                result = codeAssist.codeCompletion(project,
                                                    options.getFile(),
                                                    options.getEncoding(),
                                                    options.getLocation());
@@ -301,13 +293,14 @@ public class Main {
     private void commandTypeInference(Options options) {
         try {
             TypeInferenceResult result;
+            Project project = codeAssist.getProject(options);
             if (options.isFileStdin()) {
-                result = codeAssist.typeInference(sandbox,
-                                                  "<stdin>",
+                result = codeAssist.typeInference(project,
+                                                  new File("(stdin)"),
                                                   options.getHereDocReader(inReader),
                                                   options.getLocation());
             } else {
-                result = codeAssist.typeInference(sandbox,
+                result = codeAssist.typeInference(project,
                                                   options.getFile(),
                                                   options.getEncoding(),
                                                   options.getLocation());
@@ -387,7 +380,7 @@ public class Main {
         if (options.isEmacsFormat()) {
             out.println("((error . \"unexpected error\"))");
         } else {
-            out.println("Unexpected error:");
+            out.println("unexpected error:");
             e.printStackTrace(out);
         }
     }

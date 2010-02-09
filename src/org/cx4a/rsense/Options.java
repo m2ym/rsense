@@ -103,6 +103,34 @@ public class Options extends HashMap<String, String> {
         return get("log");
     }
 
+    public String getRsenseHome() {
+        String rsenseHome = get("rsense-home");
+        return rsenseHome != null ? rsenseHome : ".";
+    }
+
+    public String getLoadPath() {
+        String loadPath = get("load-path");
+        if (loadPath == null) {
+            String sep = File.pathSeparator;
+            if (sep.equals(";")) {
+                // Windows maybe (ActiveRuby)
+                return "C:\\Program Files\\ruby-1.8\\lib\\ruby\\1.8";
+            } else {
+                // Unix maybe
+                return "/usr/lib/ruby/1.8";
+            }
+        }
+        return loadPath;
+    }
+
+    public String getProject() {
+        return get("project");
+    }
+
+    public boolean isDetectProject() {
+        return containsKey("detect-project");
+    }
+
     public boolean isTest() {
         return containsKey("test");
     }

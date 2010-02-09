@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 import org.jruby.ast.Node;
 import org.jruby.ast.FixnumNode;
+import org.jruby.ast.StrNode;
 import org.jruby.ast.types.INameNode;
 
 import org.cx4a.rsense.ruby.IRubyObject;
@@ -95,6 +96,15 @@ public class Vertex {
         Node node = vertex.getNode();
         if (node instanceof FixnumNode) {
             return Integer.valueOf((int) ((FixnumNode) node).getValue());
+        } else {
+            return null;
+        }
+    }
+
+    public static String getString(Vertex vertex) {
+        Node node = vertex.getNode();
+        if (node instanceof StrNode) {
+            return ((StrNode) node).getValue().toString();
         } else {
             return null;
         }

@@ -452,7 +452,10 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitArgsCatNode(ArgsCatNode node) {
-        throw new UnsupportedOperationException();
+        // FIXME
+        Logger.fixme("argscat node is not implemented yet.");
+        return NULL_VERTEX;
+        //throw new UnsupportedOperationException();
     }
     
     public Object visitArgsPushNode(ArgsPushNode node) {
@@ -551,10 +554,13 @@ public class Graph implements NodeVisitor {
         }
         
         Block block = null;
-        if (node.getIterNode() != null) {
+        if (node.getIterNode() instanceof IterNode) {
             IterNode iterNode = (IterNode) node.getIterNode();
             DynamicScope scope = new DynamicScope(context.getCurrentScope().getModule(), context.getCurrentScope());
             block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), scope);
+        } else if (node.getIterNode() != null) {
+            // FIXME
+            Logger.debug("unknnown iternode: %s", node.getIterNode());
         }
         CallVertex vertex = new CallVertex(node, receiverVertex, argVertices, block);
         return RuntimeHelper.call(this, vertex);
@@ -772,9 +778,12 @@ public class Graph implements NodeVisitor {
         }
         
         Block block = null;
-        if (node.getIterNode() != null) {
+        if (node.getIterNode() instanceof IterNode) {
             IterNode iterNode = (IterNode) node.getIterNode();
             block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), context.getCurrentScope());
+        } else if (node.getIterNode() != null) {
+            // FIXME
+            Logger.debug("unknnown iternode: %s", node.getIterNode());
         }
         CallVertex vertex = new CallVertex(node, createFreeSingleTypeVertex(context.getFrameSelf()), argVertices, block);
         return RuntimeHelper.call(this, vertex);
