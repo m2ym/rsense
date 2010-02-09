@@ -12,7 +12,7 @@ module File::Constants; end
 # FIXME
 ARGS = nil
 
-##% Array<t> !nobody
+##% Array<t>
 class Array
   # FIXME to_ary for +, -, &
 
@@ -27,14 +27,14 @@ class Array
 
   # FIXME to_ary
 
-  ##% &<v>(Array<v>) -> Array<t or v>
+  ##% &<v>(Array<v>) -> Array<t | v>
   def &(other) self || other end
   ##% "*"(Integer) -> Array<t>
   ##% "*"(String) -> String
   def *(times) self end
-  ##% +(Array<v>) -> Array<t or v>
+  ##% +(Array<v>) -> Array<t | v>
   def +(other) self || other end
-  ##% -(Array<v>) -> Array<t or v>
+  ##% -(Array<v>) -> Array<t | v>
   def -(other) self || other end
   ##% "<<"<v | v <= t>(v) -> self
   def <<(obj) self end
@@ -99,8 +99,8 @@ class Array
   ##% eql?(a) -> Boolean
   def eql?(other) BOOLEAN end
   ##% fetch(Integer) -> t
-  ##% fetch(Integer, ifnone) -> t or ifnone
-  ##% fetch<v>(Integer) {Integer -> v} -> t or v
+  ##% fetch(Integer, ifnone) -> t | ifnone
+  ##% fetch<v>(Integer) {Integer -> v} -> t | v
   def fetch(nth, ifnone = nil) _e || ifnone end
   ##% fill<v | v <= t>(v) -> self
   ##% fill<v | v <= t>() {Integer -> v} -> self
@@ -200,11 +200,10 @@ class Array
   ##% values_at<k, v | t <= (k, v)>(*a) -> Array<v>
   def values_at(*index) self end
   # FIXME zip
-  ##% "|"<v>(Array<v>) -> Array<t or v>
+  ##% "|"<v>(Array<v>) -> Array<t | v>
   def |(other) self || other end
 end
 
-##% Bignum !nobody
 class Bignum
   ### Precision
   ##% self.induced_from(a) -> Bignum
@@ -251,8 +250,8 @@ class Bignum
   def remainder(other) 0 end
   ##% round() -> Integer
   def round() 0 end
-  ##% step<a | a <= Numeric>(Numeric, ?a) {self or a or Fixnum -> ?} -> self
-  ##% step<a | a <= Numeric>(Numeric, ?a) -> Enumerable::Enumerator<self, self or a or Fixnum>
+  ##% step<a | a <= Numeric>(Numeric, ?a) {self | a | Fixnum -> ?} -> self
+  ##% step<a | a <= Numeric>(Numeric, ?a) -> Enumerable::Enumerator<self, self | a | Fixnum>
   def step(limit, step = 1) self end
   ##% to_int() -> Bignum
   def to_int() 0 end
@@ -262,12 +261,10 @@ class Bignum
   def zero?() BOOLEAN end
 end
 
-##% Binding !nobody
 class Binding
   def eval(*) end
 end
 
-##% Class !nobody
 class Class
   # FIXME self.new
 
@@ -292,16 +289,14 @@ module Comparable
   def between?(min, max) BOOLEAN end
 end
 
-##% Continuation !nobody
 class Continuation
   # FIXME
 end
 
-##% Data !nobody
 class Data
 end
 
-##% Dir<| t <= String> !nobody
+##% Dir<| t <= String>
 class Dir
   include Enumerable
 
@@ -335,10 +330,10 @@ class Dir
   ##% self.mkdir(String, ?Integer) -> Fixnum
   def self.mkdir(path, mode = 0777) 0 end
   ##% self.new(String) -> Dir
-  def self.new(path) Dir.new end
+  def self.new(path) Dir.new('') end
   ##% self.open(String) -> Dir
   ##% self.open<v>(String) {Dir -> v} -> v
-  def self.open(path) Dir.new end
+  def self.open(path) Dir.new('') end
 
   ##% close() -> nil
   def close() end
@@ -362,9 +357,6 @@ end
 
 ##% Enumerable<t>
 module Enumerable
-  # Special method for internal use
-  ##% _e() -> t
-  def _e() end
   ##% all?() -> Boolean
   ##% all?() {t -> ?} -> Boolean
   def all?() yield self; BOOLEAN end
@@ -382,8 +374,8 @@ module Enumerable
   ##% cycle() {t -> ?} -> ?
   def cycle() yield self end
   # FIXME ifnone
-  ##% find<v>(?a) -> Enumerator<t or a, t>
-  ##% find<v>(?a) {t -> ?} -> t or a
+  ##% find<v>(?a) -> Enumerator<t | a, t>
+  ##% find<v>(?a) {t -> ?} -> t | a
   def find(ifnone = nil) yield self end
   alias :detect :find
   ##% drop(Integer) -> Array<t>
@@ -425,9 +417,9 @@ module Enumerable
   def member?(val) BOOLEAN end
   alias :include? :member?
   # FIXME sym
-  ##% inject(?a) {(r or init or t) -> r} -> r or init
+  ##% inject(?a) {(r | init | t) -> r} -> r | init
   ##% inject(Symbol) -> t
-  ##% inject(a, Symbol) -> t or a
+  ##% inject(a, Symbol) -> t | a
   def inject(*) _e end
   alias :reduce :inject
   ##% max() -> t
@@ -473,9 +465,14 @@ module Enumerable
   def take_while() yield _e; [_e]; end
   # FIXME
   def zip(*) [[_e]] end
+
+  private
+  # Special methods for internal use
+  ##% _e() -> t
+  def _e() end
 end
 
-##% Enumerator<s, t> !nobody
+##% Enumerator<s, t>
 class Enumerator
   include Enumerable
 
@@ -511,7 +508,6 @@ class FalseClass
   def |(other) BOOLEAN end
 end
 
-##% File !nobody
 class File
   ALT_SEPARATOR = ''
   PATH_SEPARATOR = ''
@@ -520,41 +516,41 @@ class File
   
   include File::Constants
 
-  ##% self.atime(String or IO) -> Time
+  ##% self.atime(String | IO) -> Time
   def self.atime(filename) Time.new end
   ##% self.basename(String, ?String) -> String
   def self.basename(filename, suffix = '') '' end
-  ##% self.blockdev?(String or IO) -> Boolean
+  ##% self.blockdev?(String | IO) -> Boolean
   def self.blockdev?(path) BOOLEAN end
-  ##% self.chardev?(String or IO) -> Boolean
+  ##% self.chardev?(String | IO) -> Boolean
   def self.chardev?(path) BOOLEAN end
   ##% self.chmod(Integer, *String) -> Integer
   def self.chmod(mode, *filename) 0 end
   ##% self.chown(Integer, Integer, *String) -> Integer
   def self.chown(owner, group, *filename) 0 end
-  ##% self.ctime(String or IO) -> Time
+  ##% self.ctime(String | IO) -> Time
   def self.ctime(filename) Time.new end
   ##% self.delete(*String) -> Integer
   def self.delete(*filename) 0 end
   ##% self.unlink(*String) -> Integer
   def self.unlink(*filename) 0 end
-  ##% self.directory?(String or IO) -> Boolean
+  ##% self.directory?(String | IO) -> Boolean
   def self.directory?(path) BOOLEAN end
   ##% self.dirname(String) -> String
   def self.dirname(filename) '' end
-  ##% self.executable?(String or IO) ->Boolean
+  ##% self.executable?(String | IO) ->Boolean
   def self.executable?(path) BOOLEAN end
-  ##% self.executable_real?(String or IO) ->Boolean
+  ##% self.executable_real?(String | IO) ->Boolean
   def self.executable_real?(path) BOOLEAN end
-  ##% self.exist?(String or IO) -> Boolean
+  ##% self.exist?(String | IO) -> Boolean
   def self.exist?(path) BOOLEAN end
-  ##% self.exists?(String or IO) -> Boolean
+  ##% self.exists?(String | IO) -> Boolean
   def self.exists?(path) BOOLEAN end
   ##% self.expand_path(String, ?String) -> String
   def self.expand_path(path, default_dir = '.') '' end
   ##% self.extname(String) -> String
   def self.extname(filename) '' end
-  ##% self.file?(String or IO) -> Boolean
+  ##% self.file?(String | IO) -> Boolean
   def self.file?(path) BOOLEAN end
   ##% self.fnmatch(String, String, ?Integer) -> Boolean
   def self.fnmatch(pattern, path, flags = 0) BOOLEAN end
@@ -562,9 +558,9 @@ class File
   def self.fnmatch?(pattern, path, flags = 0) BOOLEAN end
   ##% self.ftype(String) -> String
   def self.ftype(filename) '' end
-  ##% self.grpowned?(String or IO) -> Boolean
+  ##% self.grpowned?(String | IO) -> Boolean
   def self.grpowned?(filename) BOOLEAN end
-  ##% self.identical?(String or IO, String or IO) -> Boolean
+  ##% self.identical?(String | IO, String | IO) -> Boolean
   def self.identical?(filename1, filename2) BOOLEAN end
   ##% self.join(*String) -> String
   def self.join(*item) '' end
@@ -576,56 +572,56 @@ class File
   def self.link(old, new) 0 end
   ##% self.lstat(String) -> File::Stat
   def self.lstat(filename) File::Stat.new('') end
-  ##% self.mtime(String or IO) -> Time
+  ##% self.mtime(String | IO) -> Time
   def self.mtime(filename) Time.new end
-  ##% self.new(String or Integer, ?a, ?Integer) -> File
+  ##% self.new(String | Integer, ?a, ?Integer) -> File
   def self.new(path, mode = 'r', perm = 0666) File.new('') end
-  ##% self.open(String or Integer, ?a, ?Integer) -> File
-  ##% self.open(String or Integer, ?a, ?Integer) {File -> a} -> a
+  ##% self.open(String | Integer, ?a, ?Integer) -> File
+  ##% self.open(String | Integer, ?a, ?Integer) {File -> a} -> a
   def self.open(path, mode = 'r', perm = 0666) File.new('') end
-  ##% self.owned?(String or IO) -> Boolean
+  ##% self.owned?(String | IO) -> Boolean
   def self.owned?(path) BOOLEAN end
-  ##% self.pipe?(String or IO) -> Boolean
+  ##% self.pipe?(String | IO) -> Boolean
   def self.pipe?(path) BOOLEAN end
-  ##% self.readable?(String or IO) -> Boolean
+  ##% self.readable?(String | IO) -> Boolean
   def self.readable?(path) BOOLEAN end
-  ##% self.readable_real?(String or IO) -> Boolean
+  ##% self.readable_real?(String | IO) -> Boolean
   def self.readable_real?(path) BOOLEAN end
   ##% self.readlink(String) -> String
   def self.readlink(path) '' end
   ##% self.rename(String, String) -> Integer
   def self.rename(from, to) 0 end
-  ##% self.setgid?(String or IO) -> Boolean
+  ##% self.setgid?(String | IO) -> Boolean
   def self.setgid?(path) BOOLEAN end
-  ##% self.setuid?(String or IO) -> Boolean
+  ##% self.setuid?(String | IO) -> Boolean
   def self.setuid?(path) BOOLEAN end
-  ##% self.size(String or IO) -> Integer
+  ##% self.size(String | IO) -> Integer
   def self.size(path) 0 end
-  ##% self.size?(String or IO) -> Boolean
+  ##% self.size?(String | IO) -> Boolean
   def self.size?(path) BOOLEAN end
-  ##% self.socket?(String or IO) -> Boolean
+  ##% self.socket?(String | IO) -> Boolean
   def self.socket?(path) BOOLEAN end
   ##% self.split(String) -> (String, String)
   def self.split(pathname) ['', ''] end
   ##% self.stat(String) -> File::Stat
   def self.stat(filename) File::Stat.new('') end
-  ##% self.sticky?(String or IO) -> Boolean
+  ##% self.sticky?(String | IO) -> Boolean
   def self.sticky?(path) BOOLEAN end
   ##% self.symlink(String, String) -> Integer
   def self.symlink(old, new) 0 end
-  ##% self.symlink?(String or IO) -> Boolean
+  ##% self.symlink?(String | IO) -> Boolean
   def self.symlinky?(path) BOOLEAN end
   ##% self.truncate(String, Integer) -> Integer
   def self.truncate(path, length) 0 end
   ##% self.umask(?Integer) -> Integer
   def self.umask(umask = 0) 0 end
-  ##% self.utime(Time or Integer, Time or Integer, *String) -> Integer
+  ##% self.utime(Time | Integer, Time | Integer, *String) -> Integer
   def self.utime(atime, mtime, *filename) 0 end
-  ##% self.writable?(String or IO) -> Boolean
+  ##% self.writable?(String | IO) -> Boolean
   def self.writable?(path) BOOLEAN end
-  ##% self.writable_real?(String or IO) -> Boolean
+  ##% self.writable_real?(String | IO) -> Boolean
   def self.writable_real?(path) BOOLEAN end
-  ##% self.zero?(String or IO) -> Boolean
+  ##% self.zero?(String | IO) -> Boolean
   def self.zero?(path) BOOLEAN end
 
   ##% atime() -> Time
@@ -636,7 +632,7 @@ class File
   def chown(owner, group) 0 end
   ##% ctime() -> Time
   def ctime() Time.new end
-  ##% flock(Integer) -> Integer or FalseClass
+  ##% flock(Integer) -> Integer | FalseClass
   def flock(operation) 0 || false end
   ##% lstat() -> File::Stat
   def lstat() File::Stat.new('') end
@@ -671,7 +667,6 @@ module File::Constants
   WRONLY = 0
 end
 
-##% File::Stat !nobody
 class File::Stat
   include Comparable
 
@@ -740,7 +735,7 @@ class File::Stat
   def setuid?() BOOLEAN end
   ##% size() -> Integer
   def size() 0 end
-  ##% size?() -> Integer or nil
+  ##% size?() -> Integer | nil
   def size?() 0 || nil end
   ##% socket?() -> Boolean
   def socket?() BOOLEAN end
@@ -759,49 +754,48 @@ class File::Stat
 end
 
 module FileTest
-  ##% self.blockdev?(String or IO) -> Boolean
+  ##% self.blockdev?(String | IO) -> Boolean
   def self.blockdev?(path) BOOLEAN end
-  ##% self.chardev?(String or IO) -> Boolean
+  ##% self.chardev?(String | IO) -> Boolean
   def self.chardev?(path) BOOLEAN end
-  ##% self.directory?(String or IO) -> Boolean
+  ##% self.directory?(String | IO) -> Boolean
   def self.directory?(path) BOOLEAN end
-  ##% self.executable?(String or IO) ->Boolean
+  ##% self.executable?(String | IO) ->Boolean
   def self.executable?(path) BOOLEAN end
-  ##% self.executable_real?(String or IO) ->Boolean
+  ##% self.executable_real?(String | IO) ->Boolean
   def self.executable_real?(path) BOOLEAN end
-  ##% self.exist?(String or IO) -> Boolean
+  ##% self.exist?(String | IO) -> Boolean
   def self.exist?(path) BOOLEAN end
-  ##% self.exists?(String or IO) -> Boolean
+  ##% self.exists?(String | IO) -> Boolean
   def self.exists?(path) BOOLEAN end
-  ##% self.file?(String or IO) -> Boolean
+  ##% self.file?(String | IO) -> Boolean
   def self.file?(path) BOOLEAN end
-  ##% self.grpowned?(String or IO) -> Boolean
+  ##% self.grpowned?(String | IO) -> Boolean
   def self.grpowned?(filename) BOOLEAN end
-  ##% self.identical?(String or IO, String or IO) -> Boolean
+  ##% self.identical?(String | IO, String | IO) -> Boolean
   def self.identical?(filename1, filename2) BOOLEAN end
-  ##% self.owned?(String or IO) -> Boolean
-  def self.owned?(path) BOOLEAN end  ##% self.setgid?(String or IO) -> Boolean
-  ##% self.setgid?(String or IO) -> Boolean
+  ##% self.owned?(String | IO) -> Boolean
+  def self.owned?(path) BOOLEAN end  ##% self.setgid?(String | IO) -> Boolean
+  ##% self.setgid?(String | IO) -> Boolean
   def self.setgid?(path) BOOLEAN end
-  ##% self.setuid?(String or IO) -> Boolean
+  ##% self.setuid?(String | IO) -> Boolean
   def self.setuid?(path) BOOLEAN end
-  ##% self.size(String or IO) -> Integer
+  ##% self.size(String | IO) -> Integer
   def self.size(path) 0 end
-  ##% self.size?(String or IO) -> Boolean
+  ##% self.size?(String | IO) -> Boolean
   def self.size?(path) BOOLEAN end
-  ##% self.socket?(String or IO) -> Boolean
+  ##% self.socket?(String | IO) -> Boolean
   def self.socket?(path) BOOLEAN end
-  ##% self.sticky?(String or IO) -> Boolean
+  ##% self.sticky?(String | IO) -> Boolean
   def self.sticky?(path) BOOLEAN end
-  ##% self.writable?(String or IO) -> Boolean
+  ##% self.writable?(String | IO) -> Boolean
   def self.writable?(path) BOOLEAN end
-  ##% self.writable_real?(String or IO) -> Boolean
+  ##% self.writable_real?(String | IO) -> Boolean
   def self.writable_real?(path) BOOLEAN end
-  ##% self.zero?(String or IO) -> Boolean
+  ##% self.zero?(String | IO) -> Boolean
   def self.zero?(path) BOOLEAN end
 end
 
-##% Fixnum !nobody
 class Fixnum
   ### Numeric
   ##% +@() -> self
@@ -842,8 +836,8 @@ class Fixnum
   def remainder(other) 0 end
   ##% round() -> Fixnum
   def round() 0 end
-  ##% step<a | a <= Numeric>(Numeric, ?a) {self or a or Fixnum -> ?} -> self
-  ##% step<a | a <= Numeric>(Numeric, ?a) -> Enumerator<self, self or a or Fixnum>
+  ##% step<a | a <= Numeric>(Numeric, ?a) {self | a | Fixnum -> ?} -> self
+  ##% step<a | a <= Numeric>(Numeric, ?a) -> Enumerator<self, self | a | Fixnum>
   def step(limit, step = 1) self end
   ##% to_int() -> Fixnum
   def to_int() 0 end
@@ -859,7 +853,6 @@ class Fixnum
   def to_sym() :a end
 end
 
-##% Float !nobody
 class Float
   DIG = 0
   EPSILONG = 0.0
@@ -919,8 +912,8 @@ class Float
   def remainder(other) 0.0 end
   ##% round() -> Fixnum
   def round() 0 end
-  ##% step<a | a <= Numeric>(Numeric, ?a) {self or a or Fixnum -> ?} -> self
-  ##% step<a | a <= Numeric>(Numeric, ?a) -> Enumerator<self, self or a or Fixnum>
+  ##% step<a | a <= Numeric>(Numeric, ?a) {self | a | Fixnum -> ?} -> self
+  ##% step<a | a <= Numeric>(Numeric, ?a) -> Enumerator<self, self | a | Fixnum>
   def step(limit, step = 1) self end
   ##% to_int() -> Integer
   def to_int() 0 end
@@ -970,19 +963,13 @@ module GC
   def garbase_collect() end
 end
 
-##% Hash<k, v, z | (k, v) <= t> !nobody
+##% Hash<k, v, z | (k, v) <= t>
 class Hash
   include Enumerable
   
-  # Special methods for internal use
-  ##% _k() -> k
-  def _k() end
-  ##% _v() -> v
-  def _v() end
-
   # FIXME
   ##% self.[](Hash<k', v', z'>) -> Hash<k', v', z'>
-  ##% self.[](?k1, ?v1, ?k2, ?v2, ?k3, ?v3, ?k4, ?v4, ?k5, ?v5) -> Hash<k1 or k2 or k3 or k4 or k5, v1 or v2 or v3 or v4 or v5>
+  ##% self.[](?k1, ?v1, ?k2, ?v2, ?k3, ?v3, ?k4, ?v4, ?k5, ?v5) -> Hash<k1 | k2 | k3 | k4 | k5, v1 | v2 | v3 | v4 | v5>
   def self.[](*) {} end
   # FIXME
   ##% self.new(?z') -> Hash<?, ?, z'>
@@ -997,7 +984,7 @@ class Hash
   def eql?(other) BOOLEAN end
   ##% [](a) -> v
   def [](key) _v end
-  ##% []=(k, v) -> v
+  ##% []=<v' | v' <= v>(k, v') -> v'
   def []=(key, value) value end
   ##% store(k, v) -> v
   def store(key, value) value end
@@ -1007,7 +994,7 @@ class Hash
   ##% clone() -> Hash<k, v, z>
   def clone() self end
   alias :dup :clone
-  ##% default(?a) -> d or a
+  ##% default(?a) -> d | a
   def default(key = nil) end
   ##% default=<d | d <= z>(d) -> d
   def default=(value) value end
@@ -1034,8 +1021,8 @@ class Hash
   def empty?() BOOLEAN end
   ##% equal?(a) -> Boolean
   def equal?(other) BOOLEAN end
-  ##% fetch(a, ?b) -> v or b
-  ##% fetch(a) {a -> b} -> v or b
+  ##% fetch(a, ?b) -> v | b
+  ##% fetch(a) {a -> b} -> v | b
   def fetch(key) _v end
   ##% has_key?(a) -> Boolean
   def has_key(key) BOOLEAN end
@@ -1063,8 +1050,8 @@ class Hash
   ##% length() -> Integer
   def length() 0 end
   alias :size :length
-  ##% merge<a | a <= Hash<k', v', z'> >(a) -> Hash<k or k', v or v', z or z'>
-  ##% merge<a | a <= Hash<k', v', z'> >(a) {(k, v, v') -> v''} -> Hash<k or k', v'', z or z'>
+  ##% merge<a | a <= Hash<k', v', z'> >(a) -> Hash<k | k', v | v', z | z'>
+  ##% merge<a | a <= Hash<k', v', z'> >(a) {(k, v, v') -> v''} -> Hash<k | k', v'', z | z'>
   def merge(other) self end
   ##% merge!<a | a <= Hash<k, v, z> >(a) -> self
   ##% merge!<a | a <= Hash<k, v', z>, v'' <= v>(a) {(k, v, v') -> v''} -> self
@@ -1079,7 +1066,7 @@ class Hash
   ##% select() -> Enumerator<Array<(k, v)>, (k, v)>
   ##% select() {(k, v) -> ?} -> Array<(k, v)>
   def select() yield _k, _v; [_k, _v] end
-  ##% shift() -> (k, v) or z
+  ##% shift() -> (k, v) | z
   def shift() [_k, _v] end
   ##% sort() -> Array<(k, v)>
   ##% sort() {(k, v) -> ?} -> Array<k, v>
@@ -1093,11 +1080,18 @@ class Hash
   def update(other) self end
   ##% values() -> Array<v>
   def values() [_v] end
-  ##% values_at(*a) -> Array<v or z>
+  ##% values_at(*a) -> Array<v | z>
   def values_at(*key) [_v] end
+
+  private
+  # Special methods for internal use
+  ##% _k() -> k
+  def _k() end
+  ##% _v() -> v
+  def _v() end
 end
 
-##% IO<| t <= String> !nobody
+##% IO<| t <= String>
 class IO
   SEEK_CUR = 0
   SEEK_END = 0
@@ -1161,7 +1155,7 @@ class IO
   ##% eof() -> Boolean
   def eof() BOOLEAN end
   alias :eof? :eof
-  ##% fcntl(Integer, ?(Integer or String or Boolean)) -> Integer
+  ##% fcntl(Integer, ?(Integer | String | Boolean)) -> Integer
   def fcntl(cmd, arg = 0) 0 end
   ##% fileno() -> Integer
   def fileno() 0 end
@@ -1176,7 +1170,7 @@ class IO
   def getc() 0 end
   ##% gets(?String) -> String
   def gets(rs = $/) '' end
-  ##% ioctl(Integer, ?(Integer or String or Boolean)) -> Integer
+  ##% ioctl(Integer, ?(Integer | String | Boolean)) -> Integer
   def ioctl(cmd, arg = 0) 0 end
   ##% isatty() -> Boolean
   def isatty() BOOLEAN end
@@ -1247,7 +1241,6 @@ class IO
   def write_nonblock(str) 0 end
 end
 
-##% Integer !nobody
 class Integer
   include Precision
 
@@ -1296,8 +1289,8 @@ class Integer
   def remainder(other) 0 end
   ##% round() -> Integer
   def round() 0 end
-  ##% step<a | a <= Numeric>(Numeric, ?a) {self or a or Fixnum -> ?} -> self
-  ##% step<a | a <= Numeric>(Numeric, ?a) -> Enumerable::Enumerator<self, self or a or Fixnum>
+  ##% step<a | a <= Numeric>(Numeric, ?a) {self | a | Fixnum -> ?} -> self
+  ##% step<a | a <= Numeric>(Numeric, ?a) -> Enumerable::Enumerator<self, self | a | Fixnum>
   def step(limit, step = 1) self end
   ##% to_int() -> Integer
   def to_int() 0 end
@@ -1307,30 +1300,30 @@ class Integer
   def zero?() BOOLEAN end
 
   ### Integer
-  ##% %(Numeric) -> Fixnum or Bignum
+  ##% %(Numeric) -> Fixnum | Bignum
   def %(other) 0 end
-  ##% &(Numeric) -> Fixnum or Bignum
+  ##% &(Numeric) -> Fixnum | Bignum
   def &(other) 0 end
   ##% "*"(Float) -> Float
-  ##% "*"(Integer) -> Fixnum or Bignum
+  ##% "*"(Integer) -> Fixnum | Bignum
   def *(other) 0 end
   ##% "**"(Float) -> Float
-  ##% "**"(Integer) -> Fixnum or Bignum
+  ##% "**"(Integer) -> Fixnum | Bignum
   def **(other) 0 end
   ##% +(Float) -> Float
-  ##% +(Integer) -> Fixnum or Bignum
+  ##% +(Integer) -> Fixnum | Bignum
   def +(other) 0 end
   ##% -(Float) -> Float
-  ##% -(Integer) -> Fixnum or Bignum
+  ##% -(Integer) -> Fixnum | Bignum
   def -(other) 0 end
   ##% /(Float) -> Float
-  ##% /(Integer) -> Fixnum or Bignum
+  ##% /(Integer) -> Fixnum | Bignum
   def /(other) 0 end
-  ##% ">>"(Integer) -> Fixnum or Bignum
+  ##% ">>"(Integer) -> Fixnum | Bignum
   def >>(bits) 0 end
   ##% [](Integer) -> Fixnum
   def [](nth) 0 end
-  ##% ^(Integer) -> Fixnum or Bignum
+  ##% ^(Integer) -> Fixnum | Bignum
   def ^(other) 0 end
   ##% chr() -> String
   def chr() '' end
@@ -1341,14 +1334,14 @@ class Integer
   def even?() BOOLEAN end
   ##% integer?() -> TrueClass
   def integer?() true end
-  ##% next() -> Fixnum or Bignum
+  ##% next() -> Fixnum | Bignum
   def next() 0 end
   alias :succ :next
   ##% odd?() -> Boolean
   def odd?() BOOLEAN end
   ##% ord() -> self
   def ord() self end
-  ##% pred() -> Fixnum or Bignum
+  ##% pred() -> Fixnum | Bignum
   def pred() 0 end
   ##% size() -> Fixnum
   def size() 0 end
@@ -1365,9 +1358,9 @@ class Integer
   ##% upto(Numeric) {self -> ?} -> self
   ##% upto(Numeric) -> Enumerator<self, self>
   def upto(limit, step = 1) self end
-  ##% "|"(Numeric) -> Fixnum or Bignum
+  ##% "|"(Numeric) -> Fixnum | Bignum
   def |(other) 0 end
-  ##% ~() -> Fixnum or Bignum
+  ##% ~() -> Fixnum | Bignum
   def ~() 0 end
 end
 
@@ -1378,8 +1371,7 @@ module Kernel
   ARGF = IO.new(0)
   ARGV = ['']
   DATA = File.new('')
-  ENV = {}
-  ENV[''] = ''                  # normalize
+  ENV = Hash['', '']
   FALSE = false
   NIL = nil
   PLATFORM = ''
@@ -1476,9 +1468,9 @@ module Kernel
   def abort(message = $!.message) end
   ##% at_exit() {() -> ?} -> Proc
   def at_exit() Proc.new end
-  ##% autoload(String or Symbol, String) -> nil
+  ##% autoload(String | Symbol, String) -> nil
   def autoload(const_name, feature) end
-  ##% autoload?(String or Symbol) -> String
+  ##% autoload?(String | Symbol) -> String
   def autoload?(const_name) '' end
   ##% binding() -> Binding
   def binding() Binding.new end
@@ -1501,14 +1493,14 @@ module Kernel
   def chop() '' end
   ##% chop!() -> String
   def chop() '' end
-  ##% eval(String, ?Proc or Binding, ?String, ?Integer) -> ?
+  ##% eval(String, ?Proc | Binding, ?String, ?Integer) -> ?
   def eval(expr, bind = nil, fname = __FILE__, lineno = 1) end
   ##% exec(String) -> nil
   ##% exec(String, *String) -> nil
   def exec(command) end
-  ##% exit(Integer or Boolean) -> nil
+  ##% exit(Integer | Boolean) -> nil
   def exit(status = true) end
-  ##% exit!(Integer or Boolean) -> nil
+  ##% exit!(Integer | Boolean) -> nil
   def exit!(status = true) end
   # FIXME
   ##% raise() -> nil
@@ -1528,13 +1520,13 @@ module Kernel
   def gets(rs = $/) '' end
   ##% global_variables() -> Array<String>
   def global_variables() [''] end
-  ##% gsub(String or Regexp, String) -> String
-  ##% gsub(String or Regexp) {String -> ?} -> String
-  ##% gsub(String or Regexp) -> Enumerator<String, String>
+  ##% gsub(String | Regexp, String) -> String
+  ##% gsub(String | Regexp) {String -> ?} -> String
+  ##% gsub(String | Regexp) -> Enumerator<String, String>
   def gsub(pattern, replace = nil) '' end
-  ##% gsub!(String or Regexp, String) -> self
-  ##% gsub!(String or Regexp) {String -> ?} -> self
-  ##% gsub!(String or Regexp) -> Enumerator<String, self>
+  ##% gsub!(String | Regexp, String) -> self
+  ##% gsub!(String | Regexp) {String -> ?} -> self
+  ##% gsub!(String | Regexp) -> Enumerator<String, self>
   def gsub!(pattern, replace = nil) self end
   # FIXME
   ##% proc() {() -> ?} -> Proc
@@ -1547,8 +1539,8 @@ module Kernel
   def local_varaibles() [''] end
   ##% loop() {() -> a} -> a
   def loop() yield end
-  ##% open(String or Integer, ?a, ?Integer) -> IO
-  ##% open(String or Integer, ?a, ?Integer) {IO -> ?} -> nil
+  ##% open(String | Integer, ?a, ?Integer) -> IO
+  ##% open(String | Integer, ?a, ?Integer) {IO -> ?} -> nil
   def open(name, mode = 'r', perm = nil) IO.new(0) end
   ##% p(*a) -> nil
   def p(*arg) end
@@ -1557,11 +1549,11 @@ module Kernel
   ##% printf(String, *a) -> nil
   ##% printf(IO, String, *a) -> nil
   def printf(*) end
-  ##% putc<a | a <= Integer or String>(a) -> a
+  ##% putc<a | a <= Integer | String>(a) -> a
   def putc(ch) ch end
   ##% puts(*a) -> nil
   def puts(*arg) end
-  ##% rand(?Numeric) -> Integer or Float
+  ##% rand(?Numeric) -> Integer | Float
   def rand(max = 0) 0 || 0.0 end
   ##% readline(?String) -> String
   def readline(rs = $/) '' end
@@ -1571,40 +1563,40 @@ module Kernel
   def require(feature) BOOLEAN end
   ##% require_relative(String) -> Boolean
   def require_relative(feature) BOOLEAN end
-  ##% scan(String or Regexp) -> Array<String> or Array<Array<String> >
-  ##% scan(String or Regexp) {String -> ?} -> self
+  ##% scan(String | Regexp) -> Array<String> | Array<Array<String> >
+  ##% scan(String | Regexp) {String -> ?} -> self
   def scan(re) [''] || [['']] end
   ##% select(Array<IO>, ?Array<IO>, ?Array<IO>, ?Integer) -> (Array<IO>, Array<IO>, Array<IO>)
   def select(reads, writes = [], excepts = [], timeout = nil) [[IO.new(0)], [IO.new(0)], [IO.new(0)]] end
   def set_trace_func(*) end
   ##% sleep(?Numeric) -> Integer
   def sleep(sec = 0) 0 end
-  ##% split(?String, ?Integer) -> Array<String> or Array<Array<String> >
+  ##% split(?String, ?Integer) -> Array<String> | Array<Array<String> >
   def split(sep = $;, limit = 0) [''] || [['']] end
   ##% srand(?a) -> Integer
   def srand(seed = nil) 0 end
-  ##% sub(String or Regexp, String) -> String
-  ##% sub(String or Regexp) {String -> ?} -> String
-  ##% sub(String or Regexp) -> Enumerator<String, String>
+  ##% sub(String | Regexp, String) -> String
+  ##% sub(String | Regexp) {String -> ?} -> String
+  ##% sub(String | Regexp) -> Enumerator<String, String>
   def sub(pattern, replace = nil) '' end
-  ##% sub!(String or Regexp, String) -> self
-  ##% sub!(String or Regexp) {String -> ?} -> self
-  ##% sub!(String or Regexp) -> Enumerator<String, self>
+  ##% sub!(String | Regexp, String) -> self
+  ##% sub!(String | Regexp) {String -> ?} -> self
+  ##% sub!(String | Regexp) -> Enumerator<String, self>
   def sub!(pattern, replace = nil) self end
-  ##% syscall(Integer, *String or Integer) -> Integer
+  ##% syscall(Integer, *String | Integer) -> Integer
   def syscall(num, *arg) 0 end
   ##% system(String) -> Boolean
   ##% system(String, *String) -> Boolean
   def system(*) BOOLEAN end
-  ##% test(String or Integer, File) -> Boolean or Time or Integer
-  ##% test(String or Integer, File, File) -> Boolean
-  def test(cmd, file1, file2 = nil) BOOLEAN or Time.new or 0 end
+  ##% test(String | Integer, File) -> Boolean | Time | Integer
+  ##% test(String | Integer, File, File) -> Boolean
+  def test(cmd, file1, file2 = nil) BOOLEAN | Time.new | 0 end
   # FIXME
   ##% throw(a, ?b) -> nil
   def throw(tag, value = nil) end
   def trace_var(*) end
-  ##% trap(String or Symbol or Integer, String or Process) -> ?
-  ##% trap(String or Symbol or Integer) {() -> ?} -> ?
+  ##% trap(String | Symbol | Integer, String | Process) -> ?
+  ##% trap(String | Symbol | Integer) {() -> ?} -> ?
   def trap(signal, command = nil) end
   def untrace_var(*) end
   ##% warn(a) -> nil
@@ -1650,7 +1642,6 @@ class NilClass
   def |(other) BOOLEAN end
 end
 
-##% Numeric !nobody
 class Numeric
   include Comparable
 
@@ -1706,8 +1697,8 @@ class Numeric
   def remainder(other) 0 end
   ##% round() -> Integer
   def round() 0 end
-  ##% step<a | a <= Numeric>(Numeric, ?a) {self or a or Fixnum -> ?} -> self
-  ##% step<a | a <= Numeric>(Numeric, ?a) -> Enumerable::Enumerator<self, self or a or Fixnum>
+  ##% step<a | a <= Numeric>(Numeric, ?a) {self | a | Fixnum -> ?} -> self
+  ##% step<a | a <= Numeric>(Numeric, ?a) -> Enumerable::Enumerator<self, self | a | Fixnum>
   def step(limit, step = 1) self end
   ##% to_int() -> Integer
   def to_int() 0 end
@@ -1717,7 +1708,6 @@ class Numeric
   def zero?() BOOLEAN end
 end
 
-##% Object !nobody
 class Object
   include Kernel
   
@@ -1729,7 +1719,7 @@ module ObjectSpace
 end
 
 module Precision
-  ##% self.included(Module or Class) -> Precision
+  ##% self.included(Module | Class) -> Precision
   def self.included(module_or_class) self end
   ##% self.induced_from(a) -> Object
   def self.induced_from(number) 0 end
@@ -1761,11 +1751,11 @@ end
 module Process::UID
 end
 
-##% Range<_> !nobody
+##% Range<>
 class Range
   include Enumerable
 
-  ##% self.new(a, b, ?Boolean) -> Range<a or b>
+  ##% self.new(a, b, ?Boolean) -> Range<a | b>
   def self.new() end
 
   ##% ==(a) -> Boolean
@@ -1804,7 +1794,7 @@ module Signal
   # FIXME
 end
 
-##% String<| String <= t> !nobody
+##% String<| String <= t>
 class String
   include Enumerable
   include Comparable
@@ -1818,7 +1808,7 @@ class String
   def *(times) '' end
   ##% +(String) -> String
   def +(other) '' end
-  ##% "<<"(?Fixnum or String) -> self
+  ##% "<<"(?Fixnum | String) -> self
   def <<(other) self end
   alias :concat :<<
   ##% "<=>"(String) -> Integer
@@ -1835,11 +1825,11 @@ class String
   ##% [](Range) -> String
   def [](*) 0 end
   alias :slice :[]
-  ##% []=(Integer, String or Integer) -> String
-  ##% []=(Integer, Integer, String or Integer) -> String
-  ##% []=(String, String or Integer) -> String
-  ##% []=(Regexp, ?Integer, String or Integer) -> String
-  ##% []=(Range, String or Integer) -> String
+  ##% []=(Integer, String | Integer) -> String
+  ##% []=(Integer, Integer, String | Integer) -> String
+  ##% []=(String, String | Integer) -> String
+  ##% []=(Regexp, ?Integer, String | Integer) -> String
+  ##% []=(Range, String | Integer) -> String
   def []=(*) '' end
   ##% each_byte() {Fixnum -> ?} -> self
   ##% each_byte() -> Enumerator<self, Fixnum>
@@ -1892,21 +1882,21 @@ class String
   def end_with?(str) BOOLEAN end
   ##% eql?(a) -> Boolean
   def eql?(other) BOOLEAN end
-  ##% gsub(String or Regexp, String) -> String
-  ##% gsub(String or Regexp) {String -> ?} -> String
-  ##% gsub(String or Regexp) -> Enumerator<String, String>
+  ##% gsub(String | Regexp, String) -> String
+  ##% gsub(String | Regexp) {String -> ?} -> String
+  ##% gsub(String | Regexp) -> Enumerator<String, String>
   def gsub(pattern, replace = nil) '' end
-  ##% gsub!(String or Regexp, String) -> self
-  ##% gsub!(String or Regexp) {String -> ?} -> self
-  ##% gsub!(String or Regexp) -> Enumerator<String, self>
+  ##% gsub!(String | Regexp, String) -> self
+  ##% gsub!(String | Regexp) {String -> ?} -> self
+  ##% gsub!(String | Regexp) -> Enumerator<String, self>
   def gsub!(pattern, replace = nil) self end
   ##% hash() -> Integer
   def hash() 0 end
   ##% hex() -> Integer
   def hex() 0 end
-  ##% include?(String or Integer) -> Boolean
+  ##% include?(String | Integer) -> Boolean
   def include?(substr) BOOLEAN end
-  ##% index(String or Regexp, ?Integer) -> Integer
+  ##% index(String | Regexp, ?Integer) -> Integer
   def index(pattern, pos = 0) 0 end
   ##% insert(Integer, String) -> self
   def insert(pos, other) self end
@@ -1924,7 +1914,7 @@ class String
   def lstrip() '' end
   ##% lstrip!() -> self
   def lstrip!() self end
-  ##% match(String or Regexp) -> MatchData
+  ##% match(String | Regexp) -> MatchData
   def match(regexp) MatchData.new end
   ##% succ() -> String
   def succ() '' end
@@ -1934,7 +1924,7 @@ class String
   alias :next! :succ!
   ##% oct() -> Integer
   def oct() 0 end
-  ##% partition(String or Regexp) -> (String, String, String)
+  ##% partition(String | Regexp) -> (String, String, String)
   def partition(sep) ['', '', ''] end
   ##% replace(String) -> String
   def replace(other) self end
@@ -1942,21 +1932,21 @@ class String
   def reverse() '' end
   ##% reverse!() -> self
   def reverse!() self end
-  ##% rindex(String or Regexp, ?Integer) -> Integer
+  ##% rindex(String | Regexp, ?Integer) -> Integer
   def rindex(pattern, pos = 0) 0 end
   ##% rjust(Integer, ?String) -> String
   def rjust(width, padding = ' ') '' end
-  ##% rpartition(String or Regexp) -> (String, String, String)
+  ##% rpartition(String | Regexp) -> (String, String, String)
   def rpartition(sep) ['', '', ''] end
   ##% rstrip() -> String
   def rstrip() '' end
   ##% rstrip!() -> self
   def rstrip!() self end
-  ##% scan(String or Regexp) -> Array<String> or Array<Array<String> >
-  ##% scan(String or Regexp) {String -> ?} -> self
+  ##% scan(String | Regexp) -> Array<String> | Array<Array<String> >
+  ##% scan(String | Regexp) {String -> ?} -> self
   def scan(re) [''] || [['']] end
   alias :slice! :[]
-  ##% split(?String, ?Integer) -> Array<String> or Array<Array<String> >
+  ##% split(?String, ?Integer) -> Array<String> | Array<Array<String> >
   def split(sep = $;, limit = 0) [''] || [['']] end
   ##% squeeze(*String) -> String
   def squeeze(*chars) '' end
@@ -1968,13 +1958,13 @@ class String
   def strip() '' end
   ##% strip!() -> self
   def strip!() self end
-  ##% sub(String or Regexp, String) -> String
-  ##% sub(String or Regexp) {String -> ?} -> String
-  ##% sub(String or Regexp) -> Enumerator<String, String>
+  ##% sub(String | Regexp, String) -> String
+  ##% sub(String | Regexp) {String -> ?} -> String
+  ##% sub(String | Regexp) -> Enumerator<String, String>
   def sub(pattern, replace = nil) '' end
-  ##% sub!(String or Regexp, String) -> self
-  ##% sub!(String or Regexp) {String -> ?} -> self
-  ##% sub!(String or Regexp) -> Enumerator<String, self>
+  ##% sub!(String | Regexp, String) -> self
+  ##% sub!(String | Regexp) {String -> ?} -> self
+  ##% sub!(String | Regexp) -> Enumerator<String, self>
   def sub!(pattern, replace = nil) self end
   ##% sum(?Integer) -> Integer
   def sum(bits = 16) 0 end
@@ -2015,7 +2005,6 @@ class Struct::Tms
   # FIXME
 end
 
-##% Symbol !nobody
 class Symbol
   ##% self.all_symbols() -> Array<Symbol>
   def all_symbols() [:a] end

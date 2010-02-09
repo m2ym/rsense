@@ -246,6 +246,7 @@ public class Main {
             CodeCompletionResult result;
             if (options.isFileStdin()) {
                 result = codeAssist.codeCompletion(sandbox,
+                                                   "<stdin>",
                                                    options.getHereDocReader(inReader),
                                                    options.getLocation());
             } else {
@@ -302,6 +303,7 @@ public class Main {
             TypeInferenceResult result;
             if (options.isFileStdin()) {
                 result = codeAssist.typeInference(sandbox,
+                                                  "<stdin>",
                                                   options.getHereDocReader(inReader),
                                                   options.getLocation());
             } else {
@@ -375,15 +377,15 @@ public class Main {
 
     private void commandUnknown(String command, Options options) {
         if (options.isEmacsFormat()) {
-            out.printf("((error . \"Unknown command: %s\"))\n", command);
+            out.printf("((error . \"unknown command: %s\"))\n", command);
         } else {
-            out.printf("Unknown command: %s\n", command);
+            out.printf("unknown command: %s\n", command);
         }
     }
 
     private void commandException(Exception e, Options options) {
         if (options.isEmacsFormat()) {
-            out.println("((error . \"Unexpected error\"))");
+            out.println("((error . \"unexpected error\"))");
         } else {
             out.println("Unexpected error:");
             e.printStackTrace(out);

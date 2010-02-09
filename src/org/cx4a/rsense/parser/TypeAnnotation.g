@@ -45,8 +45,8 @@ type returns [TypeAnnotation value]
     ;
 
 method_type returns [MethodType value]
-    : ('::'? (ID|CONST_ID) '.')* method_name ('<' type_var_list? ('|' constraint_list)? '>')? method_sig {
-            $value = new MethodType($method_name.text, $type_var_list.value, $constraint_list.value, $method_sig.value);
+    : name=('::'? ((ID|CONST_ID) ('.'|'::'))* method_name) ('<' type_var_list? ('|' constraint_list)? '>')? method_sig {
+            $value = new MethodType($name.text, $type_var_list.value, $constraint_list.value, $method_sig.value);
         }
     ;
 
@@ -66,8 +66,8 @@ method_name
     ;
 
 class_type returns [ClassType value]
-    : CONST_ID ('<' type_var_list? ('|' constraint_list)? '>')? pragma_list? {
-            $value = new ClassType($CONST_ID.text, $type_var_list.value, $constraint_list.value, $pragma_list.value);
+    : name=('::'? (CONST_ID '::')* CONST_ID) ('<' type_var_list? ('|' constraint_list)? '>')? pragma_list? {
+            $value = new ClassType($name.text, $type_var_list.value, $constraint_list.value, $pragma_list.value);
         }
     ;
 
@@ -122,6 +122,9 @@ tuple returns [TypeTuple value]
     : '(' type_expr_comma_list ')' {
             $value = new TypeTuple($type_expr_comma_list.value);
         }
+    | '[' type_expr_comma_list ']' { // syntax sugar
+            $value = new TypeTuple($type_expr_comma_list.value);
+        }
     ;
 
 single_type_expr returns [TypeExpression value]
@@ -145,7 +148,7 @@ single_type_expr returns [TypeExpression value]
     ;
 
 or_type_list returns [List<TypeExpression> value]
-    : 'or' single_type_expr rest=or_type_list? {
+    : '|' single_type_expr rest=or_type_list? {
             $value = new ArrayList<TypeExpression>();
             $value.add($single_type_expr.value);
             if ($rest.value != null) {

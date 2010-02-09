@@ -479,7 +479,7 @@ public class Graph implements NodeVisitor {
                 argVertices[i] = createVertex(argNodes.get(i));
             }
         }
-        
+
         CallVertex vertex = new CallVertex(node, receiverVertex, argVertices, null);
         return RuntimeHelper.call(this, vertex);
     }

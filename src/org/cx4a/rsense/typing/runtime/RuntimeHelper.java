@@ -43,10 +43,12 @@ import org.cx4a.rsense.ruby.Frame;
 import org.cx4a.rsense.ruby.Visibility;
 import org.cx4a.rsense.ruby.RubyModule;
 import org.cx4a.rsense.ruby.RubyClass;
+import org.cx4a.rsense.ruby.MetaClass;
 import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.ruby.DynamicMethod;
 import org.cx4a.rsense.util.Logger;
 import org.cx4a.rsense.util.NodeDiff;
+import org.cx4a.rsense.util.SourceLocation;
 import org.cx4a.rsense.typing.TypeSet;
 import org.cx4a.rsense.typing.Template;
 import org.cx4a.rsense.typing.TemplateAttribute;
@@ -469,10 +471,10 @@ public class RuntimeHelper {
             if (nodeDiff != null
                 && nodeDiff.noDiff(node.getArgsNode(), oldMethod.getArgsNode())
                 && nodeDiff.noDiff(node.getBodyNode(), oldMethod.getBodyNode())) { // XXX nested class, defn
-                Logger.debug("template shared: %s", node.getName());
                 // FIXME annotation diff
                 newMethod.setTemplates(oldTemplates);
                 templateShared = true;
+                Logger.debug(SourceLocation.of(node), "template shared: %s", newMethod);
             }
         }
 
@@ -480,7 +482,7 @@ public class RuntimeHelper {
             if (oldTemplates != null && !oldTemplates.isEmpty()) {
                 dummyCallForTemplates(graph, node, newMethod, oldTemplates);
             } else {
-                dummyCall(graph, node, receiver);
+                dummyCall(graph, node, newMethod, receiver);
             }
         }
     }
@@ -505,7 +507,7 @@ public class RuntimeHelper {
         }
     }
 
-    private static void dummyCall(Graph graph, MethodDefNode node, IRubyObject receiver) {
+    private static void dummyCall(Graph graph, MethodDefNode node, Method method, IRubyObject receiver) {
         if (node.getBodyNode() != null) {
             Context context = graph.getRuntime().getContext();
             context.pushFrame(context.getFrameModule(), node.getName(), receiver, null, Visibility.PUBLIC);
@@ -513,16 +515,16 @@ public class RuntimeHelper {
             graph.createVertex(node.getBodyNode());
             context.popScope();
             context.popFrame();
-            Logger.debug("dummy call: %s", node.getName());
         }
+        Logger.debug(SourceLocation.of(node), "dummy call: %s", method);
     }
 
     private static void dummyCallForTemplates(Graph graph, MethodDefNode node, Method method, Map<TemplateAttribute, Template> templates) {
         String name = node.getName();
         for (TemplateAttribute attr : templates.keySet()) {
-            createTemplate(graph, name, method, attr);
+            createTemplate(graph, null, name, method, attr);
         }
-        Logger.debug("dummy call for templates: %s", name);
+        Logger.debug(SourceLocation.of(node), "template dummy call: %s", method);
     }
 
     private static Vertex applyTemplateAttribute(Graph graph, CallVertex vertex, String name, TemplateAttribute attr, boolean callSuper) {
@@ -545,10 +547,10 @@ public class RuntimeHelper {
             if (method != null) {
                 Template template = method.getTemplate(attr);
                 if (template == null) {
-                    template = createTemplate(graph, name, method, attr);
+                    template = createTemplate(graph, vertex, name, method, attr);
                 } else {
                     mergeAffectedMap(template, receiver);
-                    Logger.debug("template reused: %s", name);
+                    Logger.debug(SourceLocation.of(vertex), "template reused: %s", method);
                 }
                 return template.getReturnVertex();
             }
@@ -556,7 +558,7 @@ public class RuntimeHelper {
         return null;
     }
 
-    private static Template createTemplate(Graph graph, String name, Method method, TemplateAttribute attr) {
+    private static Template createTemplate(Graph graph, CallVertex vertex, String name, Method method, TemplateAttribute attr) {
         IRubyObject receiver = attr.getReceiver();
         Vertex[] argVertices = new Vertex[attr.getArgs().length];
         for (int i = 0; i < argVertices.length; i++) {
@@ -577,13 +579,16 @@ public class RuntimeHelper {
         setFrameTemplate(context.getCurrentFrame(), template);
 
         AnnotationResolver.Result result = AnnotationHelper.resolveMethodAnnotation(graph, template);
-        if (result != AnnotationResolver.Result.NOBODY) {
-            argsAssign(graph, (ArgsNode) method.getArgsNode(), argVertices);
-            if (method.getBodyNode() != null) {
-                Vertex ret = graph.createVertex(method.getBodyNode());
-                if (ret != null && result != AnnotationResolver.Result.NORETURN) {
-                    graph.addEdgeAndCopyTypeSet(ret, returnVertex);
-                }
+        if (result == AnnotationResolver.Result.UNRESOLVED) {
+            Logger.warn(SourceLocation.of(vertex), "annotation unmatched: %s", template.getMethod());
+        }
+
+        // FIXME more efficient way
+        argsAssign(graph, (ArgsNode) method.getArgsNode(), argVertices);
+        if (method.getBodyNode() != null) {
+            Vertex ret = graph.createVertex(method.getBodyNode());
+            if (ret != null && result != AnnotationResolver.Result.RESOLVED) {
+                graph.addEdgeAndCopyTypeSet(ret, returnVertex);
             }
         }
 
@@ -824,6 +829,12 @@ public class RuntimeHelper {
     }
 
     public static ClassTag getClassTag(RubyModule klass) {
+        if (klass instanceof MetaClass) {
+            MetaClass metaClass = (MetaClass) klass;
+            if (metaClass.getAttached() instanceof RubyModule) {
+                klass = (RubyModule) metaClass.getAttached();
+            }
+        }
         if (klass.getTag() instanceof ClassTag) {
             return (ClassTag) klass.getTag();
         } else {
@@ -839,9 +850,7 @@ public class RuntimeHelper {
     public static void setClassTag(RubyModule klass, Node node, List<TypeAnnotation> annotations) {
         for (TypeAnnotation annot : annotations) {
             if (annot instanceof ClassType) {
-                if (klass.getTag() == null) {
-                    klass.setTag(new ClassTag(node, (ClassType) annot));
-                }
+                klass.setTag(new ClassTag(node, (ClassType) annot));
                 return;
             }
         }

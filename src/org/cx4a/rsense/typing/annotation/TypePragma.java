@@ -10,4 +10,13 @@ public class TypePragma implements TypeExpression {
     public Type getType() {
         return type;
     }
+
+    @Override
+    public String toString() {
+        switch (type) {
+        case NOBODY_PRAGMA:
+            return "!nobody";
+        }
+        return "unknown-pragma";
+    }
 }

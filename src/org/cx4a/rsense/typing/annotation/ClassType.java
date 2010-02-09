@@ -52,6 +52,6 @@ public class ClassType implements TypeAnnotation {
 
     @Override
     public String toString() {
-        return "<ClassType " + name + " " + types + " " + constraints + ">";
+        return "<ClassType " + name + " " + types + " " + constraints + " " + pragmas + ">";
     }
 }

@@ -8,6 +8,7 @@ import org.jruby.ast.Node;
 import org.jruby.lexer.yacc.ISourcePosition;
 
 import org.cx4a.rsense.ruby.RubyModule;
+import org.cx4a.rsense.ruby.MetaClass;
 import org.cx4a.rsense.ruby.Visibility;
 import org.cx4a.rsense.ruby.DynamicMethod;
 import org.cx4a.rsense.typing.Template;
@@ -51,5 +52,10 @@ public class Method extends DynamicMethod {
 
     public void setAnnotations(List<MethodType> annotations) {
         this.annotations = annotations;
+    }
+
+    @Override
+    public String toString() {
+        return getModule().methodPathString() + name;
     }
 }

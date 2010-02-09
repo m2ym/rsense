@@ -101,7 +101,7 @@ public class RubyModule extends RubyObject {
                 return null;
             }
         } else {
-            RubyClass klass = RubyClass.newClass(getRuntime(), name, superClass, getRuntime().getContext().getFrameModule());
+            RubyClass klass = RubyClass.newClass(getRuntime(), name, superClass, this);
             setConstant(name, klass);
             return klass;
         }
@@ -117,7 +117,7 @@ public class RubyModule extends RubyObject {
                 return null;
             }
         } else {
-            RubyModule module = RubyModule.newModule(getRuntime(), name, getRuntime().getContext().getFrameModule());
+            RubyModule module = RubyModule.newModule(getRuntime(), name, this);
             setConstant(name, module);
             return module;
         }
@@ -175,6 +175,10 @@ public class RubyModule extends RubyObject {
 
     public void includeModule(RubyModule module) {
         includes.add(module);
+    }
+
+    public String methodPathString() {
+        return toString() + "#";
     }
 
     @Override

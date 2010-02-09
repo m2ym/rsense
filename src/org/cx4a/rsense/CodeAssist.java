@@ -162,7 +162,7 @@ public class CodeAssist {
         try {
             InputStream in = new FileInputStream(file);
             try {
-                return load(project, new InputStreamReader(in, encoding));
+                return load(project, file.getPath(), new InputStreamReader(in, encoding));
             } finally {
                 in.close();
             }
@@ -171,10 +171,10 @@ public class CodeAssist {
         } 
     }
 
-    public LoadResult load(Project project, Reader reader) {
+    public LoadResult load(Project project, String file, Reader reader) {
         try {
             prepare(project);
-            Node ast = parseString(readAll(reader));
+            Node ast = parseFileContents(file, readAll(reader));
             project.getGraph().load(ast);
 
             LoadResult result = new LoadResult();
@@ -189,7 +189,7 @@ public class CodeAssist {
         try {
             InputStream in = new FileInputStream(file);
             try {
-                return typeInference(project, new InputStreamReader(in, encoding), loc);
+                return typeInference(project, file.getPath(), new InputStreamReader(in, encoding), loc);
             } finally {
                 in.close();
             }
@@ -198,10 +198,10 @@ public class CodeAssist {
         } 
     }
 
-    public TypeInferenceResult typeInference(Project project, Reader reader, Location loc) {
+    public TypeInferenceResult typeInference(Project project, String file, Reader reader, Location loc) {
         try {
             prepare(project);
-            Node ast = parseString(readAndInjectCode(reader, loc, TYPE_INFERENCE_METHOD_NAME, "."));
+            Node ast = parseFileContents(file, readAndInjectCode(reader, loc, TYPE_INFERENCE_METHOD_NAME, "."));
             project.getGraph().load(ast);
 
             TypeInferenceResult result = new TypeInferenceResult();
@@ -217,7 +217,7 @@ public class CodeAssist {
         try {
             InputStream in = new FileInputStream(file);
             try {
-                return codeCompletion(project, new InputStreamReader(in, encoding), loc);
+                return codeCompletion(project, file.getPath(), new InputStreamReader(in, encoding), loc);
             } finally {
                 in.close();
             }
@@ -226,9 +226,9 @@ public class CodeAssist {
         } 
     }
 
-    public CodeCompletionResult codeCompletion(Project project, Reader reader, Location loc) {
+    public CodeCompletionResult codeCompletion(Project project, String file, Reader reader, Location loc) {
         CodeCompletionResult result = new CodeCompletionResult();
-        TypeInferenceResult r = typeInference(project, reader, loc);
+        TypeInferenceResult r = typeInference(project, file, reader, loc);
         result.setAST(r.getAST());
         if (r.hasError()) {
             result.setErrors(r.getErrors());
@@ -295,8 +295,8 @@ public class CodeAssist {
         return buffer.toString();
     }
 
-    public Node parseString(String string) {
+    public Node parseFileContents(String file, String string) {
         ByteArrayInputStream in = new ByteArrayInputStream(string.getBytes());
-        return rubyRuntime.parseFromMain(in, "<codeassist>");
+        return rubyRuntime.parseFromMain(in, file);
     }
 }

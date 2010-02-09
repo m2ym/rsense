@@ -33,7 +33,7 @@ import org.cx4a.rsense.util.Logger;
 
 public class AnnotationResolver {
     public enum Result {
-        UNRESOLVED, NORETURN, NOBODY,
+        NOANNOT, UNRESOLVED, RESOLVED,
     };
     
     private Graph graph;
@@ -76,14 +76,14 @@ public class AnnotationResolver {
                         && resolveMethodBlock(template, classType, block, receiver)
                         && resolveMethodConstraints(template, classType, constraints, receiver)
                         && resolveMethodReturn(template, classType, returnType, receiver)) {
-                        return (classType != null && classType.isNoBody()) ? Result.NOBODY : Result.NORETURN;
+                        return Result.RESOLVED;
                     }
                 }
             }
-
-            Logger.warn("annotation unmatched: %s", template.getMethod().getName());
+            return Result.UNRESOLVED;
+        } else {
+            return Result.NOANNOT;
         }
-        return Result.UNRESOLVED;
     }
 
     public boolean resolveClassConstraints(Template template, ClassType classType, IRubyObject receiver) {
@@ -164,8 +164,8 @@ public class AnnotationResolver {
                 if (holder == null) {
                     holder = graph.createFreeVertexHolder();
                     typeVarMap.put(var, holder);
-                    template.setAffectedVar(var, holder);
                 }
+                template.setAffectedVar(var, holder);
                 holder.getVertex().addType(arg);
                 typeVarMap.setModified(true);
             } else {
@@ -348,8 +348,8 @@ public class AnnotationResolver {
                 if (holder != null) {
                     result.addAll(holder.getVertex().getTypeSet());
                 } else if (classType != null
-                    && typeVarMap != null
-                    && classType.containsType(var)) {
+                           && typeVarMap != null
+                           && classType.containsType(var)) {
                     holder = (VertexHolder) typeVarMap.get(var);
                     if (holder != null) {
                         result.addAll(holder.getVertex().getTypeSet());
