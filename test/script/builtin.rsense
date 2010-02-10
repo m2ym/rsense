@@ -1,8 +1,218 @@
-type-inference --test=Fixnum --should-contain=Fixnum
+type-inference --test=Fixnum --should-be=Fixnum
 1_|_
 EOF
 
-type-inference --test=String --should-contain=String
+type-inference --test=String --should-be=String
 ''_|_
 EOF
 
+type-inference --test=Array --should-be=Array
+[]_|_
+EOF
+
+type-inference --test=Array.StaticAccess1 --should-be=Fixnum
+[1][0]_|_
+EOF
+
+type-inference --test=Array.StaticAccess2 --should-contain=Float --should-not-contain=Fixnum
+[1, 2.3][1]_|_
+EOF
+
+type-inference --test=Array.DynamicAccess1 --should-be=Fixnum
+a = []
+a << 1
+a[0]_|_
+EOF
+
+type-inference --test=Array.DynamicAccess2 --should-be=Fixnum,String
+a = []
+a << 1
+a << ''
+a[0]_|_
+EOF
+
+type-inference --test=Array.DynamicAccess3 --should-be=Fixnum,String
+a = ['']
+a << 1
+a[0]_|_
+EOF
+
+type-inference --test=Hash.StaticAccess1 --should-be=Fixnum
+a = { :a => 1 }
+a[:a]_|_
+EOF
+
+type-inference --test=Hash.StaticAccess2 --should-be=Float
+a = { :a => 1, :b => 2.3 }
+a[:b]_|_
+EOF
+
+type-inference --test=Hash.DynamicAccess1 --should-be=Fixnum
+a = {}
+a[:a] = 1
+a[:a]_|_
+EOF
+
+type-inference --test=Hash.DynamicAccess2 --should-be=Fixnum,Float
+a = {:a => 1}
+a[:a] = 2.3
+a[:a]_|_
+EOF
+
+type-inference --test=Hash.DynamicAccess3 --should-be=Fixnum,Float
+a = {:a => 1}
+a[:b] = 2.3
+a[:a]_|_
+EOF
+
+type-inference --test=LocalVar --should-be=Fixnum
+a = 1
+a_|_
+EOF
+
+type-inference --test=GlobalVar1 --should-be=Fixnum
+$a = 1
+$a_|_
+EOF
+
+type-inference --test=GlobalVar2 --should-be=Fixnum
+$a = 1
+def f
+  $a
+end
+f_|_
+EOF
+
+type-inference --test=MultipleAssign1 --should-be=Fixnum
+a, b = 1, ''
+a_|_
+EOF
+
+type-inference --test=MultipleAssign2 --should-be=String
+a, b = 1, ''
+b_|_
+EOF
+
+type-inference --test=Method.Basic --should-be=Fixnum
+def f
+  1
+end
+f_|_
+EOF
+
+type-inference --test=Method.Arg.OneArg --should-be=Fixnum
+def f(x)
+  x
+end
+f(1)_|_
+EOF
+
+type-inference --test=Method.Arg.TwoArg --should-be=Float
+def f(x, y)
+  y
+end
+f(1, 2.3)_|_
+EOF
+
+type-inference --test=Method.Arg.Optional --should-be=Fixnum
+def f(x = 1)
+  x
+end
+f_|_
+EOF
+
+type-inference --test=Method.Arg.Optional.Overwrite --should-be=String
+def f(x = 1)
+  x
+end
+f('')_|_
+EOF
+
+type-inference --test=Method.Arg.Splat --should-be=Array
+def f(x, y, *z)
+  z
+end
+f(1, 2, 2.3, '')_|_
+EOF
+
+type-inference --test=Method.Arg.Splat.Access --should-be=String
+def f(x, y, *z)
+  z[1]
+end
+f(1, 2, 2.3, '')_|_
+EOF
+
+type-inference --test=Method.Arg.Splat.None --should-be=Array
+def f(x, y, *z)
+  z
+end
+f(1, 2)_|_
+EOF
+
+type-inference --test=Method.Arg.OptionalAndSplat1 --should-be=Fixnum
+def f(x, y = 1, *z)
+  y
+end
+f(1)_|_
+EOF
+
+type-inference --test=Method.Arg.OptionalAndSplat2 --should-be=Float
+def f(x, y = 1, *z)
+  z[0]
+end
+f(1, '', 2.3)_|_
+EOF
+
+type-inference --test=Method.Yield.NoArg --should-be=Fixnum
+def f
+  yield
+end
+f {
+  1_|_
+}
+EOF
+
+type-inference --test=Method.Yield.NoArrayArg --should-be=Fixnum
+def f
+  yield 1
+end
+f {|x|
+  x_|_
+}
+EOF
+
+type-inference --test=Method.Yield.ArrayArg --should-be=Array
+def f
+  yield [1]
+end
+f {|x|
+  x_|_
+}
+EOF
+
+type-inference --test=Method.Yield.ArrayArg.Expand --should-be=Float
+def f
+  yield [1, 2.3]
+end
+f {|x, y|
+  y_|_
+}
+EOF
+
+type-inference --test=Method.Yield.ArrayArg.Splat --should-be=Array
+def f
+  yield [1, 2.3]
+end
+f {|x, *y|
+  y_|_
+}
+EOF
+
+type-inference --test=Method.Yield.ArrayArg.Splat --should-be=String
+def f
+  yield [1, 2.3, '']
+end
+f {|x, *y|
+  y[1]_|_
+}
+EOF

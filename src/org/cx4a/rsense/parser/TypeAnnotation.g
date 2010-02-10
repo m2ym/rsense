@@ -148,7 +148,7 @@ single_type_expr returns [TypeExpression value]
     ;
 
 or_type_list returns [List<TypeExpression> value]
-    : '|' single_type_expr rest=or_type_list? {
+    : 'or' single_type_expr rest=or_type_list? {
             $value = new ArrayList<TypeExpression>();
             $value.add($single_type_expr.value);
             if ($rest.value != null) {

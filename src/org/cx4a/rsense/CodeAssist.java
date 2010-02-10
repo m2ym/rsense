@@ -171,9 +171,7 @@ public class CodeAssist {
         rubyRuntime = org.jruby.Ruby.newInstance(); // for parse
         this.context = new Context();
         this.options = options;
-        this.projects = new HashMap<File, Project>();
-        this.sandbox = new Project("(sandbox)", null);
-        this.sandbox.setLoadPath(options.getLoadPath());
+        clear();
     }
 
     public Project getProject(Options options) {
@@ -305,6 +303,12 @@ public class CodeAssist {
 
         result.setCandidates(candidates);
         return result;
+    }
+
+    public void clear() {
+        this.projects = new HashMap<File, Project>();
+        this.sandbox = new Project("(sandbox)", null);
+        this.sandbox.setLoadPath(options.getLoadPath());
     }
 
     private void prepare(Project project) {

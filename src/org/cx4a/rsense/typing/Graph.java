@@ -138,6 +138,7 @@ import org.cx4a.rsense.util.NodeDiff;
 import org.cx4a.rsense.util.SourceLocation;
 import org.cx4a.rsense.typing.runtime.InstanceFactory;
 import org.cx4a.rsense.typing.runtime.VertexHolder;
+import org.cx4a.rsense.typing.runtime.Array;
 import org.cx4a.rsense.typing.runtime.Tuple;
 import org.cx4a.rsense.typing.runtime.Hash;
 import org.cx4a.rsense.typing.runtime.Method;
@@ -148,8 +149,8 @@ import org.cx4a.rsense.typing.runtime.TypeVarMap;
 import org.cx4a.rsense.typing.runtime.LoopTag;
 import org.cx4a.rsense.typing.runtime.ClassTag;
 import org.cx4a.rsense.typing.vertex.Vertex;
-import org.cx4a.rsense.typing.vertex.ArrayVertex;
-import org.cx4a.rsense.typing.vertex.HashVertex;
+import org.cx4a.rsense.typing.vertex.PassThroughVertex;
+import org.cx4a.rsense.typing.vertex.TypeVarVertex;
 import org.cx4a.rsense.typing.vertex.CallVertex;
 import org.cx4a.rsense.typing.vertex.MultipleAsgnVertex;
 import org.cx4a.rsense.typing.vertex.ToAryVertex;
@@ -292,14 +293,20 @@ public class Graph implements NodeVisitor {
                             if (receiver instanceof Hash) {
                                 Hash hash = (Hash) receiver;
                                 Object key = Hash.getRealKey(args[0].getNode());
-                                if (!hash.getTypeVarMap().isModified() && key != null) {
-                                    typeSet.add(hash.get(key));
+                                if (!hash.isModified() && key != null) {
+                                    Vertex v = hash.get(key);
+                                    if (v != null) {
+                                        typeSet.addAll(v.getTypeSet());
+                                    }
                                 }
-                            } else if (receiver instanceof Tuple) {
-                                Tuple tuple = (Tuple) receiver;
+                            } else if (receiver instanceof Array) {
+                                Array array = (Array) receiver;
                                 Integer n = Vertex.getFixnum(args[0]);
-                                if (!tuple.getTypeVarMap().isModified() && n != null) {
-                                    typeSet.add(tuple.safeGet(n));
+                                if (!array.isModified() && n != null) {
+                                    Vertex v = array.getElement(n);
+                                    if (v != null) {
+                                        typeSet.addAll(v.getTypeSet());
+                                    }
                                 }
                             }
                         }
@@ -427,15 +434,41 @@ public class Graph implements NodeVisitor {
     private Propagation propagation;
 
     public boolean propagate(Vertex src, Vertex dest) {
+        startPropagation();
+        boolean result = dest.accept(propagation, src);
+        endPropagation();
+        return result;
+    }
+
+    public boolean propagateEdges(Vertex dest) {
+        startPropagation();
+        boolean result = propagateEdges(propagation, dest);
+        endPropagation();
+        return result;
+    }
+
+    public boolean propagateEdges(Propagation propagation, Vertex dest) {
+        int size = dest.getEdges().size();
+        for (int i = 0; i < size; i++) {
+            Vertex edge = dest.getEdges().get(i);
+            if (!edge.accept(propagation, dest)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void startPropagation() {
         if (propagation == null) {
             propagation = new Propagation(this);
         }
         propagation.retain();
-        boolean result = dest.accept(propagation, src);
+    }
+
+    private void endPropagation() {
         if (propagation.release()) {
             propagation = null;
         }
-        return result;
     }
 
     public IRubyObject newInstanceOf(RubyClass klass) {
@@ -443,7 +476,7 @@ public class Graph implements NodeVisitor {
     }
 
     public Object visitAliasNode(AliasNode node) {
-        RubyModule module = context.getFrameModule();
+        RubyModule module = context.getCurrentScope().getModule();
         DynamicMethod method = module.getMethod(node.getOldName());
         if (method != null) {
             module.addMethod(node.getNewName(), method);
@@ -475,13 +508,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitArrayNode(ArrayNode node) {
-        Vertex[] elementVertices = new Vertex[node.size()];
-        for (int i = 0; i < elementVertices.length; i++) {
-            elementVertices[i] = createVertex(node.get(i));
-        }
-        ArrayVertex vertex = new ArrayVertex(node, elementVertices);
-        propagate(vertex, vertex);
-        return vertex;
+        return RuntimeHelper.createArrayVertex(this, node, RuntimeHelper.toVertices(this, node));
     }
     
     public Object visitAttrAssignNode(AttrAssignNode node) {
@@ -622,7 +649,7 @@ public class Graph implements NodeVisitor {
         RubyClass klass = module.defineOrGetClassUnder(name, superClass);
 
         context.pushFrame(klass, name, klass, null, Visibility.PUBLIC);
-        context.pushScope(new LocalScope(module));
+        context.pushScope(new LocalScope(klass));
 
         RuntimeHelper.classPartialUpdate(this, klass, node.getBodyNode());
 
@@ -706,7 +733,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitDefnNode(DefnNode node) {
-        RubyModule cbase = context.getFrameModule();
+        RubyModule cbase = context.getCurrentScope().getModule();
         String name = node.getName();
         Node bodyNode = node.getBodyNode();
         Node argsNode = node.getArgsNode();
@@ -741,7 +768,7 @@ public class Graph implements NodeVisitor {
             Node argsNode = node.getArgsNode();
 
             DynamicMethod oldMethod = rubyClass.getMethod(name);
-            Method newMethod = new Method(context.getFrameModule(), name, bodyNode, argsNode, Visibility.PUBLIC, node.getPosition());
+            Method newMethod = new Method(context.getCurrentScope().getModule(), name, bodyNode, argsNode, Visibility.PUBLIC, node.getPosition());
             rubyClass.addMethod(name, newMethod);
 
             methodPartialUpdateQueue.offer(new DelayedMethodPartialUpdate(node, newMethod, oldMethod, receiver));
@@ -753,6 +780,7 @@ public class Graph implements NodeVisitor {
     
     public Object visitDotNode(DotNode node) {
         // FIXME propagation
+/*
         IRubyObject range = newInstanceOf(runtime.getRange());
         Vertex beginVertex = createVertex(node.getBeginNode());
         Vertex endVertex = createVertex(node.getEndNode());
@@ -764,6 +792,8 @@ public class Graph implements NodeVisitor {
             typeVarMap.put(new TypeVariable("t"), holder);
         }
         return createSingleTypeVertex(node, range);
+*/
+        return null;
     }
     
     public Object visitEncodingNode(EncodingNode node) {
@@ -844,14 +874,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitHashNode(HashNode node) {
-        ListNode listNode = node.getListNode();
-        Vertex[] elementVertices = new Vertex[listNode.size()];
-        for (int i = 0; i < elementVertices.length; i++) {
-            elementVertices[i] = createVertex(listNode.get(i));
-        }
-        HashVertex vertex = new HashVertex(node, elementVertices);
-        propagate(vertex, vertex);
-        return vertex;
+        return RuntimeHelper.createHashVertex(this, node, RuntimeHelper.toVertices(this, node.getListNode()));
     }
     
     public Object visitInstAsgnNode(InstAsgnNode node) {
@@ -922,7 +945,7 @@ public class Graph implements NodeVisitor {
         RubyModule module = enclosingModule.defineOrGetModuleUnder(name);
 
         context.pushFrame(module, name, module, null, Visibility.PUBLIC);
-        context.pushScope(new LocalScope(enclosingModule));
+        context.pushScope(new LocalScope(module));
 
         RuntimeHelper.classPartialUpdate(this, module, node.getBodyNode());
 
@@ -1149,7 +1172,7 @@ public class Graph implements NodeVisitor {
         Block block = null;
         if (node.getIterNode() != null) {
             IterNode iterNode = (IterNode) node.getIterNode();
-            DynamicScope scope = new DynamicScope(context.getCurrentScope().getModule(), context.getCurrentScope());
+            DynamicScope scope = new DynamicScope(context.getFrameModule(), context.getCurrentScope());
             block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), scope);
         } else {
             block = context.getFrameBlock();
@@ -1231,7 +1254,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitZArrayNode(ZArrayNode node) {
-        return createSingleTypeVertex(node, new Tuple(runtime));
+        return RuntimeHelper.createArrayVertex(this, node, null);
     }
     
     public Object visitZSuperNode(ZSuperNode node) {
@@ -1250,7 +1273,7 @@ public class Graph implements NodeVisitor {
             Block block = null;
             if (node.getIterNode() != null) {
                 IterNode iterNode = (IterNode) node.getIterNode();
-                DynamicScope scope = new DynamicScope(context.getCurrentScope().getModule(), context.getCurrentScope());
+                DynamicScope scope = new DynamicScope(context.getFrameModule(), context.getCurrentScope());
                 block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), scope);
             } else {
                 block = context.getFrameBlock();
@@ -1264,29 +1287,12 @@ public class Graph implements NodeVisitor {
 
     public boolean propagateVertex(Propagation propagation, Vertex dest, Vertex src) {
         if (propagation.checkVisited(dest)
-            || dest.getTypeSet().containsAll(src.getTypeSet())) {
+            // FIXME polymorphic objects update
+            /*|| dest.getTypeSet().containsAll(src.getTypeSet())*/) {
             return true;
         }
         
         dest.copyTypeSet(src);
-        return propagateEdges(propagation, dest);
-    }
-
-    public boolean propagateArrayVertex(Propagation propagation, ArrayVertex dest, Vertex src) {
-        if (propagation.checkVisited(dest)) { return true; }
-
-        for (Tuple tuple : Tuple.generateTuples(runtime, dest.getElementVertices())) {
-            dest.addType(tuple);
-        }
-        return propagateEdges(propagation, dest);
-    }
-
-    public boolean propagateHashVertex(Propagation propagation, HashVertex dest, Vertex src) {
-        if (propagation.checkVisited(dest)) { return true; }
-
-        for (Hash hash : Hash.generateHashes(runtime, dest.getElementVertices())) {
-            dest.addType(hash);
-        }
         return propagateEdges(propagation, dest);
     }
 
@@ -1302,8 +1308,8 @@ public class Graph implements NodeVisitor {
 
         Vertex valueVertex = dest.getValueVertex();
         for (IRubyObject object : RuntimeHelper.arrayValue(propagation.getGraph(), valueVertex)) {
-            if (object instanceof Tuple) {
-                RuntimeHelper.multipleAssign(this, (MultipleAsgnNode) dest.getNode(), (Tuple) object);
+            if (object instanceof Array) {
+                RuntimeHelper.multipleAssign(this, (MultipleAsgnNode) dest.getNode(), (Array) object);
             }
         }
         return true;
@@ -1330,13 +1336,18 @@ public class Graph implements NodeVisitor {
         return propagateEdges(propagation, dest);
     }
 
-    public boolean propagateEdges(Propagation propagation, Vertex dest) {
-        for (Vertex edge : dest.getEdges()) {
-            if (!edge.accept(propagation, dest)) {
-                return false;
-            }
-        }
-        return true;
+    public boolean propagatePassThroughVertex(Propagation propagation, PassThroughVertex dest, Vertex src) {
+        if (propagation.checkVisited(dest)) { return true; }
+
+        return propagateEdges(propagation, dest);
+    }
+    
+    public boolean propagateTypeVarVertex(Propagation propagation, TypeVarVertex dest, Vertex src) {
+        if (propagation.checkVisited(dest)) { return true; }
+
+        dest.getObject().setModified(true);
+        dest.copyTypeSet(src);
+        return propagateEdges(propagation, dest);
     }
 
 }

@@ -15,7 +15,7 @@ import org.jruby.ast.StrNode;
 import org.jruby.ast.FixnumNode;
 import org.jruby.ast.SymbolNode;
 
-public class Hash extends Tuple {
+public class Hash extends Array {
     public static class Key {
         private Object realKey;
         private TypeSet typeSet;
@@ -34,51 +34,57 @@ public class Hash extends Tuple {
         }
     }
     
-    private Key[] keys;
+    protected Key[] keys;
 
-    public Hash(Ruby runtime, Key[] keys, IRubyObject[] values) {
-        this(runtime, keys, values, true);
-    }
-
-    public Hash(Ruby runtime, Key[] keys, IRubyObject[] values, boolean updateTypeVarMap) {
-        super(runtime, runtime.getHash(), values, false);
-        this.keys = keys;
-        if (updateTypeVarMap) {
-            updateTypeVarMap();
-        }
-    }
-
-    public IRubyObject get(Object key) {
-        for (int i = 0; i < elements.length; i++) {
-            if (key != null && key.equals(keys[i].getRealKey())) {
-                return elements[i];
-            }
-        }
-        return runtime.getNil();
-    }
-
-    @Override
-    protected void updateTypeVarMap() {
+    public Hash(Ruby runtime, Vertex[] elements) {
+        super(runtime, runtime.getHash(), elements);
         if (elements != null) {
-            TypeVariable keyVar = new TypeVariable("k");
-            TypeVariable valVar = new TypeVariable("v");
-            VertexHolder keyHolder = new VertexHolder(getRuntime(), new Vertex());
-            VertexHolder valHolder = new VertexHolder(getRuntime(), new Vertex());
-            for (int i = 0; i < elements.length; i++) {
-                keyHolder.getVertex().getTypeSet().addAll(keys[i].getTypeSet());
-                valHolder.getVertex().addType(elements[i]);
+            keys = new Key[elements.length / 2];
+            for (int i = 0, j = 0; i < elements.length; i += 2, j++) {
+                keys[j] = createVertexKey(elements[i]);
             }
-            TypeVarMap typeVarMap = getTypeVarMap();
-            typeVarMap.put(keyVar, keyHolder);
-            typeVarMap.put(valVar, valHolder);
-            typeVarMap.setModified(false);
         }
     }
-    
+
+    public Vertex get(Object key) {
+        if (elements != null) {
+            for (int i = 1, j = 0; i < elements.length; i += 2, j++) {
+                if (key != null && key.equals(keys[j].getRealKey())) {
+                    return elements[i];
+                }
+            }
+        }
+        return null;
+    }
+
+    public Vertex getKeyTypeVarVertex() {
+        return getTypeVarMap().get(TypeVariable.valueOf("k"));
+    }
+
+    public void setKeyTypeVarVertex(Vertex vertex) {
+        getTypeVarMap().put(TypeVariable.valueOf("k"), vertex);
+        for (Key key : keys) {
+            vertex.getTypeSet().addAll(key.getTypeSet());
+        }
+    }
+
+    public Vertex getValueTypeVarVertex() {
+        return getTypeVarMap().get(TypeVariable.valueOf("v"));
+    }
+
+    public void setValueTypeVarVertex(Vertex vertex) {
+        getTypeVarMap().put(TypeVariable.valueOf("v"), vertex);
+        if (elements != null) {
+            for (int i = 1; i < elements.length; i += 2) {
+                vertex.copyTypeSet(elements[i]);
+            }
+        }
+    }
+
     @Override
     public String toString() {
-        if (getTypeVarMap().isModified()) {
-            // no longer Hash
+        if (isModified()) {
+            // no longer static hash
             return super.toString();
         }
 
@@ -96,27 +102,6 @@ public class Hash extends Tuple {
         }
         sb.append('}');
         return sb.toString();
-    }
-
-    public static Hash[] generateHashes(Ruby runtime, Vertex[] args) {
-        assert args.length % 2 == 0;
-        Key[] keys = new Key[args.length / 2];
-        TypeSet[] values = new TypeSet[args.length / 2];
-        for (int i = 0; i < args.length; i += 2) {
-            keys[i / 2] = createVertexKey(args[i]);
-            values[i / 2] = args[i + 1].getTypeSet();
-        }
-
-        int size = calculateProductSize(values);
-        if (size == 0) {
-            return new Hash[0];
-        }
-        Hash[] result = new Hash[size];
-        for (int i = 0; i < size; i++) {
-            result[i] = new Hash(runtime, keys, new IRubyObject[values.length], false);
-        }
-        generateTuples(runtime, values, 0, values.length, result);
-        return result;
     }
 
     public static Object getRealKey(Node node) {

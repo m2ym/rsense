@@ -37,6 +37,9 @@ run-help:
 run-version:
 	java -cp $(CLASSPATH) org.cx4a.rsense.Main version
 
+run-test:
+	java -cp $(CLASSPATH) org.cx4a.rsense.Main script test/script/builtin.rsense --test-color
+
 antlr:
 	java -cp .:$(ANTLR_JAR) org.antlr.Tool -make \
 		src/org/cx4a/rsense/parser/*.g

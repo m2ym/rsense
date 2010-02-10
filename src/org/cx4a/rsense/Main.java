@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Collection;
 
 import java.io.File;
 import java.io.InputStream;
@@ -25,10 +26,17 @@ import org.cx4a.rsense.util.Logger;
 import org.cx4a.rsense.util.HereDocReader;
 
 public class Main {
+    private class TestStats {
+        public int count = 0;
+        public int success = 0;
+        public int failure = 0;
+    }
+
     private InputStream in;
     private PrintStream out;
     private Reader inReader;
     private CodeAssist codeAssist;
+    private TestStats testStats;
     
     public static void main(String[] args) throws Exception {
         new Main().run(args);
@@ -66,6 +74,7 @@ public class Main {
         } else {
             start(command, options);
         }
+        testResult(options);
     }
 
     private void init(Options options) {
@@ -156,22 +165,14 @@ public class Main {
     }
 
     private void runScript(InputStream in, Options options, boolean noprompt) {
-        String format = options.getFormat();
-        String encoding = options.getEncoding();
         String prompt = options.getPrompt();
-        if (format == null) {
-            format = options.defaultFormat();
-        }
-        if (encoding == null) {
-            encoding = options.defaultEncoding();
-        }
         if (prompt == null) {
             prompt = options.defaultPrompt();
         }
 
         Reader oldInReader = inReader;
         try {
-            BufferedReader reader = new BufferedReader(new InputStreamReader(in, encoding));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in, options.getEncoding()));
             inReader = reader;
             String line;
             String endMark = options.getEndMark();
@@ -198,12 +199,7 @@ public class Main {
                     }
 
                     Options opts = parseOptions(argv, 1);
-                    if (!opts.isFormatGiven() && format != null) {
-                        opts.setFormat(format);
-                    }
-                    if (!opts.isEncodingGiven() && encoding != null) {
-                        opts.setEncoding(encoding);
-                    }
+                    opts.inherit(options);
                     command(command, opts);
                     if (endMark != null) {
                         out.println(endMark);
@@ -218,10 +214,15 @@ public class Main {
     }
     
     private void command(String command, Options options) {
+        if (options.isTest()) {
+            codeAssist.clear();
+        }
         if (command.equals("code-completion")) {
             commandCodeCompletion(options);
         } else if (command.equals("type-inference")) {
             commandTypeInference(options);
+        } else if (command.equals("clear")) {
+            commandClear(options);
         } else if (command.equals("help")) {
             commandHelp(options);
         } else if (command.equals("version")) {
@@ -253,18 +254,11 @@ public class Main {
             }
 
             if (options.isTest()) {
-                List<String> shouldContain = options.getShouldContain();
                 Set<String> data = new HashSet<String>();
                 for (CodeCompletionResult.CompletionCandidate completion : result.getCandidates()) {
                     data.add(completion.getCompletion());
                 }
-                for (String name : shouldContain) {
-                    if (data.contains(name)) {
-                        out.printf("SUCCESS: %s\n", options.getTest());
-                    } else {
-                        out.printf("FAILURE: %s (%s is not in %s)\n", options.getTest(), name, data);
-                    }
-                }
+                test(options, data);
             } else {
                 if (options.isEmacsFormat()) {
                     out.print("(");
@@ -311,18 +305,11 @@ public class Main {
             }
             
             if (options.isTest()) {
-                List<String> shouldContain = options.getShouldContain();
                 Set<String> data = new HashSet<String>();
                 for (IRubyObject klass : result.getTypeSet()) {
                     data.add(klass.toString());
                 }
-                for (String name : shouldContain) {
-                    if (data.contains(name)) {
-                        out.printf("SUCCESS: %s\n", options.getTest());
-                    } else {
-                        out.printf("FAILURE: %s (%s is not in %s)\n", options.getTest(), name, data);
-                    }
-                }
+                test(options, data);
             } else {
                 if (options.isEmacsFormat()) {
                     out.print("(");
@@ -346,6 +333,10 @@ public class Main {
         } catch (Exception e) {
             commandException(e, options);
         }
+    }
+
+    private void commandClear(Options options) {
+        codeAssist.clear();
     }
 
     private void commandHelp(Options options) {
@@ -382,6 +373,92 @@ public class Main {
         } else {
             out.println("unexpected error:");
             e.printStackTrace(out);
+        }
+    }
+
+    private void test(Options options, Collection<String> data) {
+        if (options.isShouldBeGiven()) {
+            Set<String> shouldBe = options.getShouldBe();
+            if (shouldBe.equals(data)) {
+                testSuccess(options);
+            } else {
+                testFailure(options, "%s should be %s", data, shouldBe);
+            }
+        } else {
+            Set<String> shouldContain = options.getShouldContain();
+            Set<String> shouldNotContain = options.getShouldNotContain();
+            for (String str : data) {
+                if (!shouldContain.contains(str)) {
+                    testFailure(options, "%s should be in %s", str, shouldContain);
+                    return;
+                } else if (shouldNotContain.contains(str)) {
+                    testFailure(options, "%s should not be in %s", str, shouldNotContain);
+                    return;
+                }
+            }
+            testSuccess(options);
+        }
+    }
+
+    private void testSuccess(Options options) {
+        testSuccess(options, null);
+    }
+    
+    private void testSuccess(Options options, String format, Object... args) {
+        if (testStats == null) {
+            testStats = new TestStats();
+        }
+        testStats.count++;
+        testStats.success++;
+        if (options.isTestColor()) {
+            out.printf("\33[34m%s\33[0m... [\33[1;32mOK\33[0m]", options.getTest());
+        } else {
+            out.printf("%s... [OK]", options.getTest());
+        }
+        if (format != null) {
+            out.print("\n  ");
+            out.printf(format, args);
+        }
+        out.println();
+    }
+
+    private void testFailure(Options options) {
+        testFailure(options, null);
+    }
+    
+    private void testFailure(Options options, String format, Object... args) {
+        if (testStats == null) {
+            testStats = new TestStats();
+        }
+        testStats.count++;
+        testStats.failure++;
+        if (options.isTestColor()) {
+            out.printf("\33[34m%s\33[0m... [\33[1;31mBAD\33[0m]", options.getTest());
+        } else {
+            out.printf("%s... [BAD]", options.getTest());
+        }
+        if (format != null) {
+            out.print("\n  ");
+            out.printf(format, args);
+        }
+        out.println();
+    }
+
+    private void testResult(Options options) {
+        if (testStats != null) {
+            String ok, bad;
+            if (options.isTestColor()) {
+                ok = String.format("\33[32;1m%s\33[0m", testStats.success);
+                if (testStats.failure > 0) {
+                    bad = String.format("\33[31;1m%s\33[0m", testStats.failure);
+                } else {
+                    bad = String.valueOf(testStats.failure);
+                }
+            } else {
+                ok = String.valueOf(testStats.success);
+                bad = String.valueOf(testStats.failure);
+            }
+            out.printf("test: count=%d, success=%s, failure=%s\n", testStats.count, ok, bad);
         }
     }
 

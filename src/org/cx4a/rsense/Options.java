@@ -7,6 +7,9 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Collection;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -34,7 +37,8 @@ public class Options extends HashMap<String, String> {
     }
 
     public String getFormat() {
-        return get("format");
+        String format = get("format");
+        return format != null ? format : defaultFormat();
     }
 
     public void setFormat(String format) {
@@ -50,7 +54,8 @@ public class Options extends HashMap<String, String> {
     }
 
     public String getEncoding() {
-        return get("encoding");
+        String encoding = get("encoding");
+        return encoding != null ? encoding : defaultEncoding();
     }
 
     public void setEncoding(String encoding) {
@@ -135,20 +140,57 @@ public class Options extends HashMap<String, String> {
         return containsKey("test");
     }
 
+    public boolean isTestColor() {
+        return containsKey("test-color");
+    }
+
+    public void setTestColor(boolean testColor) {
+        put("test-color", "");
+    }
+
     public String getTest() {
         return get("test");
     }
 
-    public List<String> getShouldContain() {
-        String str = get("should-contain");
+    public Set<String> getShouldContain() {
+        return getStringSet("should-contain");
+    }
+
+    public Set<String> getShouldNotContain() {
+        return getStringSet("should-not-contain");
+    }
+
+    public Set<String> getShouldBe() {
+        return getStringSet("should-be");
+    }
+
+    public boolean isShouldBeGiven() {
+        return containsKey("should-be");
+    }
+
+    private Set<String> getStringSet(String name) {
+        Set<String> result;
+        String str = get(name);
         if (str == null) {
-            return Collections.<String>emptyList();
+            result = Collections.<String>emptySet();
+        } else {
+            result = new HashSet<String>(Arrays.asList(str.split(",")));
         }
-        return Arrays.asList(str.split(","));
+        return result;
     }
 
     public boolean isPrintAST() {
         return containsKey("print-ast");
+    }
+
+    public void inherit(Options parent) {
+        if (!isFormatGiven()) {
+            setFormat(parent.getFormat());
+        }
+        if (!isEncodingGiven()) {
+            setEncoding(parent.getEncoding());
+        }
+        setTestColor(parent.isTestColor());
     }
 
     public static String defaultFormat() {

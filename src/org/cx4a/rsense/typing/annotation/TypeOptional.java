@@ -14,4 +14,9 @@ public class TypeOptional implements TypeExpression {
     public Type getType() {
         return Type.OPTIONAL;
     }
+
+    @Override
+    public String toString() {
+        return "?" + expr;
+    }
 }

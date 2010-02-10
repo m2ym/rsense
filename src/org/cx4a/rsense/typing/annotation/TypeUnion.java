@@ -8,4 +8,16 @@ public class TypeUnion extends ArrayList<TypeExpression> implements TypeExpressi
     public Type getType() {
         return Type.UNION;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        String delim = "";
+        for (TypeExpression expr : this) {
+            sb.append(delim);
+            delim = " or ";
+            sb.append(expr);
+        }
+        return sb.toString();
+    }
 }

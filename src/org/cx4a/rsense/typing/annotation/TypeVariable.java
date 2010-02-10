@@ -37,4 +37,8 @@ public class TypeVariable implements TypeExpression {
 
         return name.equals(((TypeVariable) other).name);
     }
+
+    public static TypeVariable valueOf(String name) {
+        return new TypeVariable(name);
+    }
 }

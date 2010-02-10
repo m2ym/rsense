@@ -34,7 +34,6 @@ import org.cx4a.rsense.typing.annotation.TypeVariable;
 import org.cx4a.rsense.typing.annotation.ClassType;
 import org.cx4a.rsense.typing.annotation.MethodType;
 import org.cx4a.rsense.typing.vertex.Vertex;
-import org.cx4a.rsense.typing.vertex.ArrayVertex;
 import org.cx4a.rsense.typing.vertex.CallVertex;
 import org.cx4a.rsense.typing.vertex.MultipleAsgnVertex;
 import org.cx4a.rsense.typing.vertex.ToAryVertex;

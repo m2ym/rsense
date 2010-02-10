@@ -63,6 +63,7 @@ public class Tuple extends PolymorphicObject {
     }
 
     protected void updateTypeVarMap() {
+/*
         if (elements != null) {
             TypeVariable var = new TypeVariable("t");
             VertexHolder holder = new VertexHolder(getRuntime(), new Vertex());
@@ -71,14 +72,17 @@ public class Tuple extends PolymorphicObject {
             typeVarMap.put(var, holder);
             typeVarMap.setModified(false);
         }
+*/
     }
 
     @Override
     public String toString() {
+/*
         if (getTypeVarMap().isModified()) {
             // no longer Tuple
             return super.toString();
         }
+*/
 
         StringBuffer sb = new StringBuffer();
         String delim = "";

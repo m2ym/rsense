@@ -63,12 +63,13 @@ import org.cx4a.rsense.typing.annotation.TypeVariable;
 import org.cx4a.rsense.typing.annotation.ClassType;
 import org.cx4a.rsense.typing.annotation.MethodType;
 import org.cx4a.rsense.typing.vertex.Vertex;
-import org.cx4a.rsense.typing.vertex.ArrayVertex;
 import org.cx4a.rsense.typing.vertex.CallVertex;
 import org.cx4a.rsense.typing.vertex.MultipleAsgnVertex;
 import org.cx4a.rsense.typing.vertex.ToAryVertex;
 import org.cx4a.rsense.typing.vertex.SplatVertex;
 import org.cx4a.rsense.typing.vertex.YieldVertex;
+import org.cx4a.rsense.typing.vertex.PassThroughVertex;
+import org.cx4a.rsense.typing.vertex.TypeVarVertex;
 
 public class RuntimeHelper {
     private RuntimeHelper() {}
@@ -170,7 +171,7 @@ public class RuntimeHelper {
     }
     
     public static Vertex classVarDeclaration(Graph graph, ClassVarDeclNode node, Vertex src) {
-        RubyClass klass = (RubyClass) graph.getRuntime().getContext().getCurrentScope().getModule();
+        RubyClass klass = (RubyClass) graph.getRuntime().getContext().getFrameModule();
         if (src == null) {
             src = graph.createVertex(node.getValueNode());
         }
@@ -188,7 +189,7 @@ public class RuntimeHelper {
     }
 
     public static Vertex classVarAssign(Graph graph, ClassVarAsgnNode node, Vertex src) {
-        RubyClass klass = (RubyClass) graph.getRuntime().getContext().getCurrentScope().getModule();
+        RubyClass klass = (RubyClass) graph.getRuntime().getContext().getFrameModule();
         if (src == null) {
             src = graph.createVertex(node.getValueNode());
         }
@@ -202,7 +203,7 @@ public class RuntimeHelper {
     }
 
     public static Vertex classVariable(Graph graph, ClassVarNode node) {
-        RubyClass klass = (RubyClass) graph.getRuntime().getContext().getCurrentScope().getModule();
+        RubyClass klass = (RubyClass) graph.getRuntime().getContext().getFrameModule();
         VertexHolder holder = (VertexHolder) klass.getClassVar(node.getName());
         if (holder == null) {
             holder = graph.createFreeVertexHolder();
@@ -335,13 +336,9 @@ public class RuntimeHelper {
         if (restArg >= 0) {
             int sizeOfRestArg = args.length - postCount - givenArgsCount;
             if (sizeOfRestArg <= 0) {
-                assign(graph, restArgNode, graph.createFreeSingleTypeVertex(new Tuple(graph.getRuntime())));
+                assign(graph, restArgNode, createArrayVertex(graph, null, null));
             } else {
-                Vertex v = graph.createFreeVertex();
-                for (Tuple tuple : Tuple.generateTuples(graph.getRuntime(), args, givenArgsCount, sizeOfRestArg)) {
-                    v.addType(tuple);
-                }
-                assign(graph, restArgNode, v);
+                assign(graph, restArgNode, createArrayVertex(graph, null, args, givenArgsCount, sizeOfRestArg));
             }
         }
         if (argsNode.getBlock() != null) {
@@ -372,30 +369,31 @@ public class RuntimeHelper {
         return src;
     }
 
-    public static Vertex multipleAssign(Graph graph, MultipleAsgnNode node, Tuple tuple) {
-        int valueLen = tuple.getLength();
+    public static void multipleAssign(Graph graph, MultipleAsgnNode node, Array array) {
+        if (array.isModified()) { return; }
+        
+        int valLen = array.length();
         int varLen = node.getHeadNode() == null ? 0 : node.getHeadNode().size();
 
         int j = 0;
-        for (; j < valueLen && j < varLen; j++) {
-            assign(graph, node.getHeadNode().get(j), graph.createFreeSingleTypeVertex(tuple.get(j)));
+        for (; j < valLen && j < varLen; j++) {
+            assign(graph, node.getHeadNode().get(j), array.getElement(j));
         }
 
         Node argsNode = node.getArgsNode();
         if (argsNode != null) {
             if (argsNode.getNodeType() == NodeType.STARNODE) {
                 // no check for '*'
-            } else if (varLen < valueLen) {
-                assign(graph, argsNode, graph.createFreeSingleTypeVertex(tuple.subTuple(varLen, valueLen - varLen)));
+            } else if (varLen < valLen) {
+                assign(graph, argsNode, createArrayVertex(graph, null, array.getElements(), varLen, valLen - varLen));
             } else {
-                assign(graph, argsNode, graph.createFreeSingleTypeVertex(new Tuple(graph.getRuntime())));
+                assign(graph, argsNode, createArrayVertex(graph, null, null));
             }
         }
 
         while (j < varLen) {
             assign(graph, node.getHeadNode().get(j++), Graph.NULL_VERTEX);
         }
-        return graph.createFreeSingleTypeVertex(tuple);
     }
 
     public static Vertex call(Graph graph, CallVertex vertex) {
@@ -510,7 +508,7 @@ public class RuntimeHelper {
     private static void dummyCall(Graph graph, MethodDefNode node, Method method, IRubyObject receiver) {
         if (node.getBodyNode() != null) {
             Context context = graph.getRuntime().getContext();
-            context.pushFrame(method.getModule(), node.getName(), receiver, null, Visibility.PUBLIC);
+            context.pushFrame(context.getFrameModule(), node.getName(), receiver, null, Visibility.PUBLIC);
             context.pushScope(new LocalScope(method.getModule()));
             graph.createVertex(node.getBodyNode());
             context.popScope();
@@ -549,9 +547,8 @@ public class RuntimeHelper {
                 Template template = method.getTemplate(attr);
                 if (template == null) {
                     template = createTemplate(graph, vertex, name, method, attr);
-                    template.rememberSideEffect(receiver, args);
                 } else {
-                    template.reproduceSideEffect(receiver, args);
+                    template.reproduceSideEffect(graph, receiver, args);
                     Logger.debug(SourceLocation.of(vertex), "template reused: %s", method);
                 }
                 return template.getReturnVertex();
@@ -570,8 +567,8 @@ public class RuntimeHelper {
         Ruby runtime = graph.getRuntime();
         Context context = runtime.getContext();
 
-        Scope scope = new LocalScope(context.getCurrentScope().getModule());
-        context.pushFrame(method.getModule(), name, receiver, attr.getBlock(), Visibility.PUBLIC);
+        Scope scope = new LocalScope(method.getModule());
+        context.pushFrame(context.getFrameModule(), name, receiver, attr.getBlock(), Visibility.PUBLIC);
         context.pushScope(scope);
 
         Template template = new Template(method, context.getCurrentFrame(), scope, attr);
@@ -622,7 +619,7 @@ public class RuntimeHelper {
             int newUnit = unit / n;
             IRubyObject v = ite.next();
             for (int j = 0; j < size; j++) {
-                result.get(j).getArgs()[i] = v;
+                result.get(j).setArg(i, v);
                 if (++k == newUnit) {
                     k = 0;
                     if (!ite.hasNext()) {
@@ -634,28 +631,53 @@ public class RuntimeHelper {
             unit = newUnit;
         }
 
-        // handle receiver polymorphic
+        // handle receiver polymorphic and data polymorphic
         int resultSize = result.size();
         for (int i = 0; i < resultSize; i++) {
             TemplateAttribute base = result.get(i);
-            Iterator<IRubyObject> ite = receivers.iterator();
-            base.setReceiver(ite.next());
-            base.setBlock(block);
-            for (int j = 0; j < receivers.size() - 1; j++) {
-                TemplateAttribute attr = base.clone();
-                attr.setReceiver(ite.next());
-                result.add(attr);
+            boolean first = true;
+            for (IRubyObject recv : receivers) {
+                base.setReceiver(recv);
+                base.setBlock(block);
+                if (recv instanceof PolymorphicObject) {
+                    for (PolymorphicObject mrecv : ((PolymorphicObject) recv).generateMonomorphicObjects()) {
+                        base.setReceiver(mrecv);
+                        if (!first) {
+                            result.add(base);
+                        }
+                        first = false;
+                        base = base.clone();
+                    }
+                } else {
+                    if (!first) {
+                        result.add(base);
+                    }
+                    first = false;
+                    base = base.clone();
+                }
             }
         }
 
-        // handle data polymorphic for receivers and arguments
-        for (TemplateAttribute attr : result) {
-            attr.setReceiverTypeVarMap(getTypeVarMap(attr.getReceiver()));
-            for (int i = 0; i < args.size(); i++) {
-                attr.setArgTypeVarMap(i, getTypeVarMap(attr.getArgs()[i]));
+        // handle arguments data polymorphic
+        for (int i = 0; i < args.size(); i++) {
+            resultSize = result.size();
+            for (int j = 0; j < resultSize; j++) {
+                TemplateAttribute base = result.get(j);
+                IRubyObject arg = base.getArg(i);
+                if (arg instanceof PolymorphicObject) {
+                    boolean first = true;
+                    for (PolymorphicObject marg : ((PolymorphicObject) arg).generateMonomorphicObjects()) {
+                        base.setArg(i, marg);
+                        if (!first) {
+                            result.add(base);
+                        }
+                        first = false;
+                        base = base.clone();
+                    }
+                }
             }
         }
-        
+
         return result;
     }
 
@@ -698,22 +720,22 @@ public class RuntimeHelper {
 
                 if (noargblock) {}
                 else if (masgn != null) {
-                    Tuple tuple;
+                    Array array;
                     if (!expanded) {
                         // FIXME to_ary
-                        if (value instanceof Tuple) {
-                            tuple = (Tuple) value;
+                        if (value instanceof Array) {
+                            array = (Array) value;
                         } else {
-                            tuple = new Tuple(runtime, new IRubyObject[] {value});
+                            array = createArray(graph, new Vertex[] { graph.createFreeSingleTypeVertex(value) });
                         }
                     } else {
-                        if (value instanceof Tuple) {
-                            tuple = (Tuple) value;
+                        if (value instanceof Array) {
+                            array = (Array) value;
                         } else {
-                            tuple = new Tuple(runtime, new IRubyObject[] {value});
+                            array = createArray(graph, new Vertex[] { graph.createFreeSingleTypeVertex(value) });
                         }
                     }
-                    multipleAssign(graph, masgn, tuple);
+                    multipleAssign(graph, masgn, array);
                 } else {
                     assign(graph, varNode, graph.createFreeSingleTypeVertex(value));
                 }
@@ -773,7 +795,7 @@ public class RuntimeHelper {
                     if (array.isInstanceOf(runtime.getArray())) {
                         typeSet.add(array);
                     } else {
-                        Logger.error("to_a should be return Array");
+                        Logger.warn("to_a should be return Array");
                     }
                 }
             }
@@ -854,13 +876,15 @@ public class RuntimeHelper {
     }
     
     public static void setClassTag(RubyModule klass, Node node, List<TypeAnnotation> annotations) {
-        for (TypeAnnotation annot : annotations) {
-            if (annot instanceof ClassType) {
-                klass.setTag(new ClassTag(node, (ClassType) annot));
-                return;
+        if (klass.getTag() == null) {
+            for (TypeAnnotation annot : annotations) {
+                if (annot instanceof ClassType) {
+                    klass.setTag(new ClassTag(node, (ClassType) annot));
+                    return;
+                }
             }
+            klass.setTag(new ClassTag(node));
         }
-        klass.setTag(new ClassTag(node));
     }
 
     public static void setMethodTag(Method method, /*unused*/Node node, List<TypeAnnotation> annotations) {
@@ -898,5 +922,53 @@ public class RuntimeHelper {
         } else {
             return null;
         }
+    }
+
+    public static Array createArray(Graph graph, Vertex[] elements) {
+        Array array = new Array(graph.getRuntime(), elements);
+        TypeVarVertex t = new TypeVarVertex(array);
+        array.setTypeVarVertex(t);
+        return array;
+    }
+
+    public static Vertex createArrayVertex(Graph graph, Node node, Vertex[] elements) {
+        Array array = createArray(graph, elements);
+        Vertex vertex = new PassThroughVertex(node);
+        vertex.addType(array);
+        array.getTypeVarVertex().addEdge(vertex);
+        return vertex;
+    }
+
+    public static Vertex createArrayVertex(Graph graph, Node node, Vertex[] elements, int offset, int length) {
+        Vertex[] newElements = new Vertex[length];
+        System.arraycopy(elements, offset, newElements, 0, length);
+        return createArrayVertex(graph, node, newElements);
+    }
+
+    public static Hash createHash(Graph graph, Vertex[] elements) {
+        Hash hash = new Hash(graph.getRuntime(), elements);
+        TypeVarVertex k = new TypeVarVertex(hash);
+        TypeVarVertex v = new TypeVarVertex(hash);
+        hash.setKeyTypeVarVertex(k);
+        hash.setValueTypeVarVertex(v);
+        return hash;
+    }
+
+
+    public static Vertex createHashVertex(Graph graph, Node node, Vertex[] elements) {
+        Hash hash = createHash(graph, elements);
+        Vertex vertex = new PassThroughVertex(node);
+        vertex.addType(hash);
+        hash.getKeyTypeVarVertex().addEdge(vertex);
+        hash.getValueTypeVarVertex().addEdge(vertex);
+        return vertex;
+    }
+
+    public static Vertex[] toVertices(Graph graph, ListNode node) {
+        Vertex[] vertices = new Vertex[node.size()];
+        for (int i = 0; i < vertices.length; i++) {
+            vertices[i] = graph.createVertex(node.get(i));
+        }
+        return vertices;
     }
 }

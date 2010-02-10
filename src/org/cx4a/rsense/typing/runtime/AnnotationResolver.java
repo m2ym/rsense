@@ -67,7 +67,7 @@ public class AnnotationResolver {
                     env.clear();
                     if (types != null) {
                         for (TypeVariable var : types) {
-                            env.put(var, graph.createFreeVertexHolder());
+                            env.put(var, graph.createFreeVertex());
                         }
                     }
                     if (resolveClassConstraints(template, classType, receiver)
@@ -160,20 +160,21 @@ public class AnnotationResolver {
             if (classType != null
                 && typeVarMap != null
                 && classType.containsType(var)) {
-                VertexHolder holder = (VertexHolder) typeVarMap.get(var);
-                if (holder == null) {
-                    holder = graph.createFreeVertexHolder();
-                    typeVarMap.put(var, holder);
+                Vertex vertex = typeVarMap.get(var);
+                if (vertex == null) {
+                    vertex = graph.createFreeVertex();
+                    typeVarMap.put(var, vertex);
                 }
-                holder.getVertex().addType(arg);
-                typeVarMap.setModified(true);
+                vertex.addType(arg);
+                graph.propagateEdges(vertex);
             } else {
-                VertexHolder holder = (VertexHolder) env.get(var);
-                if (holder == null) {
-                    holder = graph.createFreeVertexHolder();
-                    env.put(var, holder);
+                Vertex vertex = env.get(var);
+                if (vertex == null) {
+                    vertex = graph.createFreeVertex();
+                    env.put(var, vertex);
                 }
-                holder.getVertex().addType(arg);
+                vertex.addType(arg);
+                graph.propagateEdges(vertex);
             }
             return true;
         }
@@ -191,10 +192,10 @@ public class AnnotationResolver {
                     List<TypeVariable> vars = classType.getTypes();
                     for (int i = 0; i < vars.size(); i++) {
                         TypeVariable var = vars.get(i);
-                        VertexHolder holder = (VertexHolder) typeVarMap.get(var);
-                        if (i < types.size() && holder != null) {
+                        Vertex vertex = typeVarMap.get(var);
+                        if (i < types.size() && vertex != null) {
                             TypeExpression expr = types.get(i);
-                            for (IRubyObject a : holder.getVertex().getTypeSet()) {
+                            for (IRubyObject a : vertex.getTypeSet()) {
                                 if (!resolveMethodArg(template, klassType, expr, receiver, a)) {
                                     return false;
                                 }
@@ -245,7 +246,6 @@ public class AnnotationResolver {
             new Throwable().printStackTrace();
             Logger.error("Unknown arg type");
         }
-        
         return false;
     }
 
@@ -342,20 +342,19 @@ public class AnnotationResolver {
             } else if (var.getName().equals("nil")) {
                 result.add(runtime.getNil());
             } else {
-                VertexHolder holder = (VertexHolder) env.get(var);
+                Vertex vertex = env.get(var);
                 TypeVarMap typeVarMap = RuntimeHelper.getTypeVarMap(receiver);
-                if (holder != null) {
-                    result.addAll(holder.getVertex().getTypeSet());
+                if (vertex != null) {
+                    result.addAll(vertex.getTypeSet());
                 } else if (classType != null
                            && typeVarMap != null
                            && classType.containsType(var)) {
-                    holder = (VertexHolder) typeVarMap.get(var);
-                    if (holder != null) {
-                        result.addAll(holder.getVertex().getTypeSet());
+                    vertex = typeVarMap.get(var);
+                    if (vertex != null) {
+                        result.addAll(vertex.getTypeSet());
                     } else {
                         result.add(runtime.getNil());
                     }
-                    typeVarMap.setModified(true);
                 }
             }
             return result;
@@ -376,10 +375,9 @@ public class AnnotationResolver {
                         if (i < types.size()) {
                             TypeExpression expr = types.get(i);
                             TypeSet ts = processMethodReturn(template, classType, expr, receiver);
-                            VertexHolder holder = graph.createFreeVertexHolder();
-                            holder.getVertex().getTypeSet().addAll(ts);
-                            typeVarMap.put(var, holder);
-                            typeVarMap.setModified(true);
+                            Vertex vertex = graph.createFreeVertex();
+                            vertex.getTypeSet().addAll(ts);
+                            typeVarMap.put(var, vertex);
                         }
                     }
                 }
@@ -429,7 +427,6 @@ public class AnnotationResolver {
             Logger.error("Unknown return type");
         }
         return null;
-        
     }
     
     public boolean resolveMethodReturn(Template template, ClassType classType, TypeExpression returnType, IRubyObject receiver) {
