@@ -1,0 +1,181 @@
+RSense type annotation
+======================
+
+[Index](index.txt)
+
+In RSense, *type annotation* is needed to resolve a data-polymorphism problem and ad-hoc parameter polymorphism. See [development guide](develop.txt) to find out motivation and what is problem.
+
+Type annotation is a comment whici takes a form of `##% ...`. Type annotation can be written before class declaration and method declaration.
+
+Method type annotation
+----------------------
+
+Be adding type annotation to method, method call will be analyzed more precissly. Consider a method which takes a one argument. If the argument is `String`, it will return `Fixnum`, otherwise returns `Float`. Such strange methods can be seen in Ruby world, you know. Anyway, it is difficult to analyze such methods. In this case, a result of `f()` will be infered as `Fixnum` and `Float` without type annotation.
+
+    # How do we analyze this method?
+    def f(a)
+      if a.instanceof(String)
+        1
+      else
+        2.3
+      end
+    end
+
+With type annotation, you can help analyzers to infer precisely. Method type annotation takes a form of
+
+    ##% method-name ('<' type-vars ('|' constraints)? '>')? '(' arguments ')' block? '->' result
+
+Learn from examples. Adding type annotation for the method above
+
+    ##% f(String) -> Fixnum
+    ##% f(a) -> Float
+    def f(a)
+      ...
+    end
+
+this method has two method type annotations. One of them is `f(String) -> Fixnum` which can be read as "If first argument is a kind of String, it returns Fixnum object." "a kind of" implies a test satisfied by calling ruby's `kind_of?` method. We call it *guard*. Two of them is `f(a) -> Float` which can be read as "If one polymorphic parameter is given, it returns Float." So now, this method can be analyzed precisely.
+
+A parameter can be optional and rest. If you want to make parameters optional, put "?" before the parameter expressions. If you want to make parameters rest, put "*" before the parameter expressions. For example,
+
+    ##% f(?a) -> Fixnum
+    def f() end
+
+This can be read as "method f can take no argument or one argument, and in such cases f returns Fixnum." You can also use guard as optional.
+
+    ##% f(?String) -> Fixnum
+    def f() end
+
+This can be read as "method f can take no arugment or a kind of String, and in such cases f returns Fixnum."
+
+As same as optional, you can use rest parameter.
+
+    ##% f(*a) -> Fixnum
+    def f() end
+
+This can be read as "method f can take any arguments and returns Fixnum." Of couse rest parameters with guard is allowed.
+
+    ##% f(*String) -> Fixnum
+    def f() end
+
+If you don't want to write any arguments, just use "()".
+
+    ##% f() -> Fixnum
+    def f() end
+
+If a method call doesn't satisfy any type annotation of the method, RSense call tell the wrong call somehow. Currently, such wrong call will be printed out as warning into log.
+
+OK, continue to learn.
+
+By the way, do you know what is `a` in above examples? It is called *type variable* which can contain any types. Generally, it is used for two ways.
+
+1. Matching any types
+2. Keeping types
+
+In above examples, we just use it as (1) case. Now let's see (2) case.
+
+    ##% f(a) -> a
+    def f() end
+
+When we call `f(1)`, it returns `Fixnum` because type variable `a` contains `Fixnum` given by an argument. Strictly, we should write it as following by using type variable declaration.
+
+    ##% f<a>(a) -> a
+    def f() end
+
+However, in our system, it can be omitted as much as possible. So, when we use type variable declaration? The time to do more complex things.
+
+Consider a method which takes one arguments, which has to be a kind of String, and returns the argument. How can we write?
+
+    # Wrong
+    ##% f(a) -> a
+    def f(a) end
+    # Wrong
+    ##% f(String) -> String
+    def f(a) end
+
+Two examples are both wrong. First case can take any argument, second case can be return *a kind of String*. Now we have to type variable declaration with constraints. *Constraints* gives type variables limit of typing. It takes a form of `a <= b` which means type expression `a` is subclass of type expression `b`. In our system, constraints will be satified as much as possible. In other words, to satify constrains, type expressions will be interpreted as free. For example, `a <= String` constraint can be satisfied by adding `String` to type variable `a` if type varaible `a` has no types. If type variable `a` has types, RSense make sure that the constraint is satisfied by checking each type of type variable `a`. For another example, `a <= b` constraint can be satified by adding types of type variable `a` into type variable `b`.
+
+Now we can resolve the problem.
+
+    ##% f<a | a <= String>(a) -> a
+    def f(a) end
+
+"|" can be read as "where" which means starting of constraints. So this type annotation is correct and can be read as "method f takes one argument which is subclass of String and returns the argument."
+
+For more detail, you should read next secion.
+
+Class type annotation
+---------------------
+
+By adding type annotation to class, class can be data-polymorphic. Think following code.
+
+    class C
+      def get() @x end
+      def set(x) @x = x end
+    end
+    a = C.new
+    a.set(1)
+    b = C.new
+    b.set('Hello')
+    b.get    # What type of mine?
+
+The answer is `Fixnum` and `String`. Why? It is because of that non data-polymorphic objects shares their instance variables. Why shares instance variables? It is to achieve balance of preciseness and performance and based on hypothesis that programmers rarely use data-polymorphic. Actually, there is serious problem when we use `Array`, `Hash`, or something else container class.
+
+So, we adopt class type annotation to realize data-polymorphism restrictedly. When you want to create data-polymorphic class, write class type annotation with type variables. Specified type variables will be independent from each instances. That is, with class type annotation and method type annotation, you can realize data-polymorphic class.
+
+    ##% C<t>
+    class C
+      ##% get() -> t
+      def get() @x end
+      ##% set<v | v <= t>(v) -> v
+      def set(x) @x = x end
+    end
+
+First, with class type annotation, class `C` is declared as data-polymorphic class. Second, with method type annotation, method `get` returns type variable `t` of class `C`. Last, with method type annotation, method `set` adds a type of an argument into type variable `t` of class `C` and returns the argument. Now we can use this class correctly.
+
+    a = C.new        # a = C<>
+    a.set(1)         # a = C<Fixnum>
+    b = C.new        # b = C<>
+    b.set('Hello')   # b = C<String>
+    b.get            # t = String (C<String>)
+
+Type variables of class will be *shared* in methods, included class, inherited class. That is, you should be careful to name type variables. Here are simple rules to name type variables.
+
+* a, b, c
+
+  Used in method type annotation
+
+* t, k, v
+
+  Used in class type annotation
+
+A reason why type variables will be shared is to keep implementation simple. Consider `Enumerable` module.
+
+    ##% Enumerable<t>
+    module Enumerable
+      ##% collect<v>() {t -> v} -> Array<v>
+      def collect() [yield self] end
+      ...
+    end
+    ##% Array<t>
+    class Array
+      include Enumerable
+    end
+    
+
+Classes which includes `Enumerable` module will automatically export useful functions. If type variables will not be shared, we have to write all of methods in `Enumerable` module in `Array` class.
+
+Now we give you a lesson. See following code.
+
+    ##% Array<t>
+    class Array
+      ##% push<v | v <= Array<t> >(*v) -> self
+      def push(*obj) self end
+      ...
+    end
+
+This is `Array#push` method type annotation. How do you can read? If you can read it as "push can any arguments as an array and types of the array elements will be added to type variable `t` of class Array, and finally return self.", you are ready to write type annotation!
+
+Stubs
+-----
+
+*Stus* is a collection of type annotation. Currently, they are located in `stubs/`. We are hard working to write stubs of builtin library and standard library by referencing [Ruby documents](http://doc.okkez.net/187/view/). We welcome any contribution especially about stubs :)
