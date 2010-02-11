@@ -5,6 +5,8 @@ ANTLR_JAR=build_lib/antlr-3.2.jar
 BUILD_CLASSPATH=.:lib/jruby.jar:lib/antlr-runtime-3.2.jar
 CLASSPATH=$(BUILD_CLASSPATH):lib/rsense.jar
 
+.PHONY: all rsense doc
+
 all: rsense
 
 rsense: antlr
@@ -52,9 +54,13 @@ jruby-diff:
 		$(JRUBY_ORIG_HOME) $(JRUBY_HOME) \
 		> etc/jruby-1.4.0.patch
 
+doc:
+	ruby etc/txt2html.rb doc/*.txt
+
 clean:
 	rm -rf build
 	rm -f hs_err_pid*.log \
+		doc/*.html \
 		lib/rsense.jar \
 		TypeAnnotation.tokens \
 		src/org/cx4a/rsense/*.class \

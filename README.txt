@@ -1,1 +1,2 @@
-Read this [documentation](doc/index.txt).
+* [Online documents](http://cx4a.org/rsense/)
+* [Offline documents](doc/index.txt)

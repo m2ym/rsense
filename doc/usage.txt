@@ -3,6 +3,23 @@ RSense usage
 
 [Index](index.txt)
 
+Compilation
+-----------
+
+You can compile RSense with `make` command.
+
+    % make rsense
+
+After compilation, `lib/rsense.jar` will appear which is a main component of RSense.
+
+In addition, you can run code-completion, type-inference and test scripts via Makefile.
+
+    % make run-code-completion FILE=test.rb LOCATION=123
+    % make run-type-inference FILE=test.rb LOCATION=123
+    % make run-test
+
+See also [testing](test.txt).
+
 Primitive frontend
 ------------------
 
@@ -143,4 +160,4 @@ Generally, you use this wrapper frontend instead of a primitive frontend, becaus
 Makefile
 --------
 
-You can also use `Makefile` as a simple frontend. See [development guide](develop.txt) in detail.
+You can also use `Makefile` as a simple frontend. See [usage](usage.txt) in detail.

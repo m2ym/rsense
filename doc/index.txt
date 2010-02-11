@@ -21,6 +21,11 @@ In addition, we know we can implement the following features too:
 * Caller jump
 * Refactoring
 
+Usage
+-----
+
+Read [usage document](usage.txt).
+
 Download
 --------
 
@@ -38,7 +43,11 @@ To maximize the software's value for users, we chose to use [GPLv3][]. If you do
 Contribution
 ------------
 
-We welcome any contribution. Please read this [development guide](develop.txt)
+We welcome any contribution. Read following documents.
+
+* [Development guide](develop.txt)
+* [Type annotation](annot.txt)
+* [Testing](test.txt)
 
 [unix philosophy]: http://www.faqs.org/docs/artu/ "The Art of Unix Programming"
 [Ruby]: http://www.ruby-lang.org/ "Ruby Programming Language"

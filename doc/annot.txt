@@ -118,7 +118,7 @@ By adding type annotation to class, class can be data-polymorphic. Think followi
     b.set('Hello')
     b.get    # What type of mine?
 
-The answer is `Fixnum` and `String`. Why? It is because of that non data-polymorphic objects shares their instance variables. Why shares instance variables? It is to achieve balance of preciseness and performance and based on hypothesis that programmers rarely use data-polymorphic. Actually, there is serious problem when we use `Array`, `Hash`, or something else container class.
+The answer is `Fixnum` and `String`. Why? It is because of that non data-polymorphic objects shares their instance variables. Why shares instance variables? It is to achieve balance of preciseness and performance and based on hypothesis that programmers rarely use data-polymorphic. However, there is serious problem when we use `Array`, `Hash`, or something else container class.
 
 So, we adopt class type annotation to realize data-polymorphism restrictedly. When you want to create data-polymorphic class, write class type annotation with type variables. Specified type variables will be independent from each instances. That is, with class type annotation and method type annotation, you can realize data-polymorphic class.
 
@@ -178,4 +178,4 @@ This is `Array#push` method type annotation. How do you can read? If you can rea
 Stubs
 -----
 
-*Stus* is a collection of type annotation. Currently, they are located in `stubs/`. We are hard working to write stubs of builtin library and standard library by referencing [Ruby documents](http://doc.okkez.net/187/view/). We welcome any contribution especially about stubs :)
+*Stub* is a collection of type annotation. Currently, they are located in `stubs/`. We are hard working to write stubs of builtin library and standard library by refering [Ruby documents](http://doc.okkez.net/187/view/). We welcome any contribution especially about stubs :)
