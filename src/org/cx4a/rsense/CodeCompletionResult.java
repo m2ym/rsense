@@ -7,13 +7,19 @@ import org.jruby.ast.Node;
 public class CodeCompletionResult extends CodeAssistResult {
     public static class CompletionCandidate {
         private String completion;
+        private String qualifiedName;
 
-        public CompletionCandidate(String completion) {
+        public CompletionCandidate(String completion, String qualifiedName) {
             this.completion = completion;
+            this.qualifiedName = qualifiedName;
         }
 
         public String getCompletion() {
             return completion;
+        }
+
+        public String getQualifiedName() {
+            return qualifiedName;
         }
 
         @Override

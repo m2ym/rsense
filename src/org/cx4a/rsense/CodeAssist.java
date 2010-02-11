@@ -22,6 +22,7 @@ import org.cx4a.rsense.ruby.Ruby;
 import org.cx4a.rsense.ruby.RubyClass;
 import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.ruby.Block;
+import org.cx4a.rsense.ruby.DynamicMethod;
 import org.cx4a.rsense.typing.Graph;
 import org.cx4a.rsense.typing.TypeSet;
 import org.cx4a.rsense.typing.vertex.Vertex;
@@ -296,8 +297,10 @@ public class CodeAssist {
 
         List<CodeCompletionResult.CompletionCandidate> candidates = new ArrayList<CodeCompletionResult.CompletionCandidate>();
         for (IRubyObject klass : r.getTypeSet()) {
-            for (String name : ((RubyClass) klass).getMethods(true)) {
-                candidates.add(new CodeCompletionResult.CompletionCandidate(name));
+            RubyClass rubyClass = ((RubyClass) klass);
+            for (String name : rubyClass.getMethods(true)) {
+                DynamicMethod method = rubyClass.searchMethod(name);
+                candidates.add(new CodeCompletionResult.CompletionCandidate(name, method.toString()));
             }
         }
 

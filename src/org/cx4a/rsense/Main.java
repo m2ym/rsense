@@ -279,9 +279,10 @@ public class Main {
                     out.print("(");
                     out.print("(completion");
                     for (CodeCompletionResult.CompletionCandidate completion : result.getCandidates()) {
-                        out.print(" \"");
-                        out.print(completion);
-                        out.print("\"");
+                        out.print(" (");
+                        out.print("\"" + completion.getCompletion() + "\"");
+                        out.print(" \"" + completion.getQualifiedName() + "\"");
+                        out.print(")");
                     }
                     out.println(")");
                     codeAssistError(result, options);
@@ -289,7 +290,10 @@ public class Main {
                 } else {
                     for (CodeCompletionResult.CompletionCandidate completion : result.getCandidates()) {
                         out.print("completion: ");
-                        out.println(completion);
+                        out.print(completion);
+                        out.print(" ");
+                        out.print(completion.getQualifiedName());
+                        out.println();
                     }
                     codeAssistError(result, options);
                 }

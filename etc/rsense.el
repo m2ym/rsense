@@ -36,6 +36,12 @@
 (defcustom rsense-log-file "/tmp/rsense.log"
   "RSense log file.")
 
+(defcustom rsense-rurema-home (expand-file-name "~/src/rurema")
+  "Home directory of Ruby Reference Manual Project.")
+
+(defcustom rsense-rurema-refe "refe-1_8_7"
+  "Program name of ReFe.")
+
 (defun rsense-command (&rest command)
   (setenv "RSENSE_LOG" rsense-log-file)
   (setenv "RSENSE_DEBUG" (if rsense-debug "true"))
@@ -70,15 +76,25 @@
                    (mapconcat 'identity result " | ")
                  "No type information"))))
 
+(defun rsense-lookup-document (pattern)
+  (shell-command-to-string (format "%s/%s '%s'" rsense-rurema-home rsense-rurema-refe pattern)))
+
+(defun ac-rsense-documentation (item)
+  (ignore-errors
+    (rsense-lookup-document (cadr item))))
+
 (defun ac-rsense-candidates ()
-  (assoc-default 'completion
-                 (rsense-code-completion (current-buffer)
-                                         ac-point
-                                         (point))))
+  (mapcar (lambda (entry)
+            (cons (car entry) entry))
+          (assoc-default 'completion
+                         (rsense-code-completion (current-buffer)
+                                                 ac-point
+                                                 (point)))))
 
 (defvar ac-source-rsense
   '((candidates . ac-rsense-candidates)
     (prefix . "\\.\\(.*\\)")
+    (document . ac-rsense-documentation)
     (cache)))
 
 (provide 'rsense)
