@@ -161,11 +161,15 @@ public class Options extends HashMap<String, String> {
     }
 
     public Set<String> getShouldBe() {
-        return getStringSet("should-be");
+        if (containsKey("should-be-empty")) {
+            return Collections.<String>emptySet();
+        } else {
+            return getStringSet("should-be");
+        }
     }
 
     public boolean isShouldBeGiven() {
-        return containsKey("should-be");
+        return containsKey("should-be") || containsKey("should-be-empty");
     }
 
     private Set<String> getStringSet(String name) {

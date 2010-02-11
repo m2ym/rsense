@@ -2,6 +2,7 @@ package org.cx4a.rsense.typing.runtime;
 
 import org.cx4a.rsense.ruby.Ruby;
 import org.cx4a.rsense.ruby.RubyClass;
+import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.typing.vertex.Vertex;
 import org.cx4a.rsense.typing.vertex.TypeVarVertex;
 import org.cx4a.rsense.typing.annotation.TypeVariable;

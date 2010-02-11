@@ -382,7 +382,8 @@ public class Main {
             if (shouldBe.equals(data)) {
                 testSuccess(options);
             } else {
-                testFailure(options, "%s should be %s", data, shouldBe);
+                String expected = shouldBe.isEmpty() ? "empty" : shouldBe.toString();
+                testFailure(options, "%s should be %s", data, expected);
             }
         } else {
             Set<String> shouldContain = options.getShouldContain();

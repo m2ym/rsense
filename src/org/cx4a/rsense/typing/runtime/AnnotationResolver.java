@@ -15,7 +15,6 @@ import org.cx4a.rsense.typing.Graph;
 import org.cx4a.rsense.typing.Template;
 import org.cx4a.rsense.typing.TemplateAttribute;
 import org.cx4a.rsense.typing.TypeSet;
-import org.cx4a.rsense.typing.runtime.Tuple;
 import org.cx4a.rsense.typing.annotation.TypeExpression;
 import org.cx4a.rsense.typing.annotation.TypeVariable;
 import org.cx4a.rsense.typing.annotation.ClassType;
@@ -122,11 +121,11 @@ public class AnnotationResolver {
                 switch (argType.getType()) {
                 case SPLAT: {
                     int len = Math.max(args.length - i, 0);
-                    IRubyObject[] elements = new IRubyObject[len];
-                    if (len > 0) {
-                        System.arraycopy(args, i, elements, 0, len);
+                    Vertex[] elements = new Vertex[len];
+                    for (int j = 0; j < len; j++) {
+                        elements[j] = graph.createFreeSingleTypeVertex(args[j]);
                     }
-                    arg = new Tuple(runtime, elements);
+                    arg = new Array(runtime, elements);
                     break;
                 }
                 default:
@@ -226,11 +225,13 @@ public class AnnotationResolver {
                 return true;
             } else if (expr.getType() == TypeExpression.Type.VARIABLE) {
                 return resolveMethodArg(template, classType, expr, receiver, arg);
-            } else if (arg instanceof Tuple) {
-                Tuple tuple = (Tuple) arg;
-                for (IRubyObject a : tuple.getElements()) {
-                    if (!resolveMethodArg(template, classType, expr, receiver, a)) {
-                        return false;
+            } else if (arg instanceof Array) {
+                Array array = (Array) arg;
+                for (Vertex v : array.getElements()) {
+                    for (IRubyObject a : v.getTypeSet()) {
+                        if (!resolveMethodArg(template, classType, expr, receiver, a)) {
+                            return false;
+                        }
                     }
                 }
                 return true;
@@ -292,19 +293,27 @@ public class AnnotationResolver {
         TypeExpression blockArgType = blockSig.getArgType();
         TypeExpression returnArgType = blockSig.getReturnType();
         TypeSet[] args = processMethodBlockArg(template, classType, blockArgType, receiver);
-        Tuple[] tuples = Tuple.generateTuples(runtime, args);
-        
+
+
         // FIXME checkArity
 
         boolean succeed = false;
-        for (Tuple tuple : tuples) {
-            Vertex returnVertex = RuntimeHelper.yield(graph, block, tuple.getLength() == 1 ? tuple.get(0) : tuple, true);
-            if (returnVertex != null) {
-                TypeSet ts = returnVertex.getTypeSet();
-                for (IRubyObject arg : ts) {
-                    if (resolveMethodArg(template, classType, returnArgType, receiver, arg)) {
-                        succeed = true;
-                    }
+        Vertex returnVertex;
+        if (args.length == 1) {
+            returnVertex = RuntimeHelper.yield(graph, block, args[0], true);
+        } else {
+            Vertex[] elements = new Vertex[args.length];
+            for (int i = 0; i < args.length; i++) {
+                elements[i] = graph.createFreeVertex();
+                elements[i].getTypeSet().addAll(args[i]);
+            }
+            returnVertex = RuntimeHelper.yield(graph, block, new Array(runtime, elements), true);
+        }
+        if (returnVertex != null) {
+            TypeSet ts = returnVertex.getTypeSet();
+            for (IRubyObject arg : ts) {
+                if (resolveMethodArg(template, classType, returnArgType, receiver, arg)) {
+                    succeed = true;
                 }
             }
         }
@@ -407,15 +416,16 @@ public class AnnotationResolver {
             TypeTuple tupleType = (TypeTuple) returnType;
             List<TypeExpression> exprs = tupleType.getList();
             if (exprs != null) {
-                TypeSet[] args = new TypeSet[exprs.size()];
+                Vertex[] elements = new Vertex[exprs.size()];
                 for (int i = 0; i < exprs.size(); i++) {
                     TypeSet ts = processMethodReturn(template, classType, exprs.get(i), receiver);
                     if (ts == null) {
                         return result;
                     }
-                    args[i] = ts;
+                    elements[i] = graph.createFreeVertex();
+                    elements[i].getTypeSet().addAll(ts);
                 }
-                result.addAll(Arrays.asList(Tuple.generateTuples(runtime, args)));
+                result.add(new Array(runtime, elements));
             }
             return result;
         }

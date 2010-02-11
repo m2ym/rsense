@@ -684,6 +684,10 @@ public class RuntimeHelper {
     public static Vertex yield(Graph graph, Block block, IRubyObject arg, boolean expanded) {
         return yield(graph, block, Arrays.asList(arg), expanded);
     }
+
+    public static Vertex yield(Graph graph, Block block, IRubyObject[] args, boolean expanded) {
+        return yield(graph, block, Arrays.asList(args), expanded);
+    }
     
     public static Vertex yield(Graph graph, Block block, Collection<IRubyObject> args, boolean expanded) {
         if (block == null) {

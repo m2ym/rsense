@@ -7,7 +7,7 @@ CLASSPATH=$(BUILD_CLASSPATH):lib/rsense.jar
 
 all: rsense
 
-rsense:
+rsense: antlr
 	mkdir -p build
 	javac -cp $(BUILD_CLASSPATH) \
 		-d build \

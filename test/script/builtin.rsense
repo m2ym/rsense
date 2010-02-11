@@ -14,7 +14,7 @@ type-inference --test=Array.StaticAccess1 --should-be=Fixnum
 [1][0]_|_
 EOF
 
-type-inference --test=Array.StaticAccess2 --should-contain=Float --should-not-contain=Fixnum
+type-inference --test=Array.StaticAccess2 --should-be=Float
 [1, 2.3][1]_|_
 EOF
 
@@ -199,7 +199,7 @@ f {|x, y|
 }
 EOF
 
-type-inference --test=Method.Yield.ArrayArg.Splat --should-be=Array
+type-inference --test=Method.Yield.ArrayArg.Splat1 --should-be=Array
 def f
   yield [1, 2.3]
 end
@@ -208,11 +208,84 @@ f {|x, *y|
 }
 EOF
 
-type-inference --test=Method.Yield.ArrayArg.Splat --should-be=String
+type-inference --test=Method.Yield.ArrayArg.Splat2 --should-be=String
 def f
   yield [1, 2.3, '']
 end
 f {|x, *y|
   y[1]_|_
 }
+EOF
+
+type-inference --test=Annotation.Method.Return --should-be=String
+##% f() -> String
+def f() end
+f_|_
+EOF
+
+type-inference --test=Annotation.Method.Arg --should-be=Fixnum
+##% f(a) -> a
+def f(a) end
+f(1)_|_
+EOF
+
+type-inference --test=Annotation.Method.Arg.Guard1 --should-be=String
+##% f(Fixnum) -> String
+def f(a) end
+f(1)_|_
+EOF
+
+type-inference --test=Annotation.Method.Arg.Guard2 --should-be-empty
+##% f(Fixnum) -> String
+def f(a) end
+f('')_|_
+EOF
+
+type-inference --test=Annotation.Method.Arg.Guard3 --should-be=Fixnum
+##% f(Fixnum) -> String
+##% f(String) -> Fixnum
+def f(a) end
+f('')_|_
+EOF
+
+type-inference --test=Annotation.Method.Arg.Optional --should-be=Fixnum
+##% f(?a) -> Fixnum
+def f(*a) end
+f_|_
+EOF
+
+type-inference --test=Annotation.Method.Arg.OptionalGuard1 --should-be=Fixnum
+##% f(?String) -> Fixnum
+def f(*a) end
+f_|_
+EOF
+
+type-inference --test=Annotation.Method.Arg.OptionalGuard2 --should-be=Fixnum
+##% f(?String) -> Fixnum
+def f(*a) end
+f('')_|_
+EOF
+
+type-inference --test=Annotation.Method.Arg.OptionalGuard3 --should-be-empty
+##% f(?String) -> Fixnum
+def f(*a) end
+f(1)_|_
+EOF
+
+type-inference --test=Annotation.Method.Arg.Splat --should-be=Array
+##% f(*a) -> a
+def f(*a) end
+f(1, '')_|_
+EOF
+
+type-inference --test=Annotation.Method.Arg.SplatGuard1 --should-be=Fixnum
+##% f(*String) -> Fixnum
+def f(*a) end
+f('', '', '')_|_
+EOF
+
+type-inference --test=Annotation.Method.Arg.SplatGuard2 --should-be-empty
+##% f(*String) -> Fixnum
+def f(*a) end
+f('', 1, '')_|_
 EOF

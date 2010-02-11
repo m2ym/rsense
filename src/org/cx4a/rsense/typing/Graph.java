@@ -139,7 +139,6 @@ import org.cx4a.rsense.util.SourceLocation;
 import org.cx4a.rsense.typing.runtime.InstanceFactory;
 import org.cx4a.rsense.typing.runtime.VertexHolder;
 import org.cx4a.rsense.typing.runtime.Array;
-import org.cx4a.rsense.typing.runtime.Tuple;
 import org.cx4a.rsense.typing.runtime.Hash;
 import org.cx4a.rsense.typing.runtime.Method;
 import org.cx4a.rsense.typing.runtime.SpecialMethod;
