@@ -1,15 +1,7 @@
-- begin/rescue/else/ensure/end
-- template clone
-- unit test
-- proc, lambda
-- callcc
-- exceptions
-- partial update
-- exception handling
-- require/load
-- cut branches
-- recursive call
-- pobj instances
-- data polymorphic object's cartesian product
-- refactoring tvmap (replaced by TypeSet)
-- refactoring frame module and scope module
+* Exceptions (raise/rescue)
+* Template clone
+* proc, lambda
+* callcc
+* Cut branches
+* Recursive customization
+* Integrate document server

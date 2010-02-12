@@ -10,8 +10,11 @@ import java.util.Arrays;
 
 import org.jruby.ast.Node;
 import org.jruby.ast.ArgsNode;
+import org.jruby.ast.ArgsNoArgNode;
+import org.jruby.ast.ArgsPreOneArgNode;
 import org.jruby.ast.ArgumentNode;
 import org.jruby.ast.ListNode;
+import org.jruby.ast.LocalVarNode;
 import org.jruby.ast.LocalAsgnNode;
 import org.jruby.ast.DAsgnNode;
 import org.jruby.ast.ClassVarDeclNode;
@@ -30,8 +33,12 @@ import org.jruby.ast.AssignableNode;
 import org.jruby.ast.YieldNode;
 import org.jruby.ast.ZeroArgNode;
 import org.jruby.ast.MethodDefNode;
+import org.jruby.ast.DefnNode;
 import org.jruby.ast.NodeType;
 import org.jruby.ast.types.INameNode;
+import org.jruby.parser.LocalStaticScope;
+import org.jruby.lexer.yacc.ISourcePosition;
+import org.jruby.lexer.yacc.SimpleSourcePosition;
 
 import org.cx4a.rsense.ruby.Ruby;
 import org.cx4a.rsense.ruby.Context;
@@ -974,5 +981,44 @@ public class RuntimeHelper {
             vertices[i] = graph.createVertex(node.get(i));
         }
         return vertices;
+    }
+
+    public static void defineAttrs(Graph graph, TypeSet receivers, Vertex[] args, boolean reader, boolean writer) {
+        if (args.length > 0) {
+            for (IRubyObject receiver : receivers) {
+                if (receiver.isKindOf(graph.getRuntime().getModule())) {
+                    for (Vertex arg : args) {
+                        String name = Vertex.getStringOrSymbol(arg);
+                        if (name != null) {
+                            if (reader) {
+                                defineAttrReader(graph, name);
+                            }
+                            if (writer) {
+                                defineAttrWriter(graph, name);
+                            }
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    public static void defineAttrReader(Graph graph, String name) {
+        ISourcePosition pos = new SimpleSourcePosition("(generated)", 0);
+        graph.createVertex(new DefnNode(pos,
+                                        new ArgumentNode(pos, name),
+                                        new ArgsNoArgNode(pos),
+                                        new LocalStaticScope(null),
+                                        new InstVarNode(pos, "@" + name)));
+    }
+
+    public static void defineAttrWriter(Graph graph, String name) {
+        ISourcePosition pos = new SimpleSourcePosition("(generated)", 0);
+        graph.createVertex(new DefnNode(pos,
+                                        new ArgumentNode(pos, name + "="),
+                                        new ArgsPreOneArgNode(pos, new ListNode(null, new ArgumentNode(null, name))),
+                                        new LocalStaticScope(null),
+                                        new InstAsgnNode(pos, "@" + name, new LocalVarNode(null, 0, name))));
     }
 }

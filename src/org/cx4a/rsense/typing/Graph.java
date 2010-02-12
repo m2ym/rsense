@@ -358,6 +358,32 @@ public class Graph implements NodeVisitor {
                     runtime.getContext().getCurrentFrame().setVisibility(Visibility.PUBLIC);
                 }
             });
+
+        addSpecialMethod("attr", new SpecialMethod() {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                    if (args.length > 0) {
+                        RuntimeHelper.defineAttrs(Graph.this, receivers, new Vertex[] { args[0] }, true, args.length > 1);
+                    }
+                }
+            });
+
+        addSpecialMethod("attr_reader", new SpecialMethod() {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                    RuntimeHelper.defineAttrs(Graph.this, receivers, args, true, false);
+                }
+            });
+
+        addSpecialMethod("attr_writer", new SpecialMethod() {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                    RuntimeHelper.defineAttrs(Graph.this, receivers, args, false, true);
+                }
+            });
+
+        addSpecialMethod("attr_accessor", new SpecialMethod() {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                    RuntimeHelper.defineAttrs(Graph.this, receivers, args, true, true);
+                }
+            });
     }
 
     public void load(Node newAST) {

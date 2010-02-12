@@ -217,6 +217,86 @@ f {|x, *y|
 }
 EOF
 
+type-inference --test=Attr1 --should-be=Fixnum
+class C
+  attr :foo
+  def initialize() @foo = 1 end
+end
+C.new.foo_|_
+EOF
+
+type-inference --test=Attr2 --should-be-empty
+class C
+  attr :foo
+end
+a = C.new
+a.foo = 1
+a.foo_|_
+EOF
+
+type-inference --test=Attr3 --should-be=Fixnum
+class C
+  attr :foo, true
+end
+a = C.new
+a.foo = 1
+a.foo_|_
+EOF
+
+type-inference --test=AttrReader1 --should-be=Fixnum
+class C
+  attr_reader :foo
+  def initialize() @foo = 1 end
+end
+C.new.foo_|_
+EOF
+
+type-inference --test=AttrReader2 --should-be=Float
+class C
+  attr_reader :foo, :bar
+  def initialize() @bar = 2.3 end
+end
+C.new.bar_|_
+EOF
+
+type-inference --test=AttrWriter1 --should-be=Fixnum
+class C
+  attr_writer :foo
+  def get() @foo end
+end
+a = C.new
+a.foo = 1
+a.get_|_
+EOF
+
+type-inference --test=AttrWriter1 --should-be=Float
+class C
+  attr_writer :foo, :bar
+  def get() @bar end
+end
+a = C.new
+a.bar = 2.3
+a.get_|_
+EOF
+
+type-inference --test=AttrAccessor1 --should-be=Fixnum
+class C
+  attr_accessor :foo
+end
+a = C.new
+a.foo = 1
+a.foo_|_
+EOF
+
+type-inference --test=AttrAccessor2 --should-be=Float
+class C
+  attr_accessor :foo, :bar
+end
+a = C.new
+a.bar = 2.3
+a.bar_|_
+EOF
+
 type-inference --test=Annotation.Method.Return --should-be=String
 ##% f() -> String
 def f() end
@@ -289,3 +369,4 @@ type-inference --test=Annotation.Method.Arg.SplatGuard2 --should-be-empty
 def f(*a) end
 f('', 1, '')_|_
 EOF
+
