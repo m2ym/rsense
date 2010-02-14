@@ -119,12 +119,16 @@ public class Options extends HashMap<String, String> {
             String sep = File.pathSeparator;
             if (sep.equals(";")) {
                 // Windows maybe (ActiveRuby)
-                return "C:\\Program Files\\ruby-1.8\\lib\\ruby\\1.8";
+                loadPath = "C:\\Program Files\\ruby-1.8\\lib\\ruby\\1.8";
             } else {
                 // Unix maybe
-                return "/usr/lib/ruby/1.8";
+                loadPath = "/usr/lib/ruby/1.8";
             }
         }
+
+        // add stub path
+        loadPath = getRsenseHome() + "/stubs/1.8:" + loadPath;
+        
         return loadPath;
     }
 

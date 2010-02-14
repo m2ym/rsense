@@ -1583,7 +1583,7 @@ module Kernel
   ##% sub!(String or Regexp) {String -> ?} -> self
   ##% sub!(String or Regexp) -> Enumerator<String, self>
   def sub!(pattern, replace = nil) self end
-  ##% syscall(Integer, *String or Integer) -> Integer
+  ##% syscall(Integer, *(String or Integer)) -> Integer
   def syscall(num, *arg) 0 end
   ##% system(String) -> Boolean
   ##% system(String, *String) -> Boolean
@@ -1620,7 +1620,135 @@ class Method
 end
 
 class Module
-  # FIXME
+  ##% self.constants() -> Array<String>
+  def self.constants() [''] end
+  ##% self.nesting() -> Array<Module or Class>
+  def self.nesting() [Module.new || Class.new] end
+  ##% self.new() -> Module
+  ##% self.new() {Module -> ?} -> Module
+  def self.new() super end
+
+  ##% "<"(Module) -> Boolean
+  def <(other) BOOLEAN end
+  ##% "<="(Module) -> Boolean
+  def <=(other) BOOLEAN end
+  ##% "<=>"(Module) -> Integer
+  def <=>(other) 0 end
+  ##% ===(other) -> Boolean
+  def ===(other) BOOLEAN end
+  ##% ">"(Module) -> Boolean
+  def >(other) BOOLEAN end
+  ##% ">="(Module) -> Boolean
+  def >=(other) BOOLEAN end
+  ##% ancestors() -> Array<Module or Class>
+  def ancestors() [Module.new || Class.new] end
+  ##% autoload(String or Symbol, String) -> nil
+  def autoload(const_name, feature) nil end
+  ##% autoload(String or Symbol) -> String
+  def autoload?(const_name) '' end
+  ##% module_eval(String, ?String, ?Integer) -> Object
+  ##% module_eval() {self -> ?} -> Object
+  def module_eval(*) end
+  alias :class_eval :module_eval
+  ##% class_variable_defined?(String or Symbol) -> Boolean
+  def class_variable_defined?(name) BOOLEAN end
+  ##% class_variables() -> Array<String>
+  def class_variables() [''] end
+  ##% const_defined?(String or Symbol) -> Boolean
+  def const_defined?(name) BOOLEAN end
+  ##% const_get(String or Symbol) -> Object
+  def const_get(name) Object.new end
+  ##% const_missing(Symbol) -> nil
+  def const_missing(name) end
+  ##% const_set(String or Symbol, a) -> a
+  def const_set(name, value) value end
+  ##% constants() -> Array<String>
+  def constants() [''] end
+  ##% include?(Module) -> Boolean
+  def include?() BOOLEAN end
+  ##% included_modules() -> Array<Module>
+  def included_modules() [Module.new] end
+  ##% instance_method(String or Symbol) -> UnboundMethod
+  def instance_method(name) UnboundMethod.new end
+  ##% instance_methods(?Boolean) -> Array<String>
+  def instance_methods(inherited_too = true) [''] end
+  ##% method_defined(String or Symbol) -> Boolean
+  def method_defined(name) BOOLEAN end
+  ##% name() -> String
+  def name() '' end
+  alias :to_s :name
+  ##% private_class_method(*(String or Symbol)) -> self
+  def private_class_method(*name) self end
+  ##% private_instance_methods(?Boolean) -> Array<String>
+  def private_instance_methods(inherited_too = true) [''] end
+  ##% private_method_defined?(String or Symbol) -> Boolean
+  def private_method_defined?(name) BOOLEAN end
+  ##% protected_class_method(*(String or Symbol)) -> self
+  def protected_class_method(*name) self end
+  ##% protected_instance_methods(?Boolean) -> Array<String>
+  def protected_instance_methods(inherited_too = true) [''] end
+  ##% protected_method_defined?(String or Symbol) -> Boolean
+  def protected_method_defined?(name) BOOLEAN end
+  ##% public_class_method(*(String or Symbol)) -> self
+  def public_class_method(*name) self end
+  ##% public_instance_methods(?Boolean) -> Array<String>
+  def public_instance_methods(inherited_too = true) [''] end
+  ##% public_method_defined?(String or Symbol) -> Boolean
+  def public_method_defined?(name) BOOLEAN end
+    
+  private
+  ##% alias_method(String or Symbol, String or Symbol) -> self
+  def alias_method(new, original) self end
+  ##% append_features(Module) -> self
+  def append_features(module_or_class) self end
+  ##% attr(String or Symbol, ?Boolean) -> nil
+  def attr(name, assignable = false) nil end
+  ##% attr_accessor(*(String or Symbol)) -> nil
+  def attr_accessor(*name) nil end
+  ##% attr_reader(*(String or Symbol)) -> nil
+  def attr_reader(*name) nil end
+  ##% attr_writer(*(String or Symbol)) -> nil
+  def attr_writer(*name) nil end
+  ##% module_exec(*args) {args -> ?} -> Object
+  def module_exec(*args) yield *args end
+  alias :class_exec :module_exec
+  ##% class_variable_get(String or Symbol) -> Object
+  def class_variable_get(name) Object.new end
+  ##% class_variable_set(String or Symbol, a) -> a
+  def class_variable_set(name, val) val end
+  ##% define_method<a | a <= Proc or Method or UnboundMethod>(String or Symbol, a) -> Proc or Method or UnboundMethod
+  ##^ define_method(String or Symbol) {() -> ?}  -> Proc
+  def define_method(*) end
+  ##% extend_object<a | a <= Module>(a) -> a
+  def extend_object(mod) mod end
+  ##% extended(Module) -> nil
+  def extended(class_or_module) end
+  ##% include(*Module) -> self
+  def include(*mod) self end
+  ##% included(Module) -> nil
+  def included(class_or_module) end
+  ##% method_added(Symbol) -> nil
+  def method_added(name) end
+  ##% method_removed(Symbol) -> nil
+  def method_removed(name) end
+  ##% method_undefined(Symbol) -> nil
+  def method_undefined(name) end
+  ##% module_function(*(String or Symbol)) -> self
+  def module_function(*name) self end
+  ##% private(*(String or Symbol)) -> self
+  def private(*name) self end
+  ##% protected(*(String or Symbol)) -> self
+  def protected(*name) self end
+  ##% public(*(String or Symbol)) -> self
+  def public(*name) self end
+  ##% remove_class_variable(String or Symbol) -> Object
+  def remove_class_variable(name) Object.new end
+  ##% remove_const(String or Symbol) -> Object
+  def remove_const(name) Object.new end
+  ##% remove_method(*(String or Symbol)) -> self
+  def remove_method(*name) self end
+  ##% undef_method(*(String or Symbol)) -> self
+  def undef_method(*name) self end
 end
 
 class NilClass

@@ -241,7 +241,7 @@ public class CodeAssist {
                 return load(project, file, encoding);
             }
         }
-        Logger.debug("require failed: %s", feature);
+        Logger.warn("require failed: %s", feature);
         return LoadResult.failWithNotFound();
     }
 
@@ -323,7 +323,7 @@ public class CodeAssist {
         graph.addSpecialMethod("require", requireMethod);
         graph.setNodeDiff(new NodeDiffForTypeInference());
 
-        load(project, new File(options.getRsenseHome() + "/stubs/1.8/builtin.rb"), "UTF-8");
+        require(project, "_builtin", "UTF-8");
     }
 
     private String readAll(Reader reader) throws IOException {

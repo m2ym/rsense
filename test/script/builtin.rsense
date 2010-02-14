@@ -217,7 +217,7 @@ f {|x, *y|
 }
 EOF
 
-type-inference --test=Attr1 --should-be=Fixnum
+type-inference --test=Module.Attr1 --should-be=Fixnum
 class C
   attr :foo
   def initialize() @foo = 1 end
@@ -225,7 +225,7 @@ end
 C.new.foo_|_
 EOF
 
-type-inference --test=Attr2 --should-be-empty
+type-inference --test=Module.Attr2 --should-be-empty
 class C
   attr :foo
 end
@@ -234,7 +234,7 @@ a.foo = 1
 a.foo_|_
 EOF
 
-type-inference --test=Attr3 --should-be=Fixnum
+type-inference --test=Module.Attr3 --should-be=Fixnum
 class C
   attr :foo, true
 end
@@ -243,7 +243,7 @@ a.foo = 1
 a.foo_|_
 EOF
 
-type-inference --test=AttrReader1 --should-be=Fixnum
+type-inference --test=Module.AttrReader1 --should-be=Fixnum
 class C
   attr_reader :foo
   def initialize() @foo = 1 end
@@ -251,7 +251,7 @@ end
 C.new.foo_|_
 EOF
 
-type-inference --test=AttrReader2 --should-be=Float
+type-inference --test=Module.AttrReader2 --should-be=Float
 class C
   attr_reader :foo, :bar
   def initialize() @bar = 2.3 end
@@ -259,7 +259,7 @@ end
 C.new.bar_|_
 EOF
 
-type-inference --test=AttrWriter1 --should-be=Fixnum
+type-inference --test=Module.AttrWriter1 --should-be=Fixnum
 class C
   attr_writer :foo
   def get() @foo end
@@ -269,7 +269,7 @@ a.foo = 1
 a.get_|_
 EOF
 
-type-inference --test=AttrWriter1 --should-be=Float
+type-inference --test=Module.AttrWriter1 --should-be=Float
 class C
   attr_writer :foo, :bar
   def get() @bar end
@@ -279,7 +279,7 @@ a.bar = 2.3
 a.get_|_
 EOF
 
-type-inference --test=AttrAccessor1 --should-be=Fixnum
+type-inference --test=Module.AttrAccessor1 --should-be=Fixnum
 class C
   attr_accessor :foo
 end
@@ -288,13 +288,28 @@ a.foo = 1
 a.foo_|_
 EOF
 
-type-inference --test=AttrAccessor2 --should-be=Float
+type-inference --test=Module.AttrAccessor2 --should-be=Float
 class C
   attr_accessor :foo, :bar
 end
 a = C.new
 a.bar = 2.3
 a.bar_|_
+EOF
+
+type-inference --test=Module.ModuleFunction1 --should-be-empty
+module M
+  def f() 1 end
+end
+M.f_|_
+EOF
+
+type-inference --test=Module.ModuleFunction2 --should-be=Fixnum
+module M
+  def f() 1 end
+  module_function :f
+end
+M.f_|_
 EOF
 
 type-inference --test=Annotation.Method.Return --should-be=String
@@ -369,4 +384,3 @@ type-inference --test=Annotation.Method.Arg.SplatGuard2 --should-be-empty
 def f(*a) end
 f('', 1, '')_|_
 EOF
-

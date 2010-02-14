@@ -137,14 +137,14 @@ single_type_expr returns [TypeExpression value]
             }
         }
     | tuple { $value = $tuple.value; }
-    | '?' expr=single_type_expr? {
+    | '?' (expr=single_type_expr? | '(' expr=type_expr ')') {
             if ($expr.value != null) {
                 $value = new TypeOptional($expr.value);
             } else {
                 $value = new TypeAny();
             }
         }
-    | '*' expr=single_type_expr { $value = new TypeSplat($expr.value); }
+    | '*' (expr=single_type_expr | '(' expr=type_expr ')') { $value = new TypeSplat($expr.value); }
     ;
 
 or_type_list returns [List<TypeExpression> value]

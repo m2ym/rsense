@@ -33,6 +33,10 @@ public class DynamicMethod {
         return visibility;
     }
 
+    public void setVisibility(Visibility visibility) {
+        this.visibility = visibility;
+    }
+
     public ISourcePosition getPosition() {
         return position;
     }

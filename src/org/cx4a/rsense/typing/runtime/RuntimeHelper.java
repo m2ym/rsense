@@ -983,8 +983,29 @@ public class RuntimeHelper {
         return vertices;
     }
 
+    public static void setMethodsVisibility(Graph graph, TypeSet receivers, Vertex[] args, Visibility visibility) {
+        if (args == null || args.length == 0) {
+            graph.getRuntime().getContext().getCurrentFrame().setVisibility(visibility);
+        } else {
+            for (IRubyObject receiver : receivers) {
+                if (receiver.isKindOf(graph.getRuntime().getModule())) {
+                    RubyModule module = (RubyModule) receiver;
+                    for (Vertex arg : args) {
+                        String name = Vertex.getStringOrSymbol(arg);
+                        if (name != null) {
+                            DynamicMethod method = module.getMethod(name);
+                            if (method != null) {
+                                method.setVisibility(visibility);
+                            }
+                        }                        
+                    }
+                }
+            }
+        }
+    }
+
     public static void defineAttrs(Graph graph, TypeSet receivers, Vertex[] args, boolean reader, boolean writer) {
-        if (args.length > 0) {
+        if (args != null && args.length > 0) {
             for (IRubyObject receiver : receivers) {
                 if (receiver.isKindOf(graph.getRuntime().getModule())) {
                     for (Vertex arg : args) {
@@ -998,7 +1019,6 @@ public class RuntimeHelper {
                             }
                         }
                     }
-                    break;
                 }
             }
         }

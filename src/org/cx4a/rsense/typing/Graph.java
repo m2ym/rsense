@@ -343,25 +343,25 @@ public class Graph implements NodeVisitor {
 
         addSpecialMethod("private", new SpecialMethod() {
                 public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
-                    runtime.getContext().getCurrentFrame().setVisibility(Visibility.PRIVATE);
+                    RuntimeHelper.setMethodsVisibility(Graph.this, receivers, args, Visibility.PRIVATE);
                 }
             });
 
         addSpecialMethod("protected", new SpecialMethod() {
                 public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
-                    runtime.getContext().getCurrentFrame().setVisibility(Visibility.PROTECTED);
+                    RuntimeHelper.setMethodsVisibility(Graph.this, receivers, args, Visibility.PROTECTED);
                 }
             });
 
         addSpecialMethod("public", new SpecialMethod() {
                 public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
-                    runtime.getContext().getCurrentFrame().setVisibility(Visibility.PUBLIC);
+                    RuntimeHelper.setMethodsVisibility(Graph.this, receivers, args, Visibility.PUBLIC);
                 }
             });
 
         addSpecialMethod("attr", new SpecialMethod() {
                 public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
-                    if (args.length > 0) {
+                    if (args != null && args.length > 0) {
                         RuntimeHelper.defineAttrs(Graph.this, receivers, new Vertex[] { args[0] }, true, args.length > 1);
                     }
                 }
@@ -382,6 +382,27 @@ public class Graph implements NodeVisitor {
         addSpecialMethod("attr_accessor", new SpecialMethod() {
                 public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
                     RuntimeHelper.defineAttrs(Graph.this, receivers, args, true, true);
+                }
+            });
+
+        addSpecialMethod("module_function", new SpecialMethod() {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                    if (args != null && args.length > 0) {
+                        for (IRubyObject receiver : receivers) {
+                            if (receiver.isKindOf(runtime.getModule())) {
+                                RubyModule module = (RubyModule) receiver;
+                                for (Vertex arg : args) {
+                                    String name = Vertex.getStringOrSymbol(arg);
+                                    if (name != null) {
+                                        DynamicMethod method = module.getMethod(name);
+                                        if (method != null) {
+                                            module.getSingletonClass().addMethod(name, method);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
                 }
             });
     }
