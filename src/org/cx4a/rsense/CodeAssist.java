@@ -302,32 +302,35 @@ public class CodeAssist {
     }
 
     public CodeCompletionResult codeCompletion(Project project, File file, Reader reader, Location loc) {
-        CodeCompletionResult result = new CodeCompletionResult();
-        TypeInferenceResult r = typeInference(project, file, reader, loc);
-        result.setAST(r.getAST());
-        if (r.hasError()) {
-            result.setErrors(r.getErrors());
-            return result;
-        }
+        try {
+            prepare(project);
+            Node ast = parseFileContents(file, readAndInjectCode(reader, loc, TYPE_INFERENCE_METHOD_NAME, new String[] {".", "::"}, "."));
+            project.getGraph().load(ast);
 
-        List<CodeCompletionResult.CompletionCandidate> candidates = new ArrayList<CodeCompletionResult.CompletionCandidate>();
-        for (IRubyObject receiver : r.getTypeSet()) {
-            RubyClass rubyClass = receiver.getMetaClass();
-            for (String name : rubyClass.getMethods(true)) {
-                DynamicMethod method = rubyClass.searchMethod(name);
-                candidates.add(new CodeCompletionResult.CompletionCandidate(name, method.toString()));
-            }
-            if (receiver instanceof RubyModule) {
-                RubyModule module = ((RubyModule) receiver);
-                for (String name : module.getConstants(true)) {
-                    String qname = module.getConstantModule(name).toString() + "::" + name;
-                    candidates.add(new CodeCompletionResult.CompletionCandidate(name, qname));
+            CodeCompletionResult result = new CodeCompletionResult();
+            result.setAST(ast);
+
+            List<CodeCompletionResult.CompletionCandidate> candidates = new ArrayList<CodeCompletionResult.CompletionCandidate>();
+            for (IRubyObject receiver : context.typeSet) {
+                RubyClass rubyClass = receiver.getMetaClass();
+                for (String name : rubyClass.getMethods(true)) {
+                    DynamicMethod method = rubyClass.searchMethod(name);
+                    candidates.add(new CodeCompletionResult.CompletionCandidate(name, method.toString()));
+                }
+                if (receiver instanceof RubyModule) {
+                    RubyModule module = ((RubyModule) receiver);
+                    for (String name : module.getConstants(true)) {
+                        String qname = module.getConstantModule(name).toString() + "::" + name;
+                        candidates.add(new CodeCompletionResult.CompletionCandidate(name, qname));
+                    }
                 }
             }
-        }
 
-        result.setCandidates(candidates);
-        return result;
+            result.setCandidates(candidates);
+            return result;
+        } catch (IOException e) {
+            return CodeCompletionResult.failWithException("Cannot read file", e);
+        }
     }
 
     public void clear() {
