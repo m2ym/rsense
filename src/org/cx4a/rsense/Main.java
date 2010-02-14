@@ -103,6 +103,9 @@ public class Main {
                   + "      --file=            - File to analyze\n"
                   + "      --location=        - Location where you want to complete (pos, line:col, str)\n"
                   + "\n"
+                  + "  load                   - Load file without any outputs.\n"
+                  + "      --file=            - File to analyze\n"
+                  + "\n"
                   + "  script                 - Run rsense script from file or stdin.\n"
                   + "      --prompt=          - Prompt string in interactive shell mode\n"
                   + "      --no-prompt        - Do not show prompt\n"
@@ -236,6 +239,8 @@ public class Main {
             commandCodeCompletion(options);
         } else if (command.equals("type-inference")) {
             commandTypeInference(options);
+        } else if (command.equals("load")) {
+            commandLoad(options);
         } else if (command.equals("clear")) {
             commandClear(options);
         } else if (command.equals("help")) {
@@ -348,6 +353,36 @@ public class Main {
                     }
                     codeAssistError(result, options);
                 }
+            }
+        } catch (Exception e) {
+            commandException(e, options);
+        }
+    }
+
+    private void commandLoad(Options options) {
+        try {
+            LoadResult result;
+            Project project = codeAssist.getProject(options);
+            if (options.isFileStdin()) {
+                result = codeAssist.load(project,
+                                         new File("(stdin)"),
+                                         options.getHereDocReader(inReader));
+            } else {
+                result = codeAssist.load(project,
+                                         options.getFile(),
+                                         options.getEncoding());
+            }
+
+            if (options.isPrintAST()) {
+                Logger.debug("AST:\n%s", result.getAST());
+            }
+            
+            if (options.isEmacsFormat()) {
+                out.print("(");
+                codeAssistError(result, options);
+                out.println(")");
+            } else {
+                codeAssistError(result, options);
             }
         } catch (Exception e) {
             commandException(e, options);

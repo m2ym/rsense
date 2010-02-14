@@ -56,6 +56,6 @@ public class Method extends DynamicMethod {
 
     @Override
     public String toString() {
-        return getModule().methodPathString() + name;
+        return getModule().toMethodPathString() + name;
     }
 }

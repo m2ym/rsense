@@ -82,6 +82,28 @@ public class RubyClass extends RubyModule {
     }
 
     @Override
+    public Set<String> getConstants(boolean inheritedToo) {
+        Set<String> result = super.getConstants(inheritedToo);
+        RubyClass sclass = superClass;
+        while (sclass != null) {
+            result.addAll(sclass.getConstants(inheritedToo));
+            sclass = sclass.getSuperClass();
+        }
+        return result;
+    }
+
+    @Override
+    public RubyModule getConstantModule(String name) {
+        RubyModule module = super.getConstantModule(name);
+        RubyClass sclass = superClass;
+        while (module == null && sclass != null) {
+            module = sclass.getConstantModule(name);
+            sclass = sclass.getSuperClass();
+        }
+        return module;
+    }
+
+    @Override
     public DynamicMethod searchMethod(String name) {
         DynamicMethod method = getMethod(name);
         if (method == null && superClass != null) {

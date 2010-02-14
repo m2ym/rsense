@@ -87,6 +87,31 @@ public class RubyModule extends RubyObject {
         return constants.get(name);
     }
 
+    public Set<String> getConstants(boolean inheritedToo) {
+        Set<String> result = new HashSet<String>(constants.keySet());
+        if (inheritedToo) {
+            for (RubyModule module : includes) {
+                result.addAll(module.getConstants(inheritedToo));
+            }
+        }
+        return result;
+    }
+
+    public RubyModule getConstantModule(String name) {
+        // FIXME return pairs at getConstants
+        if (constants.containsKey(name)) {
+            return this;
+        } else {
+            for (RubyModule module : includes) {
+                module = module.getConstantModule(name);
+                if (module != null) {
+                    return module;
+                }
+            }
+        }
+        return null;
+    }
+
     public boolean isConstantDefined(String name) {
         return constants.containsKey(name);
     }
@@ -177,7 +202,7 @@ public class RubyModule extends RubyObject {
         includes.add(module);
     }
 
-    public String methodPathString() {
+    public String toMethodPathString() {
         return toString() + "#";
     }
 

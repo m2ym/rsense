@@ -20,6 +20,7 @@ import org.jruby.ast.types.INameNode;
 
 import org.cx4a.rsense.ruby.Ruby;
 import org.cx4a.rsense.ruby.RubyClass;
+import org.cx4a.rsense.ruby.RubyModule;
 import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.ruby.Block;
 import org.cx4a.rsense.ruby.DynamicMethod;
@@ -150,7 +151,7 @@ public class CodeAssist {
     private SpecialMethod typeInferenceMethod = new SpecialMethod() {
             public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
                 for (IRubyObject receiver : receivers) {
-                    context.typeSet.add(receiver.getMetaClass());
+                    context.typeSet.add(receiver);
                 }
                 result.setResultTypeSet(receivers);
                 result.setNeverCallAgain(true); // cutout vertex
@@ -271,12 +272,16 @@ public class CodeAssist {
     public TypeInferenceResult typeInference(Project project, File file, Reader reader, Location loc) {
         try {
             prepare(project);
-            Node ast = parseFileContents(file, readAndInjectCode(reader, loc, TYPE_INFERENCE_METHOD_NAME, "."));
+            Node ast = parseFileContents(file, readAndInjectCode(reader, loc, TYPE_INFERENCE_METHOD_NAME, new String[] {".", "::"}, "."));
             project.getGraph().load(ast);
 
             TypeInferenceResult result = new TypeInferenceResult();
             result.setAST(ast);
-            result.setTypeSet(context.typeSet);
+            TypeSet ts = new TypeSet();
+            for (IRubyObject receiver : context.typeSet) {
+                ts.add(receiver.getMetaClass());
+            }
+            result.setTypeSet(ts);
             return result;
         } catch (IOException e) {
             return TypeInferenceResult.failWithException("Cannot read file", e);
@@ -306,11 +311,18 @@ public class CodeAssist {
         }
 
         List<CodeCompletionResult.CompletionCandidate> candidates = new ArrayList<CodeCompletionResult.CompletionCandidate>();
-        for (IRubyObject klass : r.getTypeSet()) {
-            RubyClass rubyClass = ((RubyClass) klass);
+        for (IRubyObject receiver : r.getTypeSet()) {
+            RubyClass rubyClass = receiver.getMetaClass();
             for (String name : rubyClass.getMethods(true)) {
                 DynamicMethod method = rubyClass.searchMethod(name);
                 candidates.add(new CodeCompletionResult.CompletionCandidate(name, method.toString()));
+            }
+            if (receiver instanceof RubyModule) {
+                RubyModule module = ((RubyModule) receiver);
+                for (String name : module.getConstants(true)) {
+                    String qname = module.getConstantModule(name).toString() + "::" + name;
+                    candidates.add(new CodeCompletionResult.CompletionCandidate(name, qname));
+                }
             }
         }
 
@@ -337,10 +349,10 @@ public class CodeAssist {
     }
 
     private String readAll(Reader reader) throws IOException {
-        return readAndInjectCode(reader, null, null, null);
+        return readAndInjectCode(reader, null, null, null, null);
     }
 
-    private String readAndInjectCode(Reader _reader, Location loc, String injection, String prefix) throws IOException {
+    private String readAndInjectCode(Reader _reader, Location loc, String injection, String[] prefixes, String defaultPrefix) throws IOException {
         LineNumberReader reader = new LineNumberReader(_reader);
         int line = reader.getLineNumber() + 1;
         int offset = -1;
@@ -361,8 +373,15 @@ public class CodeAssist {
                         if (len == offset) {
                             index = i + 1;
                             buffer.append(buf, 0, index);
-                            if (!buffer.substring(Math.max(0, buffer.length() - prefix.length()), buffer.length()).equals(prefix)) {
-                                buffer.append(prefix);
+                            boolean found = false;
+                            for (String p : prefixes) {
+                                if (buffer.substring(Math.max(0, buffer.length() - p.length()), buffer.length()).equals(p)) {
+                                    found = true;
+                                    break;
+                                }
+                            }
+                            if (!found) {
+                                buffer.append(defaultPrefix);
                             }
                             buffer.append(injection);
                             index += loc.getSkip();

@@ -94,7 +94,7 @@
 
 (defvar ac-source-rsense
   '((candidates . ac-rsense-candidates)
-    (prefix . "\\.\\(.*\\)")
+    (prefix . "\\(?:\\.\\|::\\)\\(.*\\)")
     (document . ac-rsense-documentation)
     (cache)))
 

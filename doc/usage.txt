@@ -76,6 +76,14 @@ Same to code-completion command except this command gets a type of an expression
     % java -cp ... org.cx4a.rsense.Main type-inference --file=test1.rb --location=_|_
     type: Fixnum
 
+### command: load ###
+
+Load specified file without any outputs.
+
+#### Example ####
+
+    % java -cp ... org.cx4a.rsense.Main load --file=test1.rb
+
 ### command: script ###
 
 This commands is useful for processing a series of commands again and again. If no script files are given, this commands reads commands from standard input. An end of each command is detected by mark specified by `--end-mark=` option. If `--end-mark=` option is not given, `--end-mark=EOF` will be used instead.
