@@ -359,6 +359,12 @@ public class Graph implements NodeVisitor {
                 }
             });
 
+        addSpecialMethod("module_function", new SpecialMethod() {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                    RuntimeHelper.setMethodsVisibility(Graph.this, receivers, args, Visibility.MODULE_FUNCTION);
+                }
+            });
+
         addSpecialMethod("attr", new SpecialMethod() {
                 public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
                     if (args != null && args.length > 0) {
@@ -382,27 +388,6 @@ public class Graph implements NodeVisitor {
         addSpecialMethod("attr_accessor", new SpecialMethod() {
                 public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
                     RuntimeHelper.defineAttrs(Graph.this, receivers, args, true, true);
-                }
-            });
-
-        addSpecialMethod("module_function", new SpecialMethod() {
-                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
-                    if (args != null && args.length > 0) {
-                        for (IRubyObject receiver : receivers) {
-                            if (receiver.isKindOf(runtime.getModule())) {
-                                RubyModule module = (RubyModule) receiver;
-                                for (Vertex arg : args) {
-                                    String name = Vertex.getStringOrSymbol(arg);
-                                    if (name != null) {
-                                        DynamicMethod method = module.getMethod(name);
-                                        if (method != null) {
-                                            module.getSingletonClass().addMethod(name, method);
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
                 }
             });
     }
@@ -791,6 +776,10 @@ public class Graph implements NodeVisitor {
         DynamicMethod oldMethod = cbase.getMethod(name);
         Method newMethod = new Method(cbase, name, bodyNode, argsNode, visibility, node.getPosition());
         cbase.addMethod(name, newMethod);
+        
+        if (context.getCurrentFrame().getVisibility() == Visibility.MODULE_FUNCTION) {
+            cbase.getSingletonClass().addMethod(name, newMethod);
+        }
 
         IRubyObject receiver = newInstanceOf((cbase instanceof RubyClass) ? (RubyClass) cbase : runtime.getObject());
         

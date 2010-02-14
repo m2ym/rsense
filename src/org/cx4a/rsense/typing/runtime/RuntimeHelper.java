@@ -1009,6 +1009,9 @@ public class RuntimeHelper {
                             DynamicMethod method = module.getMethod(name);
                             if (method != null) {
                                 method.setVisibility(visibility);
+                                if (visibility == Visibility.MODULE_FUNCTION) {
+                                    module.getSingletonClass().addMethod(name, method);
+                                }
                             }
                         }                        
                     }
