@@ -390,6 +390,49 @@ public class Graph implements NodeVisitor {
                     RuntimeHelper.defineAttrs(Graph.this, receivers, args, true, true);
                 }
             });
+
+        addSpecialMethod("unpack", new SpecialMethod() {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                    if (args != null && args.length > 0) {
+                        String template = Vertex.getString(args[0]);
+                        if (template != null) {
+                            TypeSet ts = new TypeSet();
+                            for (IRubyObject object : receivers) {
+                                if (object.isKindOf(runtime.getString())) {
+                                    List<Vertex> elements = new ArrayList<Vertex>();
+                                    for (char c : template.toCharArray()) {
+                                        RubyClass type = null;
+                                        switch (c) {
+                                        case 'a': case 'A': case 'Z': case 'b':
+                                        case 'B': case 'h': case 'H': case 'm':
+                                        case 'M': case 'p': case 'P': case 'u':
+                                        case 'U': 
+                                            type = runtime.getString();
+                                            break;
+                                        case 'c': case 'C': case 's': case 'S':
+                                        case 'i': case 'I': case 'l': case 'L':
+                                        case 'q': case 'Q': case 'n': case 'N':
+                                        case 'v': case 'V': case 'w': case 'x':
+                                        case 'X':
+                                            type = runtime.getInteger();
+                                            break;
+                                        case 'f': case 'd': case 'e': case 'E':
+                                        case 'g': case 'G':
+                                            type = runtime.getFloat();
+                                            break;
+                                        }
+                                        if (type != null) {
+                                            elements.add(createFreeSingleTypeVertex(newInstanceOf(type)));
+                                        }
+                                    }
+                                    ts.add(RuntimeHelper.createArray(Graph.this, elements.toArray(new Vertex[0])));
+                                }
+                            }
+                            result.setResultTypeSet(ts);
+                        }
+                    }
+                }
+            });
     }
 
     public void load(Node newAST) {

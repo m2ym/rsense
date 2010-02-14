@@ -312,6 +312,10 @@ end
 M.f_|_
 EOF
 
+type-inference --test=String.Unpack1 --should-be=String
+''.unpack('a')[0]_|_
+EOF
+
 type-inference --test=Annotation.Method.Return --should-be=String
 ##% f() -> String
 def f() end
