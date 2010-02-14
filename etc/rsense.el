@@ -52,19 +52,23 @@
                                      (mapconcat 'identity command " ")
                                      rsense-log-file)))))
 
-(defun rsense-buffer-command (buffer offset command &optional remove-until)
+(defun rsense-buffer-command (buffer offset command &optional remove-until prefix)
   (with-temp-buffer
     (insert (with-current-buffer buffer (buffer-string)))
     (if remove-until
         (delete-region offset remove-until))
+    (when prefix
+      (goto-char offset)
+      (insert prefix)
+      (incf offset (length prefix)))
     (write-region (point-min) (point-max) rsense-temp-file nil 0)
     (rsense-command command
                     (format "--file=%s" rsense-temp-file)
                     (format "--encoding=UTF-8")
                     (format "--location=%s" (1- offset)))))
 
-(defun rsense-code-completion (buffer offset &optional remove-until)
-  (rsense-buffer-command buffer offset "code-completion" remove-until))
+(defun rsense-code-completion (buffer offset &optional remove-until prefix)
+  (rsense-buffer-command buffer offset "code-completion" remove-until prefix))
 
 (defun rsense-type-inference (buffer offset)
   (rsense-buffer-command buffer offset "type-inference"))
@@ -84,19 +88,27 @@
   (ignore-errors
     (rsense-lookup-document (cadr item))))
 
-(defun ac-rsense-candidates ()
+(defun ac-rsense-candidates (&optional prefix)
   (mapcar (lambda (entry)
             (cons (car entry) entry))
           (assoc-default 'completion
                          (rsense-code-completion (current-buffer)
                                                  ac-point
-                                                 (point)))))
+                                                 (point)
+                                                 prefix))))
 
 (defvar ac-source-rsense
   '((candidates . ac-rsense-candidates)
     (prefix . "\\(?:\\.\\|::\\)\\(.*\\)")
     (document . ac-rsense-documentation)
     (cache)))
+
+(defun rsense-complete ()
+  (interactive)
+  (auto-complete '(((candidates . (ac-rsense-candidates "self"))
+                    (prefix . "\\(\\sw\\|\\s_\\)*")
+                    (document . ac-rsense-documentation)
+                    (cache)))))
 
 (provide 'rsense)
 ;;; rsense.el ends here
