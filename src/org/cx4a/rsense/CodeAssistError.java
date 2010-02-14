@@ -16,4 +16,16 @@ public class CodeAssistError {
     public CodeAssistError(Throwable cause) {
         this.cause = cause;
     }
+
+    public String getShortError() {
+        return message != null ? message : (cause != null ? cause.getMessage() : "unknown error");
+    }
+
+    public String getMessage() {
+        return message;
+    }
+
+    public Throwable getCause() {
+        return cause;
+    }
 }

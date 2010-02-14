@@ -483,6 +483,21 @@ public class Main {
     }
 
     private void codeAssistError(CodeAssistResult result, Options options) {
-        // FIXME
+        boolean emacsFormat = options.isEmacsFormat();
+        if (emacsFormat) {
+            out.print(" (error");
+        }
+        for (CodeAssistError error : result.getErrors()) {
+            if (emacsFormat) {
+                out.print(" ");
+                out.print(error.getShortError());
+            } else {
+                out.printf("error: ", error.getShortError());
+                out.println(error.getCause());
+            }
+        }
+        if (emacsFormat) {
+            out.println(")");
+        }
     }
 }

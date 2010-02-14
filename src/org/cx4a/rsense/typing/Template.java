@@ -64,8 +64,9 @@ public class Template {
                 Vertex dest = b.getTypeVarMap().get(entry.getKey());
                 if (dest != null) {
                     src.addEdge(dest);
-                    //dest.copyTypeSet(src);
-                    graph.propagateEdges(src);
+                    dest.copyTypeSet(src);
+                    // FIXME
+                    //graph.propagateEdges(src);
                 }
             }
         }

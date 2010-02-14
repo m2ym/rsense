@@ -74,7 +74,8 @@
   (let ((result (assoc-default 'type (rsense-type-inference (current-buffer) (point)))))
     (popup-tip (if result
                    (mapconcat 'identity result " | ")
-                 "No type information"))))
+                 "No type information")
+               :margin t)))
 
 (defun rsense-lookup-document (pattern)
   (shell-command-to-string (format "%s/%s '%s'" rsense-rurema-home rsense-rurema-refe pattern)))

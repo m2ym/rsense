@@ -826,20 +826,17 @@ public class Graph implements NodeVisitor {
     
     public Object visitDotNode(DotNode node) {
         // FIXME propagation
-/*
         IRubyObject range = newInstanceOf(runtime.getRange());
         Vertex beginVertex = createVertex(node.getBeginNode());
         Vertex endVertex = createVertex(node.getEndNode());
         TypeVarMap typeVarMap = RuntimeHelper.getTypeVarMap(range);
         if (typeVarMap != null && beginVertex != null && endVertex != null) {
-            VertexHolder holder = createFreeVertexHolder();
-            holder.getVertex().copyTypeSet(beginVertex);
-            holder.getVertex().copyTypeSet(endVertex);
-            typeVarMap.put(new TypeVariable("t"), holder);
+            Vertex t = createFreeVertex();
+            t.copyTypeSet(beginVertex);
+            t.copyTypeSet(endVertex);
+            typeVarMap.put(TypeVariable.valueOf("t"), t);
         }
         return createSingleTypeVertex(node, range);
-*/
-        return null;
     }
     
     public Object visitEncodingNode(EncodingNode node) {

@@ -91,6 +91,8 @@ public class RuntimeHelper {
             return localAssign(graph, (LocalAsgnNode) node, src);
         case DASGNNODE:
             return dynamicAssign(graph, (DAsgnNode) node, src);
+        case INSTASGNNODE:
+            return instanceAssign(graph, (InstAsgnNode) node, src);
         case CONSTDECLNODE:
             return constDeclaration(graph, (ConstDeclNode) node, src);
         case CLASSVARASGNNODE:
@@ -103,7 +105,7 @@ public class RuntimeHelper {
         case RESTARG:
             return argumentAssign(graph, (ArgumentNode) node, src);
         }
-        Logger.error("Unknown assignable node");
+        Logger.error("unknown assignable node: %s", node);
         return Graph.NULL_VERTEX;
     }
     
@@ -704,6 +706,11 @@ public class RuntimeHelper {
         Ruby runtime = graph.getRuntime();
         Context context = runtime.getContext();
         Frame frame = context.getCurrentFrame();
+        Template template = getFrameTemplate(frame);
+        if (template == null) {
+            return Graph.NULL_VERTEX;
+        }
+        
         Node varNode = block.getVarNode();
         boolean noargblock = false;
         MultipleAsgnNode masgn = null;
@@ -712,7 +719,7 @@ public class RuntimeHelper {
         Node rest = null;
         ListNode pre = null;
         Vertex vertex = graph.createFreeVertex();
-        Vertex returnVertex = getFrameTemplate(frame).getReturnVertex();
+        Vertex returnVertex = template.getReturnVertex();
 
         if (varNode == null || varNode instanceof ZeroArgNode) {
             noargblock = true;

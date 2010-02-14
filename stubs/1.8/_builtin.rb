@@ -1952,7 +1952,45 @@ class Range
 end
 
 class Regexp
-  # FIXME
+  EXTENDED = 0
+  IGNORECASE = 0
+  MULTILINE = 0
+  
+  ##% self.compile(String, Fixnum or Boolean, String) -> Regexp
+  def self.compile(string, option = nil, code = nil) Regexp.new end
+  ##% self.escape(String, String) -> String
+  def self.escape(string, kcode = $KCODE) '' end
+  ##% self.last_match() -> MatchData
+  ##% self.last_match(Integer) -> MatchData
+  def self.last_match(n = nil) MatchData.new end
+  ##% self.union(*(String or Regexp)) -> Regexp
+  def self.union(*pattern) Regexp.new end
+
+  ##% ==(Regexp) -> Boolean
+  def ==(other) BOOLEAN end
+  alias :eql? :==
+  ##% =~(String) -> Fixnum
+  def =~(string) 0 end
+  ##% ===(string) -> Boolean
+  def ===(string) BOOLEAN end
+  ##% casefold?() -> Boolean
+  def casefold?() BOOLEAN end
+  ##% hash() -> Fixnum
+  def hash() 0 end
+  ##% inspect() -> String
+  def inspect() '' end
+  ##% kcode() -> String
+  def kcode() '' end
+  ##% match(String) -> MatchData
+  def match(str) MatchData.new end
+  ##% options() -> Integer
+  def options() 0 end
+  ##% source() -> String
+  def source() '' end
+  ##% to_s() -> String
+  def to_s() '' end
+  ##% ~() -> Fixnum
+  def ~() 0 end
 end
 
 module Signal

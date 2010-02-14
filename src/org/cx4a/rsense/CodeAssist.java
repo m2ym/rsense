@@ -203,6 +203,10 @@ public class CodeAssist {
     }
 
     public LoadResult load(Project project, File file, String encoding) {
+        return load(project, file, encoding, true);
+    }
+    
+    private LoadResult load(Project project, File file, String encoding, boolean prepare) {
         if (project.isLoaded(file)) {
             return LoadResult.alreadyLoaded();
         }
@@ -211,7 +215,7 @@ public class CodeAssist {
         try {
             InputStream in = new FileInputStream(file);
             try {
-                return load(project, file, new InputStreamReader(in, encoding));
+                return load(project, file, new InputStreamReader(in, encoding), prepare);
             } finally {
                 in.close();
             }
@@ -221,8 +225,14 @@ public class CodeAssist {
     }
 
     public LoadResult load(Project project, File file, Reader reader) {
+        return load(project, file, reader, true);
+    }
+    
+    private LoadResult load(Project project, File file, Reader reader, boolean prepare) {
         try {
-            prepare(project);
+            if (prepare) {
+                prepare(project);
+            }
             Node ast = parseFileContents(file, readAll(reader));
             project.getGraph().load(ast);
 
@@ -238,7 +248,7 @@ public class CodeAssist {
         for (String pathElement : project.getLoadPath()) {
             File file = new File(pathElement, feature + ".rb");
             if (file.exists()) {
-                return load(project, file, encoding);
+                return load(project, file, encoding, false);
             }
         }
         Logger.warn("require failed: %s", feature);
