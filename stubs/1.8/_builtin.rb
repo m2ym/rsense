@@ -9,9 +9,6 @@ class IO; end
 class File < IO; end
 module File::Constants; end
 
-# FIXME
-ARGS = nil
-
 ##% Array<t>
 class Array
   # FIXME to_ary for +, -, &
@@ -271,7 +268,11 @@ class Class
   ##% _load(String) -> Class
   def _load(str) Class.new end
   def allocate() new() end
-  # FIXME inherited
+  ##% superclass() -> Class
+  def superclass() Class.new end
+
+  private
+  def inherited(subclass) end
 end
 
 module Comparable
@@ -1604,11 +1605,47 @@ module Kernel
 end
 
 module Marshal
-  # FIXME
+  MAJOR_VERSION = 0
+  MINOR_VERSION = 0
+
+  ##% dump(Object, ?(IO or String), ?Integer) -> IO or String
+  def dump(obj, port = '', limit = -1) IO.new(0) || '' end
+  ##% load(IO or String, ?Proc) -> Object
+  def load(port, proc = nil) Object.new end
 end
 
 class MatchData
-  # FIXME
+  ##% [](Integer) -> String
+  ##% [](Range) -> String
+  ##% [](Integer, Integer) -> Array<String>
+  def [](*) '' end
+  ##% begin(Integer) -> Fixnum
+  def begin(n) 0 end
+  ##% captures() -> Array<String>
+  def captures() [''] end
+  ##% end(Integer) -> Fixnum
+  def end(n) 0 end
+  ##% end(Integer) -> Fixnum
+  def end(n) 0 end
+  ##% length() -> Fixnum
+  def length() 0 end
+  alias :size :length
+  ##% offset(Integer) -> Fixnum
+  def offset(n) 0 end
+  ##% post_match() -> String
+  def post_match() '' end
+  ##% pre_match() -> String
+  def pre_match() '' end
+  ##% select() {Strign -> ?} -> Array<String>
+  def select() yield ''; [''] end
+  ##% string() -> String
+  def string() '' end
+  ##% to_a() -> Array<String>
+  def to_a() [''] end
+  ##% to_s() -> String
+  def to_s() '' end
+  ##% values_at(*Integer) -> Array<String>
+  def values_at(*idnex) [''] end
 end
 
 module Math
