@@ -44,7 +44,7 @@ public class Ruby {
         hashClass = RubyClass.newClass(this, "Hash", objectClass);
         rangeClass = RubyClass.newClass(this, "Range", objectClass);
         regexpClass = RubyClass.newClass(this, "Regexp", objectClass);
-        matchDataClass = RubyClass.newClass(this, "Regexp", objectClass);
+        matchDataClass = RubyClass.newClass(this, "MatchData", objectClass);
 
         objectClass.setConstant("Object", objectClass);
         objectClass.setConstant("Module", moduleClass);

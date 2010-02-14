@@ -189,6 +189,8 @@ public class RuntimeHelper {
             holder = graph.createFreeVertexHolder();
             klass.setClassVar(node.getName(), holder);
         }
+        // Clear older types (performance issue)
+        holder.getVertex().getTypeSet().clear();
         graph.addEdgeAndPropagate(src, holder.getVertex());
         return src;
     }
@@ -207,6 +209,8 @@ public class RuntimeHelper {
             holder = graph.createFreeVertexHolder();
             klass.setClassVar(node.getName(), holder);
         }
+        // Clear older types (performance issue)
+        holder.getVertex().getTypeSet().clear();
         graph.addEdgeAndPropagate(src, holder.getVertex());
         return src;
     }
@@ -272,6 +276,8 @@ public class RuntimeHelper {
             holder = graph.createFreeVertexHolder();
             runtime.setGlobalVar(node.getName(), holder);
         }
+        // Clear older types (performance issue)
+        holder.getVertex().getTypeSet().clear();
         graph.addEdgeAndPropagate(src, holder.getVertex());
         return src;
     }
