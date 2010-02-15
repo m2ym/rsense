@@ -1649,7 +1649,55 @@ class MatchData
 end
 
 module Math
-  # FIXME
+  E = 0.0
+  PI = 0.0
+
+  module_function
+  
+  ##% acos(Integer or Float) -> Float
+  def acos(x) 0.0 end
+  ##% acosh(Integer or Float) -> Float
+  def acosh(x) 0.0 end
+  ##% asin(Integer or Float) -> Float
+  def asin(x) 0.0 end
+  ##% asinh(Integer or Float) -> Float
+  def asinh(x) 0.0 end
+  ##% atan(Integer or Float) -> Float
+  def atan(x) 0.0 end
+  ##% atan2(Integer or Float) -> Float
+  def atan2(x) 0.0 end
+  ##% atanh(Integer or Float) -> Float
+  def atanh(x) 0.0 end
+  ##% cos(Integer or Float) -> Float
+  def cos(x) 0.0 end
+  ##% cosh(Integer or Float) -> Float
+  def cosh(x) 0.0 end
+  ##% erf(Integer or Float) -> Float
+  def erf(x) 0.0 end
+  ##% erfc(Integer or Float) -> Float
+  def erfc(x) 0.0 end
+  ##% exp(Integer or Float) -> Float
+  def exp(x) 0.0 end
+  ##% frexp(Integer or Float) -> (Float, Fixnum)
+  def frexp(x) [0.0, 0] end
+  ##% hypot(Integer or Float, Integer or Float) -> Float
+  def hypot(x, y) 0.0 end
+  ##% ldexp(Integer or Float, Integer) -> Float
+  def ldexp(x, exp) 0.0 end
+  ##% log(Integer or Float) -> Float
+  def log(x) 0.0 end
+  ##% log10(Integer or Float) -> Float
+  def log10(x) 0.0 end
+  ##% sin(Integer or Float) -> Float
+  def sin(x) 0.0 end
+  ##% sinh(Integer or Float) -> Float
+  def sinh(x) 0.0 end
+  ##% sqrt(Integer or Float) -> Float
+  def sqrt(x) 0.0 end
+  ##% tan(Integer or Float) -> Float
+  def tan(x) 0.0 end
+  ##% tanh(Integer or Float) -> Float
+  def tanh(x) 0.0 end
 end
 
 class Method

@@ -388,3 +388,7 @@ type-inference --test=Annotation.Method.Arg.SplatGuard2 --should-be-empty
 def f(*a) end
 f('', 1, '')_|_
 EOF
+
+type-inference --test=StdLib.Math --should-be=Float
+Math.sin(5)_|_
+EOF
