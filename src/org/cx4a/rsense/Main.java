@@ -430,7 +430,7 @@ public class Main {
         }
     }
 
-    private void test(Options options, Collection<String> data) {
+    private void test(Options options, Set<String> data) {
         if (options.isShouldBeGiven()) {
             Set<String> shouldBe = options.getShouldBe();
             if (shouldBe.equals(data)) {
@@ -442,11 +442,14 @@ public class Main {
         } else {
             Set<String> shouldContain = options.getShouldContain();
             Set<String> shouldNotContain = options.getShouldNotContain();
-            for (String str : data) {
-                if (!shouldContain.contains(str)) {
+            for (String str : shouldContain) {
+                if (!data.contains(str)) {
                     testFailure(options, "%s should be in %s", str, shouldContain);
                     return;
-                } else if (shouldNotContain.contains(str)) {
+                }
+            }
+            for (String str : shouldNotContain) {
+                if (data.contains(str)) {
                     testFailure(options, "%s should not be in %s", str, shouldNotContain);
                     return;
                 }

@@ -6,6 +6,48 @@ type-inference --test=String --should-be=String
 ''_|_
 EOF
 
+type-inference --test=Constant1 --should-be=Fixnum
+C = 1
+C_|_
+EOF
+
+type-inference --test=Constant2 --should-be=Fixnum
+module M
+  C = 1
+end
+M::C_|_
+EOF
+
+type-inference --test=Constant3 --should-be=Fixnum
+C = 1
+def f
+  C
+end
+f_|_
+EOF
+
+type-inference --test=Constant4 --should-be=Fixnum
+class C
+  D = 1
+  def f
+    D
+  end
+end
+C.new.f_|_
+EOF
+
+type-inference --test=Constant5 --should-be=Fixnum
+class C
+  A = 1
+end
+class D < C
+  def f
+    A
+  end
+end
+D.new.f_|_
+EOF
+
 type-inference --test=Array --should-be=Array
 []_|_
 EOF
@@ -147,6 +189,29 @@ def f(x, y, *z)
   z
 end
 f(1, 2)_|_
+EOF
+
+type-inference --test=Method.Arg.Splat.Pass1 --should-be=Float
+def f(x, y)
+  y
+end
+f(*[1, 2.3])_|_
+EOF
+
+type-inference --test=Method.Arg.Splat.Pass2 --should-be=Fixnum
+def f(x, y)
+  x
+end
+f(1, *[1, 2.3])_|_
+EOF
+
+type-inference --test=Method.Arg.Splat.Pass3 --should-be=Float
+a = [2.3, '']
+b = [1]
+def f(x, y, z)
+  y
+end
+f(b, *a)_|_
 EOF
 
 type-inference --test=Method.Arg.OptionalAndSplat1 --should-be=Fixnum
@@ -310,6 +375,36 @@ module M
   module_function :f
 end
 M.f_|_
+EOF
+
+type-inference --test=Class.Method1 --should-be=Fixnum
+class C
+  def foo() 1 end
+end
+C.new.foo_|_
+EOF
+
+type-inference --test=Class.SingletonMethod1 --should-be=Fixnum
+class C
+  def self.foo() 1 end
+end
+C.foo_|_
+EOF
+
+type-inference --test=Class.Constructor1 --should-be=Fixnum
+class C
+  def initialize() @x = 1 end
+  def get() @x end
+end
+C.new.get_|_
+EOF
+
+type-inference --test=Class.Constructor2 --should-be=Float
+class C
+  def initialize(x) @x = x end
+  def get() @x end
+end
+C.new(2.3).get_|_
 EOF
 
 type-inference --test=String.Unpack1 --should-be=String

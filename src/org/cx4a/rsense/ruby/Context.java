@@ -49,6 +49,10 @@ public class Context {
         return scopes.peek();
     }
 
+    public IRubyObject getConstant(String name) {
+        return getCurrentScope().getModule().getConstant(name);
+    }
+
     public Frame getCurrentFrame() {
         return frame;
     }
@@ -67,9 +71,5 @@ public class Context {
 
     public Visibility getFrameVisibility() {
         return getCurrentFrame().getVisibility();
-    }
-
-    public IRubyObject getConstant(String name) {
-        return getFrameModule().getConstant(name);
     }
 }
