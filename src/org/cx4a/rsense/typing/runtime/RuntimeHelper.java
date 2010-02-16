@@ -30,6 +30,7 @@ import org.jruby.ast.Colon2Node;
 import org.jruby.ast.Colon2ImplicitNode;
 import org.jruby.ast.Colon3Node;
 import org.jruby.ast.AssignableNode;
+import org.jruby.ast.IterNode;
 import org.jruby.ast.YieldNode;
 import org.jruby.ast.ZeroArgNode;
 import org.jruby.ast.MethodDefNode;
@@ -411,6 +412,53 @@ public class RuntimeHelper {
         }
     }
 
+    public static Vertex[] setupCallArgs(Graph graph, Node argsNode) {
+        List<Vertex> args = new ArrayList<Vertex>();
+        if (argsNode != null) {
+            switch (argsNode.getNodeType()) {
+            case ARGSCATNODE:
+            case SPLATNODE: {
+                Vertex arrayVertex = graph.createVertex(argsNode);
+                for (IRubyObject object : arrayVertex.getTypeSet()) {
+                    if (object instanceof Array) {
+                        Array array = (Array) object;
+                        if (array.getElements() != null) {
+                            for (Vertex element : array.getElements()) {
+                                args.add(element);
+                            }
+                        }
+                    }
+                }
+                break;
+            }
+            default:
+                for (Node arg : argsNode.childNodes()) {
+                    args.add(graph.createVertex(arg));
+                }
+            }
+        }
+        return args.isEmpty() ? null : args.toArray(new Vertex[0]);
+    }
+
+    public static Block setupCallBlock(Graph graph, Node iterNode) {
+        Context context = graph.getRuntime().getContext();
+        Block block = null;
+        if (iterNode != null) {
+            switch (iterNode.getNodeType()) {
+            case ITERNODE: {
+                IterNode inode = (IterNode) iterNode;
+                DynamicScope scope = new DynamicScope(context.getCurrentScope().getModule(), context.getCurrentScope());
+                block = new Block(inode.getVarNode(), inode.getBodyNode(), context.getCurrentFrame(), scope);
+                break;
+            }
+            case BLOCKPASSNODE:
+                block = context.getFrameBlock();
+                break;
+            }
+        }
+        return block;
+    }
+        
     public static Vertex call(Graph graph, CallVertex vertex) {
         return call(graph, vertex, false);
     }

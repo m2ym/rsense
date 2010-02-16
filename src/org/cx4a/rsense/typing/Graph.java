@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Queue;
 import java.util.Collections;
+import java.util.Arrays;
 
 import org.jruby.ast.AliasNode;
 import org.jruby.ast.AndNode;
@@ -571,10 +572,33 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitArgsCatNode(ArgsCatNode node) {
-        // FIXME
-        Logger.fixme("argscat node is not implemented yet.");
-        return NULL_VERTEX;
-        //throw new UnsupportedOperationException();
+        Vertex vertex = createEmptyVertex(node);
+        Vertex first = createVertex(node.getFirstNode());
+        SplatVertex second = new SplatVertex(node, createVertex(node.getSecondNode()));
+        RuntimeHelper.splatValue(this, second);
+        for (IRubyObject a : first.getTypeSet()) {
+            List<Vertex> elements = new ArrayList<Vertex>();
+            if (a instanceof Array) {
+                Array array = (Array) a;
+                if (array.getElements() != null) {
+                    elements.addAll(Arrays.asList(array.getElements()));
+                }
+            } else {
+                elements.add(createFreeSingleTypeVertex(a));
+            }
+            for (IRubyObject b : second.getTypeSet()) {
+                if (b instanceof Array) {
+                    Array array = (Array) b;
+                    if (array.getElements() != null) {
+                        elements.addAll(Arrays.asList(array.getElements()));
+                    }
+                } else {
+                    elements.add(createFreeSingleTypeVertex(a));
+                }
+            }
+            vertex.addType(RuntimeHelper.createArray(this, elements.toArray(new Vertex[0])));
+        }
+        return vertex;
     }
     
     public Object visitArgsPushNode(ArgsPushNode node) {
@@ -657,24 +681,8 @@ public class Graph implements NodeVisitor {
     
     public Object visitCallNode(CallNode node) {
         Vertex receiverVertex = createVertex(node.getReceiverNode());
-        Vertex[] argVertices = null;
-        if (node.getArgsNode() != null) {
-            List<Node> argNodes = node.getArgsNode().childNodes();
-            argVertices = new Vertex[argNodes.size()];
-            for (int i = 0; i < argVertices.length; i++) {
-                argVertices[i] = createVertex(argNodes.get(i));
-            }
-        }
-        
-        Block block = null;
-        if (node.getIterNode() instanceof IterNode) {
-            IterNode iterNode = (IterNode) node.getIterNode();
-            DynamicScope scope = new DynamicScope(context.getCurrentScope().getModule(), context.getCurrentScope());
-            block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), scope);
-        } else if (node.getIterNode() != null) {
-            // FIXME
-            Logger.debug("unknnown iternode: %s", node.getIterNode());
-        }
+        Vertex[] argVertices = RuntimeHelper.setupCallArgs(this, node.getArgsNode());
+        Block block = RuntimeHelper.setupCallBlock(this, node.getIterNode());
         CallVertex vertex = new CallVertex(node, receiverVertex, argVertices, block);
         return RuntimeHelper.call(this, vertex);
     }
@@ -887,28 +895,8 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitFCallNode(FCallNode node) {
-        Vertex[] argVertices = null;
-        if (node.getArgsNode() != null) {
-            List<Node> argNodes = node.getArgsNode().childNodes();
-            argVertices = new Vertex[argNodes.size()];
-            for (int i = 0; i < argVertices.length; i++) {
-                argVertices[i] = createVertex(argNodes.get(i));
-            }
-        }
-        
-        Block block = null;
-        if (node.getIterNode() != null) {
-            switch (node.getIterNode().getNodeType()) {
-            case ITERNODE: {
-                IterNode iterNode = (IterNode) node.getIterNode();
-                block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), context.getCurrentScope());
-                break;
-            }
-            case BLOCKPASSNODE:
-                block = context.getFrameBlock();
-                break;
-            }
-        }
+        Vertex[] argVertices = RuntimeHelper.setupCallArgs(this, node.getArgsNode());
+        Block block = RuntimeHelper.setupCallBlock(this, node.getIterNode());
         CallVertex vertex = new CallVertex(node, createFreeSingleTypeVertex(context.getFrameSelf()), argVertices, block);
         return RuntimeHelper.call(this, vertex);
     }
