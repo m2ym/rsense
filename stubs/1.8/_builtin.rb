@@ -1925,7 +1925,112 @@ end
 class Object
   include Kernel
   
-  # FIXME
+  ##% ==(a) -> Boolean
+  def ==(other) BOOLEAN end
+  ##% ===(a) -> Boolean
+  def ===(other) BOOLEAN end
+  ##% =~(a) -> FalseClass
+  def =~(other) FALSE end
+  ##% __id__() -> Integer
+  def __id__() 0 end
+  alias :object_id :__id__
+  alias :id :__id__
+  ##% send(String or Symbol, *a) -> Object
+  def send(name, *args) end
+  ##% _dump(Integer) -> String
+  def _dump(limit) '' end
+  ##% class() -> Class
+  def class() Class.new end
+  alias :type :class
+  ##% clone() -> self
+  def clone() self end
+  alias :dup :clone
+  ##% display(?IO) -> nil
+  def display(out = $stdout) nil end
+  ##% to_enum(?String, *a) -> Enumerator
+  def to_enum(method = :each, *args) Enumerator.new end
+  alias :enum_for :to_enum
+  ##% eql?(a) -> Boolean
+  def eql?(other) BOOLEAN end
+  ##% equal?(a) -> Boolean
+  def equal?(other) BOOLEAN end
+  ##% extend(*Module) -> self
+  def extend(*modules) self end
+  ##% freeze() -> self
+  def freeze() self end
+  ##% frozen?() -> Boolean
+  def frozen?() BOOLEAN end
+  ##% hash() -> Fixnum
+  def hash() 0 end
+  ##% inspect() -> String
+  def inspect() '' end
+  ##% instance_eval(String, ?String, ?Integer) -> Object
+  ##% instance_eval() {Object -> ?} -> Object
+  def instance_eval(expr, filename = "(eval)", lineno = 1) Object.new end
+  ##% instance_of?(Class) -> Boolean
+  def instance_of?(klass) BOOLEAN end
+  ##% instance_variable_defined?(String or Symbol) -> Boolean
+  def instance_variable_defined?(var) BOOLEAN end
+  ##% instance_variable_get(String or Symbol) -> Object
+  def instance_variable_get(var) Object.new end
+  ##% instance_variable_set(String or Symbol, a) -> a
+  def instance_variable_set(var, value) value end
+  ##% instance_variables() -> Array<String>
+  def instance_variables() [''] end
+  ##% is_a?(Module) -> Boolean
+  def is_a?(mod) BOOLEAN end
+  alias :kind_of? :is_a?
+  ##% marshal_dump() -> Object
+  def marshal_dump() Object.new end
+  ##% marshal_load(Object) -> ?
+  def marshal_load(obj) end
+  ##% method(String or Symbol) -> Method
+  def method(name) Method.new end
+  def method_missing(name, *args) end
+  ##% methods(?Boolean) -> Array<String>
+  def methods(include_inherited = true) [''] end
+  ##% nil?() -> Boolean
+  def nil?() BOOLEAN end
+  ##% private_methods(?Boolean) -> Array<String>
+  def private_methods(include_inherited = true) [''] end
+  ##% protected_methods(?Boolean) -> Array<String>
+  def protected_methods(include_inherited = true) [''] end
+  ##% public_methods(?Boolean) -> Array<String>
+  def public_methods(include_inherited = true) [''] end
+  ##% respond_to?(String or Symbol, ?Boolean) -> Boolean
+  def respond_to?(name, include_private = false) BOOLEAN end
+  ##% singleton_methods(?Boolean) -> Array<String>
+  def singleton_methods(inherited_too = true) [''] end
+  ##% taint() -> self
+  def taint() self end
+  ##% tainted?() -> Boolean
+  def tainted?() BOOLEAN end
+  ##% tap() {self -> ?} -> self
+  def tap() yield self; self end
+  ##% to_a() -> Array
+  def to_a() [] end
+  ##% to_s() -> String
+  def to_s() '' end
+  ##% untaint() -> self
+  def untaint() self end
+
+  private
+  ##% to_ary() -> Array
+  def to_ary() [] end
+  ##% to_hash() -> Hash
+  def to_hash() {} end
+  ##% to_int() -> Integer
+  def to_int() 0 end
+  ##% to_io() -> IO
+  def to_io() IO.new(0) end
+  ##% to_proc() -> Proc
+  def to_proc() Proc.new end
+  ##% to_regexp() -> Regexp
+  def to_regexp() Regexp.new end
+  ##% to_str() -> String
+  def to_str() '' end
+
+  # FIXME singleton methods
 end
 
 module ObjectSpace
@@ -2457,7 +2562,7 @@ end
 
 class FloatDomainError < RangeError; end
 class IndexError < StandardError; end
-class Interrupt < SingalException; end
+class Interrupt < SignalException; end
 class LoadError < ScriptError; end
 
 class LocalJumpError < StandardError

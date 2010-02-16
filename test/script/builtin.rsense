@@ -377,6 +377,12 @@ end
 M.f_|_
 EOF
 
+type-inference --test=Class.New --should-be=C
+class C
+end
+C.new._|_
+EOF
+
 type-inference --test=Class.Method1 --should-be=Fixnum
 class C
   def foo() 1 end

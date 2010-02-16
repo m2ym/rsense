@@ -1,2 +1,2 @@
-Online documents: http://cx4a.org/rsense/
+Online documents: http://cx4a.org/software/rsense/
 Offline documents: doc/index.txt
