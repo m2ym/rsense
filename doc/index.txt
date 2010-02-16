@@ -1,56 +1,55 @@
+Title: RSense - Most useful development tools for Ruby
+Use numbered headers: true
+HTML use syntax: true
+CSS: style.css
+
 RSense
 ======
 
-What is RSense?
----------------
+*RSense* is a most useful development tools for [Ruby][].
 
-RSense is a development tools for [Ruby][], which is written by Java. Following [unix philosophy][], RSense can be used from a terminal easily as an unix command. And also, it can be used as a background daemon which is used from editors such as Emacs, Vim, etc. We are struggling to keep a transparency for hackers to learn, extend, and fix easily.
+![](rsense.png)
 
 Features
 --------
 
-The main features we are trying to provide are:
+Available main features are:
 
-* Code completion (mainly method name completion)
+* Code completion
 * Type inspection
 
-In addition, we know we can implement the following features too:
+In the future, the following features will be also available:
 
 * Static code checking
 * Definition jump
 * Caller jump
 * Refactoring
 
-Usage
------
-
-Read [usage document](usage.txt).
-
 Download
 --------
 
 There is no downloads yet.
 
-You can access a source code via a git repository.
+You can access a source code from git repository.
 
 <http://github.com/m2ym/rsense>
+
+Usage
+-----
+
+Read [this manual](manual.txt).
 
 License
 -------
 
-To maximize the software's value for users, we chose to use [GPLv3][]. If you don't familiar with [GPLv3][] and [Free software][], I really suggest you to read [this book][Free software Free society].
+To maximize the software's value for users, we chose to use [GPLv3][]. If you don't familiar with [GPLv3][] and [Free Software][], I really suggest you to read [this book][Free software Free society].
 
 Contribution
 ------------
 
-We welcome any contribution. Read following documents.
+We welcome any contribution. Read [development guide](devel.txt).
 
-* [Development guide](develop.txt)
-* [Type annotation](annot.txt)
-* [Testing](test.txt)
-
-[unix philosophy]: http://www.faqs.org/docs/artu/ "The Art of Unix Programming"
 [Ruby]: http://www.ruby-lang.org/ "Ruby Programming Language"
 [GPLv3]: http://gplv3.fsf.org/
-[Free software]: http://www.gnu.org/philosophy/free-sw.html
+[Free Software]: http://www.gnu.org/philosophy/free-sw.html
 [Free software Free society]: http://shop.fsf.org/product/free-software-free-society/
