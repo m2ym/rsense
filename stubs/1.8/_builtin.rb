@@ -2148,7 +2148,12 @@ class Regexp
 end
 
 module Signal
-  # FIXME
+  module_function
+  ##% list() -> Hash<String, Integer>
+  def list() {'' => 1} end
+  ##% trap(String or Symbol, String or Proc) -> String or Proc
+  ##% trap(String or Symbol) {? -> ?} -> String or Proc
+  def trap(signal, command = nil) yield; '' end
 end
 
 ##% String<| String <= t>
