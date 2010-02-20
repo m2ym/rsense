@@ -2,3 +2,13 @@ type-inference --test=BigDecimal --should-be=BigDecimal
 require 'bigdecimal'
 BigDecimal('')_|_
 EOF
+
+type-inference --test=CGI --should-be=CGI
+require 'cgi'
+CGI.new_|_
+EOF
+
+type-inference --test=Socket --should-be=TCPSocket
+require 'socket'
+TCPSocket.open('foo', 80)_|_
+EOF

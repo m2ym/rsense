@@ -241,17 +241,25 @@ Mostly done.
 
 #### Standard Library Status ####
 
-Blank means nothing is started. "-" means no need to create a stub file. "Done" means it has done by creating a stub file, but a little work remains. "OK" means it has **fully** done. If a status is "-", accurate static type checking is not available.
+**Status meanings**
+
+| Status | Meaning                                          |
+|--------|--------------------------------------------------|
+| Blank  | Nothing is started.                              |
+| -      | No need to create a stub, but it should be done. |
+| =      | No need to create a stub.                        |
+| Done   | It has done, but a little work remains.          |
+| OK     | It has fully done.                               |
 
 | Name             | Status |
 |------------------|--------|
-| abbrev           |   -    |
-| base64           |   -    |
+| abbrev           |   =    |
+| base64           |   =    |
 | benchmark        |        |
 | bigdecimal       |  Done  |
 | cgi              |  Done  |
 | cgi-lib          |        |
-| complex          |        |
+| complex          |   =    |
 | csv              |        |
 | curses           |        |
 | date             |        |

@@ -894,7 +894,10 @@ public class Graph implements NodeVisitor {
     public Object visitEnsureNode(EnsureNode node) {
         // FIXME
         //throw new UnsupportedOperationException();
-        return NULL_VERTEX;
+        if (node.getEnsureNode() != null) {
+            createVertex(node.getEnsureNode());
+        }
+        return createVertex(node.getBodyNode());
     }
     
     public Object visitEvStrNode(EvStrNode node) {
