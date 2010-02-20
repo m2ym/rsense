@@ -2394,7 +2394,93 @@ class ThreadGroup
 end
 
 class Time
-  # FIXME
+  include Comparable
+
+  ##% self.at(Time or Integer, ?Integer) -> Time
+  def self.at(time, usec) Time.new end
+  ##% self.gm(Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String) -> Time
+  ##% self.gm(Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, a, b, Boolean, c) -> Time
+  def self.gm(*) Time.new end
+  ##% self.utc(Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String) -> Time
+  ##% self.utc(Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, a, b, Boolean, c) -> Time
+  def self.utc(*) Time.new end
+  ##% self.local(Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String) -> Time
+  ##% self.local(Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, a, b, Boolean, c) -> Time
+  def self.local(*) Time.new end
+  ##% self.mktime(Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String) -> Time
+  ##% self.mktime(Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, Integer or String, a, b, Boolean, c) -> Time
+  def self.mktime(*) Time.new end
+  ##% self.now() -> Time
+  def self.now() Time.new end
+  ##% self.times() -> Struct::Tms
+  def self.times() Struct::Tms.new end
+  
+  ##% +(Integer) -> Time
+  def +(other) Time.new end
+  ##% -(Integer or Time) -> Time
+  def -(other) Time.new end
+  ##% "<=>"(Time) -> Fixnum
+  def <=>(other) 0 end
+  ##% asctime() -> String
+  def asctime() '' end
+  alias :ctime :asctime
+  ##% mday() -> Integer
+  def mday() 0 end
+  alias :day :mday
+  ##% isdst() -> Boolean
+  def isdst() BOOLEAN end
+  alias :dst? :isdst
+  ##% eql?(Time) -> Boolean
+  def eql?(other) BOOLEAN end
+  ##% getgm() -> Time
+  def getgm() Time.new end
+  alias :getutc :getgm
+  ##% getlocal() -> Time
+  def getlocal() Time.new end
+  ##% gmt?() -> Boolean
+  def gmt?() BOOLEAN end
+  alias :utc? :gmt?
+  ##% utc_offset() -> Integer
+  def utc_offset() 0 end
+  alias :gmt_offset :utc_offset
+  alias :gmtoff :utc_offset
+  ##% gmtime() -> self
+  def gmtime() self end
+  ##% hour() -> Integer
+  def hour() 0 end
+  ##% localtime() -> self
+  def localtime() self end
+  ##% min() -> Integer
+  def min() 0 end
+  ##% mon() -> Integer
+  def mon() 0 end
+  alias :month :mon
+  ##% sec() -> Integer
+  def sec() 0 end
+  ##% strftime(String) -> String
+  def strftime(format) '' end
+  ##% succ() -> Time
+  def succ() Time.new end
+  ##% to_a() -> (Integer, Integer, Integer, Integer, Integer, Integer, Integer, Integer, Boolean, String)
+  def to_a() [0, 0, 0, 0, 0, 0, 0, 0, BOOLEAN, ''] end
+  ##% to_f() -> Float
+  def to_f() 0.0 end
+  ##% to_i() -> Integer
+  def to_i() 0 end
+  alias :tv_sec :to_i
+  ##% to_s() -> String
+  def to_s() '' end
+  ##% usec() -> Integer
+  def usec() 0 end
+  alias :tv_usec :usec
+  ##% wday() -> Integer
+  def wday() 0 end
+  ##% yday() -> Integer
+  def yda() 0 end
+  ##% year() -> Integer
+  def year() 0 end
+  ##% zone() -> String
+  def zone() '' end
 end
 
 class TrueClass
