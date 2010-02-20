@@ -32,6 +32,7 @@ public class Main {
         public int failure = 0;
     }
 
+    private File currentDir;
     private InputStream in;
     private PrintStream out;
     private Reader inReader;
@@ -82,11 +83,7 @@ public class Main {
     }
 
     private void start(String command, Options options) {
-        if (command.equals("script")) {
-            script(options);
-        } else {
-            command(command, options);
-        }
+        command(command, options);
     }
 
     private void usage() {
@@ -168,12 +165,21 @@ public class Main {
             runScript(in, options, false);
         } else {
             try {
-                for (String file : options.getRestArgs()) {
+                for (String filename : options.getRestArgs()) {
+                    File file;
+                    if (currentDir == null || !(file = new File(currentDir, filename)).exists()) {
+                        // Load from current directory if possible
+                        file = new File(filename);
+                    }
+
+                    File oldCurrentDir = currentDir;
+                    currentDir = file.getParentFile();
                     InputStream in = new FileInputStream(file);
                     try {
                         runScript(in, options, true);
                     } finally {
                         in.close();
+                        currentDir = oldCurrentDir;
                     }
                 }
             } catch (IOException e) {
@@ -241,6 +247,8 @@ public class Main {
             commandTypeInference(options);
         } else if (command.equals("load")) {
             commandLoad(options);
+        } else if (command.equals("script")) {
+            script(options);
         } else if (command.equals("clear")) {
             commandClear(options);
         } else if (command.equals("help")) {

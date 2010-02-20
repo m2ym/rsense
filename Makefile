@@ -33,6 +33,9 @@ run-code-completion:
 run-type-inference:
 	java -cp $(CLASSPATH) org.cx4a.rsense.Main type-inference --file=$(FILE) --encoding=UTF-8 --location=$(LOCATION) $(OPTIONS)
 
+run-type-inference-prof:
+	java -agentlib:hprof=cpu=samples,depth=10 -cp $(CLASSPATH) org.cx4a.rsense.Main type-inference --file=$(FILE) --encoding=UTF-8 --location=$(LOCATION) $(OPTIONS)
+
 run-help:
 	java -cp $(CLASSPATH) org.cx4a.rsense.Main help
 
@@ -40,7 +43,7 @@ run-version:
 	java -cp $(CLASSPATH) org.cx4a.rsense.Main version
 
 run-test:
-	java -cp $(CLASSPATH) org.cx4a.rsense.Main script test/script/builtin.rsense --test-color
+	java -cp $(CLASSPATH) org.cx4a.rsense.Main script test/script/all.rsense --test-color
 
 antlr:
 	java -cp .:$(ANTLR_JAR) org.antlr.Tool -make \
@@ -60,6 +63,7 @@ doc:
 clean:
 	rm -rf build
 	rm -f hs_err_pid*.log \
+        java.hprof.txt \
 		doc/*.html \
 		lib/rsense.jar \
 		TypeAnnotation.tokens \

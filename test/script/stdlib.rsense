@@ -1,0 +1,4 @@
+type-inference --test=BigDecimal --should-be=BigDecimal
+require 'bigdecimal'
+BigDecimal('')_|_
+EOF

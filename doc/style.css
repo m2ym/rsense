@@ -16,3 +16,16 @@ pre {
     background-color: #eee;
     border: 1px solid #ddd;
 }
+
+table {
+    margin-left: 1em;
+    background-color: lightgray;
+}
+
+td, th {
+    padding: 0.3em;
+}
+
+td {
+    background-color: white;
+}

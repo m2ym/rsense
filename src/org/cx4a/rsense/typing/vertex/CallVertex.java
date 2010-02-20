@@ -12,6 +12,7 @@ public class CallVertex extends Vertex {
     private Vertex receiverVertex;
     private Vertex[] argVertices;
     private Block block;
+    private boolean privateVisibility;
 
     public CallVertex(Node node, Vertex receiverVertex, Vertex[] argVertices, Block block) {
         this(node, null, receiverVertex, argVertices, block);
@@ -23,6 +24,7 @@ public class CallVertex extends Vertex {
         this.receiverVertex = receiverVertex;
         this.argVertices = argVertices;
         this.block = block;
+        this.privateVisibility = false;
         receiverVertex.addEdge(this);
         if (argVertices != null) {
             for (Vertex v : argVertices) {
@@ -54,6 +56,14 @@ public class CallVertex extends Vertex {
 
     public Block getBlock() {
         return block;
+    }
+
+    public boolean hasPrivateVisibility() {
+        return privateVisibility;
+    }
+
+    public void setPrivateVisibility(boolean privateVisibility) {
+        this.privateVisibility = privateVisibility;
     }
 
     public boolean isApplicable() {

@@ -7,7 +7,7 @@ import org.cx4a.rsense.typing.vertex.Vertex;
 
 public class Propagation {
     private Graph graph;
-    private Set<Vertex> visited;
+    private Set<Object> visited;
     private int refCount;
 
     public Propagation(Graph graph) {
@@ -20,15 +20,15 @@ public class Propagation {
     }
 
     public boolean isVisited(Vertex vertex) {
-        return visited != null ? visited.contains(vertex) : false;
+        return visited != null ? visited.contains(getVisitTag(vertex)) : false;
     }
 
     public void addVisited(Vertex vertex) {
         if (visited == null) {
             // lazy allocation
-            visited = new HashSet<Vertex>();
+            visited = new HashSet<Object>();
         }
-        visited.add(vertex);
+        visited.add(getVisitTag(vertex));
     }
 
     public boolean checkVisited(Vertex vertex) {
@@ -46,5 +46,9 @@ public class Propagation {
 
     public boolean release() {
         return --refCount == 0;
+    }
+
+    private Object getVisitTag(Vertex vertex) {
+        return vertex.getNode() != null ? vertex.getNode() : vertex;
     }
 }

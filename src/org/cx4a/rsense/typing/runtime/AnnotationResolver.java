@@ -69,6 +69,16 @@ public class AnnotationResolver {
                             env.put(var, graph.createFreeVertex());
                         }
                     }
+
+                    /*
+                    Logger.debug("resolve annotation for %s", template.getMethod().getName());
+                    Logger.debug("  class constraints: %s", resolveClassConstraints(template, classType, receiver));
+                    Logger.debug("  receiver class constraints: %s", resolveReceiverClassConstraints(template, classType, receiver));
+                    Logger.debug("  method arg: %s", resolveMethodArg(template, classType, argType, receiver, args));
+                    Logger.debug("  method block: %s", resolveMethodBlock(template, classType, block, receiver));
+                    Logger.debug("  method constraints: %s", resolveMethodConstraints(template, classType, constraints, receiver));
+                    Logger.debug("  method return: %s", resolveMethodReturn(template, classType, returnType, receiver));
+                    */
                     if (resolveClassConstraints(template, classType, receiver)
                         && resolveReceiverClassConstraints(template, classType, receiver)
                         && resolveMethodArg(template, classType, argType, receiver, args)
@@ -218,6 +228,15 @@ public class AnnotationResolver {
                 }
             }
             return false;
+        case TUPLE: {
+            TypeTuple tuple = (TypeTuple) argType;
+            for (TypeExpression expr : tuple.getList()) {
+                if (resolveMethodArg(template, classType, expr, receiver, arg)) {
+                    return true;
+                }
+            }
+            return false;
+        }
         case SPLAT: {
             TypeSplat splat = (TypeSplat) argType;
             TypeExpression expr = splat.getExpression();
@@ -244,8 +263,7 @@ public class AnnotationResolver {
         case ANY:
             return true;
         default:
-            new Throwable().printStackTrace();
-            Logger.error("Unknown arg type");
+            Logger.error("unknown arg type: %s", argType);
         }
         return false;
     }
@@ -309,12 +327,11 @@ public class AnnotationResolver {
             }
             returnVertex = RuntimeHelper.yield(graph, block, new Array(runtime, elements), true);
         }
+
         if (returnVertex != null) {
-            TypeSet ts = returnVertex.getTypeSet();
-            for (IRubyObject arg : ts) {
-                if (resolveMethodArg(template, classType, returnArgType, receiver, arg)) {
-                    succeed = true;
-                }
+            succeed = true;
+            for (IRubyObject arg : returnVertex.getTypeSet()) {
+                resolveMethodArg(template, classType, returnArgType, receiver, arg);
             }
         }
         return succeed;
@@ -322,7 +339,6 @@ public class AnnotationResolver {
 
     public TypeSet[] processMethodBlockArg(Template template, ClassType classType, TypeExpression argType, IRubyObject receiver) {
         if (argType == null) { return new TypeSet[0]; }
-
         List<TypeSet> args = new ArrayList<TypeSet>();
         switch (argType.getType()) {
         case TUPLE: {

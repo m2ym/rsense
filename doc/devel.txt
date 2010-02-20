@@ -235,6 +235,144 @@ This is `Array#push` method type annotation. How do you can read? If you can rea
 
 *Stub* is a collection of type annotation. Currently, they are located in `stubs/`. We are hard working to write stubs of builtin library and standard library by refering [Ruby documents](http://doc.okkez.net/187/view/). We welcome any contribution especially about stubs :)
 
+#### Builtin Library Status ####
+
+Mostly done.
+
+#### Standard Library Status ####
+
+Blank means nothing is started. "-" means no need to create a stub file. "Done" means it has done by creating a stub file, but a little work remains. "OK" means it has **fully** done. If a status is "-", accurate static type checking is not available.
+
+| Name             | Status |
+|------------------|--------|
+| abbrev           |   -    |
+| base64           |   -    |
+| benchmark        |        |
+| bigdecimal       |  Done  |
+| cgi              |        |
+| cgi-lib          |        |
+| complex          |        |
+| csv              |        |
+| curses           |        |
+| date             |        |
+| date2            |        |
+| dbm              |        |
+| debug            |        |
+| delegate         |        |
+| digest           |        |
+| dl               |        |
+| drb              |        |
+| e2mmap           |        |
+| English          |        |
+| Env              |        |
+| erb              |        |
+| eregex           |        |
+| etc              |        |
+| expect           |        |
+| fcntl            |        |
+| fileutils        |        |
+| finalize         |        |
+| find             |        |
+| forwardable      |        |
+| ftools           |        |
+| gdbm             |        |
+| generator        |        |
+| getoptlong       |        |
+| getopts          |        |
+| gserver          |        |
+| iconv            |        |
+| importenv        |        |
+| io/nonblock      |        |
+| io/wait          |        |
+| ipaddr           |        |
+| irb              |        |
+| jcode            |        |
+| kconv            |        |
+| logger           |        |
+| mailread         |        |
+| mathn            |        |
+| matrix           |        |
+| md5              |        |
+| mkmf             |        |
+| monitor          |        |
+| mutex_m          |        |
+| net/ftp          |        |
+| net/ftptls       |        |
+| net/http         |        |
+| net/https        |        |
+| net/imap         |        |
+| net/pop          |        |
+| net/protocol     |        |
+| net/smtp         |        |
+| net/telnet       |        |
+| net/telnets      |        |
+| nkf              |        |
+| observer         |        |
+| open3            |        |
+| open-uri         |        |
+| openssl          |        |
+| optparse         |        |
+| ostruct          |        |
+| parsearg         |        |
+| parsedate        |        |
+| pathname         |        |
+| ping             |        |
+| pp               |        |
+| prettyprint      |        |
+| profile          |        |
+| profiler         |        |
+| pstore           |        |
+| pty              |        |
+| racc/parser      |        |
+| rational         |        |
+| rbconfig         |        |
+| readbytes        |        |
+| readline         |        |
+| resolv           |        |
+| resolv-replace   |        |
+| rexml            |        |
+| rinda/rinda      |        |
+| rinda/tuplespace |        |
+| rss              |        |
+| rubyunit         |        |
+| scanf            |        |
+| sdbm             |        |
+| securerandom     |        |
+| set              |        |
+| sha1             |        |
+| shell            |        |
+| shellwords       |        |
+| singleton        |        |
+| soap             |        |
+| socket           |        |
+| stringio         |        |
+| strscan          |        |
+| sync             |        |
+| syslog           |        |
+| tempfile         |        |
+| test/unit        |        |
+| thread           |        |
+| thwait           |        |
+| time             |        |
+| timeout          |        |
+| tk               |        |
+| tmpdir           |        |
+| tracer           |        |
+| tsort            |        |
+| un               |        |
+| uri              |        |
+| weakref          |        |
+| webrick          |        |
+| win32/registry   |        |
+| win32/resolv     |        |
+| Win32API         |        |
+| win32ole         |        |
+| wsdl             |        |
+| xmlrpc           |        |
+| xsd              |        |
+| yaml             |        |
+| zlib             |        |
+
 Partial update
 --------------
 

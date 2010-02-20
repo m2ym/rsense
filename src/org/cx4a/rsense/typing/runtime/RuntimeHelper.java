@@ -75,6 +75,7 @@ import org.cx4a.rsense.typing.vertex.CallVertex;
 import org.cx4a.rsense.typing.vertex.MultipleAsgnVertex;
 import org.cx4a.rsense.typing.vertex.ToAryVertex;
 import org.cx4a.rsense.typing.vertex.SplatVertex;
+import org.cx4a.rsense.typing.vertex.SValueVertex;
 import org.cx4a.rsense.typing.vertex.YieldVertex;
 import org.cx4a.rsense.typing.vertex.PassThroughVertex;
 import org.cx4a.rsense.typing.vertex.TypeVarVertex;
@@ -385,30 +386,49 @@ public class RuntimeHelper {
         return src;
     }
 
-    public static void multipleAssign(Graph graph, MultipleAsgnNode node, Array array) {
-        if (array.isModified()) { return; }
+    public static void multipleAssign(Graph graph, MultipleAsgnNode node, IRubyObject object) {
+        boolean isArray = object instanceof Array;
+        Array array = null;
+        Vertex element = Graph.NULL_VERTEX;
+
+        if (isArray) {
+            array = (Array) object;
+            if (array.isModified()) {
+                return;
+            }
+        } else {
+            TypeVarMap tvmap = getTypeVarMap(object);
+            TypeVariable var = TypeVariable.valueOf("t");
+            if (tvmap != null && tvmap.containsKey(var)) {
+                element = tvmap.get(var);
+            }
+        }
         
-        int valLen = array.length();
+        int valLen = array != null ? array.length() : 256; // magic number
         int varLen = node.getHeadNode() == null ? 0 : node.getHeadNode().size();
 
         int j = 0;
         for (; j < valLen && j < varLen; j++) {
-            assign(graph, node.getHeadNode().get(j), array.getElement(j));
+            assign(graph, node.getHeadNode().get(j), array != null ? array.getElement(j) : element);
         }
 
         Node argsNode = node.getArgsNode();
         if (argsNode != null) {
             if (argsNode.getNodeType() == NodeType.STARNODE) {
                 // no check for '*'
-            } else if (varLen < valLen) {
+            } else if (varLen < valLen && array != null) {
                 assign(graph, argsNode, createArrayVertex(graph, null, array.getElements(), varLen, valLen - varLen));
             } else {
-                assign(graph, argsNode, createArrayVertex(graph, null, null));
+                Vertex[] elements = null;
+                if (element != null) {
+                    elements = new Vertex[] { element };
+                }
+                assign(graph, argsNode, createArrayVertex(graph, null, elements));
             }
         }
 
         while (j < varLen) {
-            assign(graph, node.getHeadNode().get(j++), Graph.NULL_VERTEX);
+            assign(graph, node.getHeadNode().get(j++), element);
         }
     }
 
@@ -500,6 +520,7 @@ public class RuntimeHelper {
                     }
                 }
 
+                //Logger.debug("try to apply template: %s", name);
                 List<TemplateAttribute> attrs = generateTemplateAttributes(receivers, args, block);
                 for (TemplateAttribute attr : attrs) {
                     Vertex returnVertex = applyTemplateAttribute(graph, vertex, name, attr, callSuper);
@@ -606,7 +627,9 @@ public class RuntimeHelper {
         }
         if (receiverType != null) {
             Method method = (Method) receiverType.searchMethod(name);
-            if (method != null) {
+            if (method != null
+                && (method.getVisibility() != Visibility.PRIVATE
+                    || vertex.hasPrivateVisibility())) {
                 Template template = method.getTemplate(attr);
                 if (template == null) {
                     template = createTemplate(graph, vertex, name, method, attr);
@@ -756,7 +779,6 @@ public class RuntimeHelper {
         if (block == null) {
             return Graph.NULL_VERTEX;
         }
-
         Ruby runtime = graph.getRuntime();
         Context context = runtime.getContext();
         Frame frame = context.getCurrentFrame();
@@ -859,12 +881,12 @@ public class RuntimeHelper {
         Ruby runtime = graph.getRuntime();
         TypeSet typeSet = new TypeSet();
         for (IRubyObject object : vertex.getTypeSet()) {
-            if (object.isInstanceOf(runtime.getArray())) {
+            if (object.isKindOf(runtime.getArray())) {
                 typeSet.add(object);
             } else {
                 CallVertex callVertex = new CallVertex(vertex.getNode(), "to_a", vertex, null, null);
                 for (IRubyObject array : call(graph, callVertex).getTypeSet()) {
-                    if (array.isInstanceOf(runtime.getArray())) {
+                    if (array.isKindOf(runtime.getArray())) {
                         typeSet.add(array);
                     } else {
                         Logger.warn("to_a should be return Array");
@@ -873,6 +895,29 @@ public class RuntimeHelper {
             }
         }
         return typeSet;
+    }
+
+    public static void aValueSplat(Graph graph, SValueVertex vertex) {
+        for (IRubyObject object : vertex.getValueVertex().getTypeSet()) {
+            if (object.isKindOf(graph.getRuntime().getArray())) {
+                if (object instanceof Array) {
+                    Array array = (Array) object;
+                    if (!array.isModified()) {
+                        if (array.length() == 1) {
+                            vertex.copyTypeSet(array.getElement(0));
+                        } else {
+                            vertex.addType(object);
+                        }
+                        continue;
+                    }
+                }
+                TypeVariable var = TypeVariable.valueOf("t");
+                TypeVarMap tvmap = getTypeVarMap(object);
+                if (tvmap != null && tvmap.containsKey(var)) {
+                    vertex.copyTypeSet(tvmap.get(var));
+                }
+            }
+        }
     }
 
     public static RubyModule getNamespace(Graph graph, Colon3Node node) {
@@ -955,7 +1000,6 @@ public class RuntimeHelper {
                     return;
                 }
             }
-            klass.setTag(new ClassTag(node));
         }
     }
 

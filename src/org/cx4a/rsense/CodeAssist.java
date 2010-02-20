@@ -124,6 +124,8 @@ public class CodeAssist {
     private static class Context {
         public Project project;
         public TypeSet typeSet;
+        public String feature;
+        public int loadPathLevel = 0;
     }
 
     private static class NodeDiffForTypeInference extends NodeDiff {
@@ -165,6 +167,14 @@ public class CodeAssist {
                     if (feature != null) {
                         require(context.project, feature, "UTF-8");
                     }
+                }
+            }
+        };
+
+    private SpecialMethod requireNextMethod = new SpecialMethod() {
+            public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                if (context.feature != null) {
+                    require(context.project, context.feature, "UTF-8", context.loadPathLevel + 1);
                 }
             }
         };
@@ -246,13 +256,28 @@ public class CodeAssist {
     }
 
     public LoadResult require(Project project, String feature, String encoding) {
-        for (String pathElement : project.getLoadPath()) {
-            File file = new File(pathElement, feature + ".rb");
-            if (file.exists()) {
-                return load(project, file, encoding, false);
+        return require(project, feature, encoding, 0);
+    }
+
+    private LoadResult require(Project project, String feature, String encoding, int loadPathLevel) {
+        List<String> loadPath = project.getLoadPath();
+        for (int i = loadPathLevel; i < loadPath.size(); i++) {
+            String pathElement = loadPath.get(i);
+            int oldLoadPathLevel = context.loadPathLevel;
+            context.loadPathLevel = i;
+            String oldFeature = context.feature;
+            context.feature = feature;
+            try {
+                File file = new File(pathElement, feature + ".rb");
+                if (file.exists()) {
+                    return load(project, file, encoding, false);
+                }
+            } finally {
+                context.feature = oldFeature;
+                context.loadPathLevel = oldLoadPathLevel;
             }
         }
-        Logger.warn("require failed: %s", feature);
+        Logger.warn("cannot require: %s", feature);
         return LoadResult.failWithNotFound();
     }
 
@@ -346,6 +371,7 @@ public class CodeAssist {
         Graph graph = project.getGraph();
         graph.addSpecialMethod(TYPE_INFERENCE_METHOD_NAME, typeInferenceMethod);
         graph.addSpecialMethod("require", requireMethod);
+        graph.addSpecialMethod("require_next", requireNextMethod);
         graph.setNodeDiff(new NodeDiffForTypeInference());
 
         require(project, "_builtin", "UTF-8");

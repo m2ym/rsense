@@ -155,6 +155,7 @@ import org.cx4a.rsense.typing.vertex.CallVertex;
 import org.cx4a.rsense.typing.vertex.MultipleAsgnVertex;
 import org.cx4a.rsense.typing.vertex.ToAryVertex;
 import org.cx4a.rsense.typing.vertex.SplatVertex;
+import org.cx4a.rsense.typing.vertex.SValueVertex;
 import org.cx4a.rsense.typing.vertex.YieldVertex;
 import org.cx4a.rsense.typing.annotation.TypeAnnotation;
 import org.cx4a.rsense.typing.annotation.TypeVariable;
@@ -265,23 +266,26 @@ public class Graph implements NodeVisitor {
                     if (args != null) {
                         for (Vertex arg : args) {
                             for (IRubyObject receiver : receivers) {
+                                // FIXME log message
+                                if (!(receiver instanceof RubyModule)) {
+                                    // FIXME toplevel
+                                    receiver = receiver.getMetaClass();
+                                }
                                 if (receiver instanceof RubyModule) {
                                     RubyModule module = (RubyModule) receiver;
                                     for (IRubyObject target : arg.getTypeSet()) {
                                         if (target instanceof RubyModule) {
                                             module.includeModule((RubyModule) target);
                                             included = true;
-                                        } else {
-                                            Logger.warn("Invalid include module");
                                         }
                                     }
-                                } else {
-                                    Logger.warn("Invalid include module");
                                 }
                             }
                         }
                     }
-                    result.setCallNextMethod(!included);
+                    if (!included) {
+                        result.setCallNextMethod(true);
+                    }
                 }
             });
 
@@ -724,7 +728,7 @@ public class Graph implements NodeVisitor {
                 }
             }
             if (superClass == null) {
-                Logger.error("Invalid superclass: %s", cpath.getName());
+                Logger.error("superclass not found: %s", cpath.getName());
             }
         }
 
@@ -898,6 +902,7 @@ public class Graph implements NodeVisitor {
         Vertex[] argVertices = RuntimeHelper.setupCallArgs(this, node.getArgsNode());
         Block block = RuntimeHelper.setupCallBlock(this, node.getIterNode());
         CallVertex vertex = new CallVertex(node, createFreeSingleTypeVertex(context.getFrameSelf()), argVertices, block);
+        vertex.setPrivateVisibility(true);
         return RuntimeHelper.call(this, vertex);
     }
     
@@ -924,7 +929,7 @@ public class Graph implements NodeVisitor {
         Block block = new Block(node.getVarNode(), node.getBodyNode(), context.getCurrentFrame(), context.getCurrentScope());
         CallVertex callVertex = new CallVertex(node, "each", receiverVertex, null, block);
         RuntimeHelper.call(this, callVertex);
-        addEdgeAndPropagate(callVertex, vertex);
+        addEdgeAndCopyTypeSet(vertex, callVertex);
         return vertex;
     }
     
@@ -1232,20 +1237,16 @@ public class Graph implements NodeVisitor {
             }
         }
         
-        Block block = null;
-        if (node.getIterNode() != null) {
-            IterNode iterNode = (IterNode) node.getIterNode();
-            DynamicScope scope = new DynamicScope(context.getFrameModule(), context.getCurrentScope());
-            block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), scope);
-        } else {
-            block = context.getFrameBlock();
-        }
+        Block block = RuntimeHelper.setupCallBlock(this, node.getIterNode());
         CallVertex vertex = new CallVertex(node, context.getCurrentFrame().getName(), receiverVertex, argVertices, block);
+        vertex.setPrivateVisibility(true);
         return RuntimeHelper.callSuper(this, vertex);
     }
     
     public Object visitSValueNode(SValueNode node) {
-        throw new UnsupportedOperationException();
+        SValueVertex vertex = new SValueVertex(node, createVertex(node.getValue()));
+        RuntimeHelper.aValueSplat(this, vertex);
+        return vertex;
     }
     
     public Object visitSymbolNode(SymbolNode node) {
@@ -1285,6 +1286,7 @@ public class Graph implements NodeVisitor {
     
     public Object visitVCallNode(VCallNode node) {
         CallVertex vertex = new CallVertex(node, createFreeSingleTypeVertex(context.getFrameSelf()), null, null);
+        vertex.setPrivateVisibility(true);
         return RuntimeHelper.call(this, vertex);
     }
     
@@ -1333,29 +1335,24 @@ public class Graph implements NodeVisitor {
                 argVertices[i] = createFreeSingleTypeVertex(args[i]);
             }
             
-            Block block = null;
-            if (node.getIterNode() != null) {
-                IterNode iterNode = (IterNode) node.getIterNode();
-                DynamicScope scope = new DynamicScope(context.getFrameModule(), context.getCurrentScope());
-                block = new Block(iterNode.getVarNode(), iterNode.getBodyNode(), context.getCurrentFrame(), scope);
-            } else {
-                block = context.getFrameBlock();
-            }
-            
+            Block block = RuntimeHelper.setupCallBlock(this, node.getIterNode());
             CallVertex vertex = new CallVertex(node, context.getCurrentFrame().getName(), receiverVertex, argVertices, block);
+            vertex.setPrivateVisibility(true);
             return RuntimeHelper.callSuper(this, vertex);
         }
         return NULL_VERTEX;
     }
 
     public boolean propagateVertex(Propagation propagation, Vertex dest, Vertex src) {
+        // copy first to make sure variable assign can be revisited
+        dest.copyTypeSet(src);
+
         if (propagation.checkVisited(dest)
             // FIXME polymorphic objects update
             /*|| dest.getTypeSet().containsAll(src.getTypeSet())*/) {
             return true;
         }
-        
-        dest.copyTypeSet(src);
+
         return propagateEdges(propagation, dest);
     }
 
@@ -1371,9 +1368,7 @@ public class Graph implements NodeVisitor {
 
         Vertex valueVertex = dest.getValueVertex();
         for (IRubyObject object : RuntimeHelper.arrayValue(propagation.getGraph(), valueVertex)) {
-            if (object instanceof Array) {
-                RuntimeHelper.multipleAssign(this, (MultipleAsgnNode) dest.getNode(), (Array) object);
-            }
+            RuntimeHelper.multipleAssign(this, (MultipleAsgnNode) dest.getNode(), object);
         }
         return true;
     }
@@ -1389,6 +1384,13 @@ public class Graph implements NodeVisitor {
         if (propagation.checkVisited(dest)) { return true; }
 
         RuntimeHelper.toAryValue(this, dest);
+        return propagateEdges(propagation, dest);
+    }
+
+    public boolean propagateSValueVertex(Propagation propagation, SValueVertex dest, Vertex src) {
+        if (propagation.checkVisited(dest)) { return true; }
+
+        RuntimeHelper.aValueSplat(this, dest);
         return propagateEdges(propagation, dest);
     }
 
