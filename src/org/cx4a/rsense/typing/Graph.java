@@ -256,7 +256,8 @@ public class Graph implements NodeVisitor {
                         .setNextMethodName("initialize")
                         .setNextMethodReceivers(accumulator)
                         .setNextMethodBlock(null)
-                        .setNextMethodNoReturn(true);
+                        .setNextMethodNoReturn(true)
+                        .setPrivateVisibility(true);
                 }
             });
 
@@ -824,7 +825,8 @@ public class Graph implements NodeVisitor {
         Node bodyNode = node.getBodyNode();
         Node argsNode = node.getArgsNode();
         Visibility visibility = context.getFrameVisibility();
-        if (name == "initialize" || name == "initialize_copy" || visibility == Visibility.MODULE_FUNCTION) {
+        boolean moduleFunction = visibility == Visibility.MODULE_FUNCTION;
+        if (name == "initialize" || name == "initialize_copy" || moduleFunction) {
             visibility = Visibility.PRIVATE;
         }
 
@@ -832,8 +834,10 @@ public class Graph implements NodeVisitor {
         Method newMethod = new Method(cbase, name, bodyNode, argsNode, visibility, node.getPosition());
         cbase.addMethod(name, newMethod);
         
-        if (context.getCurrentFrame().getVisibility() == Visibility.MODULE_FUNCTION) {
-            cbase.getSingletonClass().addMethod(name, newMethod);
+        if (moduleFunction) {
+            Method singletonMethod = new Method(cbase, name, bodyNode, argsNode, visibility, node.getPosition());
+            singletonMethod.setVisibility(Visibility.PUBLIC);
+            cbase.getSingletonClass().addMethod(name, singletonMethod);
         }
 
         IRubyObject receiver = newInstanceOf((cbase instanceof RubyClass) ? (RubyClass) cbase : runtime.getObject());

@@ -506,6 +506,9 @@ public class RuntimeHelper {
                     if (result.getResultTypeSet() != null) {
                         accumulator.addAll(result.getResultTypeSet());
                     }
+                    if (result.hasPrivateVisibility()) {
+                        vertex.setPrivateVisibility(true);
+                    }
                     if (result.isNeverCallAgain()) {
                         vertex.cutout();
                     } else if (!result.isCallNextMethod()) {
@@ -689,6 +692,9 @@ public class RuntimeHelper {
             size *= c.size();
         }
         if (size == 0) {
+            return Collections.emptyList();
+        } else if (size >= 128) {
+            Logger.warn("too big application: %s", size);
             return Collections.emptyList();
         }
 

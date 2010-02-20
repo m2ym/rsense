@@ -22,6 +22,7 @@ public abstract class SpecialMethod {
         private Block nextMethodBlock;
         private boolean nextMethodNoReturn;
         private boolean neverCallAgain;
+        private boolean privateVisibility;
 
         public Result(Result prev, TypeSet accumulator) {
             this.prev = prev;
@@ -63,6 +64,16 @@ public abstract class SpecialMethod {
             return this;
         }
 
+        public Result setNeverCallAgain(boolean neverCallAgain) {
+            this.neverCallAgain = neverCallAgain;
+            return this;
+        }
+
+        public Result setPrivateVisibility(boolean privateVisibility) {
+            this.privateVisibility = privateVisibility;
+            return this;
+        }
+
         public Result getPrevious() {
             return prev;
         }
@@ -99,12 +110,12 @@ public abstract class SpecialMethod {
             return nextMethodNoReturn;
         }
 
-        public void setNeverCallAgain(boolean neverCallAgain) {
-            this.neverCallAgain = neverCallAgain;
-        }
-
         public boolean isNeverCallAgain() {
             return neverCallAgain;
+        }
+
+        public boolean hasPrivateVisibility() {
+            return privateVisibility;
         }
     }
 
