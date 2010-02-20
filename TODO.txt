@@ -1,4 +1,3 @@
-* Megamorphic objects
 * proc, lambda
 * Template clone
 * Exceptions (raise/rescue)

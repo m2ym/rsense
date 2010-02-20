@@ -249,7 +249,7 @@ Blank means nothing is started. "-" means no need to create a stub file. "Done" 
 | base64           |   -    |
 | benchmark        |        |
 | bigdecimal       |  Done  |
-| cgi              |        |
+| cgi              |  Done  |
 | cgi-lib          |        |
 | complex          |        |
 | csv              |        |
