@@ -1,6 +1,5 @@
 Title: RSense - Most useful development tools for Ruby
-Use numbered headers: true
-HTML use syntax: true
+Numbering: yes
 CSS: style.css
 
 RSense

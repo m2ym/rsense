@@ -1,6 +1,5 @@
 Title: RSense Development Guide
-Use numbered headers: true
-HTML use syntax: true
+Numbering: yes
 CSS: style.css
 
 RSense Development Guide
@@ -10,8 +9,7 @@ RSense Development Guide
 
 * * *
 
-* Tables of contents
-{:toc}
+{toc}
 
 * * *
 

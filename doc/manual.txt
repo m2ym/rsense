@@ -1,6 +1,5 @@
 Title: RSense Manual
-Use numbered headers: true
-HTML use syntax: true
+Numbering: yes
 CSS: style.css
 
 RSense Manual
@@ -10,8 +9,7 @@ RSense Manual
 
 * * *
 
-* Tables of contents
-{:toc}
+{toc}
 
 * * *
 
