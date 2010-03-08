@@ -1,0 +1,65 @@
+Title: RSense - The most useful development tools for Ruby
+CSS: style.css
+
+RSense
+======
+
+*[Ruby][]のための最も優れた開発援助ツール*
+
+\[[English](index.txt)]
+
+* * * *
+
+{toc}
+
+* * * *
+
+スクリーンショット
+------------------
+
+![](rsense.png)
+
+特徴
+----
+
+現在利用機能が利用可能です。
+
+* コード補完（メソッド名補完など）
+* 型検査
+
+将来は以下の機能も利用可能になる予定です。
+
+* 静的コードチェック
+* 定義元ジャンプ
+* 呼び出し元ジャンプ
+* リファクタリング
+
+ダウンロード
+------------
+
+ダウンロードパッケージはまだ用意されていません。
+
+次のURLからソースコードのリポジトリにアクセスできます。
+
+* <http://cx4a.org/repo/rsense.git>
+* <http://github.com/m2ym/rsense> （ミラー）
+
+使い方
+------
+
+[ユーザーマニュアル](manual.txt)を読んでください。
+
+ライセンス
+----------
+
+ソフトウェアの価値を最大化するために[GPLv3][]のもとでライセンスしています。[GPLv3][]や[フリーソフトウェア][]について詳しくない方は、[この本][Free software Free society]を読んでみることをお薦めします。
+
+開発
+----
+
+どのような貢献も歓迎です。RSenseをハックしたい方はまず[開発ガイド](devel.txt)を読むことから始めるとよいでしょう。
+
+[Ruby]: http://www.ruby-lang.org/ "Ruby Programming Language"
+[GPLv3]: http://gplv3.fsf.org/
+[Free Software]: http://www.gnu.org/philosophy/free-sw.html
+[Free software Free society]: http://shop.fsf.org/product/free-software-free-society/

@@ -1,18 +1,28 @@
-Title: RSense - Most useful development tools for Ruby
-Numbering: yes
+Title: RSense - The most useful development tools for Ruby
 CSS: style.css
 
 RSense
 ======
 
-*RSense* is a most useful development tools for [Ruby][].
+*The most useful development tools for [Ruby][]*
+
+\[[Japanese](index.ja.txt)]
+
+* * * *
+
+{toc}
+
+* * * *
+
+Screenshots
+-----------
 
 ![](rsense.png)
 
 Features
 --------
 
-Available main features are:
+Main afvailable features are:
 
 * Code completion
 * Type inspection
@@ -24,14 +34,15 @@ In the future, the following features will be also available:
 * Caller jump
 * Refactoring
 
-Download
---------
+Downloads
+---------
 
 There is no downloads yet.
 
 You can access a source code from git repository.
 
-<http://github.com/m2ym/rsense>
+* <http://cx4a.org/repo/rsense.git>
+* <http://github.com/m2ym/rsense> (Mirror)
 
 Usage
 -----
