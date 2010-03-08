@@ -28,6 +28,7 @@ import org.cx4a.rsense.typing.annotation.TypeSplat;
 import org.cx4a.rsense.typing.annotation.TypeApplication;
 import org.cx4a.rsense.typing.annotation.TypeConstraint;
 import org.cx4a.rsense.typing.vertex.Vertex;
+import org.cx4a.rsense.typing.vertex.YieldVertex;
 import org.cx4a.rsense.util.Logger;
 
 public class AnnotationResolver {
@@ -318,14 +319,16 @@ public class AnnotationResolver {
         boolean succeed = false;
         Vertex returnVertex;
         if (args.length == 1) {
-            returnVertex = RuntimeHelper.yield(graph, block, args[0], true, template.getReturnVertex());
+            YieldVertex vertex = new YieldVertex(null, template, block, graph.createFreeVertex(args[0]), true);
+            returnVertex = RuntimeHelper.yield(graph, vertex);
         } else {
             Vertex[] elements = new Vertex[args.length];
             for (int i = 0; i < args.length; i++) {
                 elements[i] = graph.createFreeVertex();
                 elements[i].getTypeSet().addAll(args[i]);
             }
-            returnVertex = RuntimeHelper.yield(graph, block, new Array(runtime, elements), true, template.getReturnVertex());
+            YieldVertex vertex = new YieldVertex(null, template, block, graph.createFreeSingleTypeVertex(new Array(runtime, elements)), true);
+            returnVertex = RuntimeHelper.yield(graph, vertex);
         }
 
         if (returnVertex != null) {

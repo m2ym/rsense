@@ -20,6 +20,7 @@ import org.cx4a.rsense.typing.runtime.Proc;
 import org.cx4a.rsense.typing.vertex.Vertex;
 import org.cx4a.rsense.typing.vertex.YieldVertex;
 import org.cx4a.rsense.typing.annotation.TypeVariable;
+import org.cx4a.rsense.util.Logger;
 
 public class Template {
     private Method method;
