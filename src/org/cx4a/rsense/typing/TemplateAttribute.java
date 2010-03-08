@@ -59,9 +59,16 @@ public class TemplateAttribute {
     @Override
     public int hashCode() {
         int code = 0;
-        code ^= objectHashCode(receiver);
+        if (receiver != null) {
+            code ^= receiver.hashCode();
+        }
         for (IRubyObject arg : args) {
-            code ^= objectHashCode(arg);
+            if (arg != null) {
+                code ^= arg.hashCode();
+            }
+        }
+        if (block != null) {
+            code ^= block.hashCode();
         }
         return code;
     }
@@ -78,37 +85,25 @@ public class TemplateAttribute {
 
         TemplateAttribute o = (TemplateAttribute) other;
 
-        if (!objectEquals(receiver, o.receiver)
+        if (((receiver == null) ^ (o.receiver == null))
+            || (receiver != null && !receiver.equals(o.receiver))
             || args.length != o.args.length
-            || block != o.block) {
+            || (block != null
+                ? !block.equals(o.block)
+                : o.block != null
+                ? !o.block.equals(block)
+                : false)) {
             return false;
         }
 
         for (int i = 0; i < args.length; i++) {
-            if (!objectEquals(args[i], o.args[i])) {
+            if (((args[i] == null) ^ (o.args[i] == null))
+                || (args[i] != null && !args[i].equals(o.args[i]))) {
                 return false;
             }
         }
         
         return true;
-    }
-
-    private int objectHashCode(IRubyObject object) {
-        if (object instanceof PolymorphicObject) {
-            return object.hashCode();
-        } else {
-            return object.getMetaClass().hashCode();
-        }
-    }
-
-    private boolean objectEquals(IRubyObject a, IRubyObject b) {
-        if (a instanceof PolymorphicObject) {
-            return a.equals(b);
-        } else if (b instanceof PolymorphicObject) {
-            return b.equals(a);
-        } else {
-            return a.getMetaClass().equals(b.getMetaClass());
-        }
     }
 
     @Override

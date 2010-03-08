@@ -35,6 +35,7 @@ import org.jruby.ast.YieldNode;
 import org.jruby.ast.ZeroArgNode;
 import org.jruby.ast.MethodDefNode;
 import org.jruby.ast.DefnNode;
+import org.jruby.ast.BlockArgNode;
 import org.jruby.ast.NodeType;
 import org.jruby.ast.types.INameNode;
 import org.jruby.parser.LocalStaticScope;
@@ -101,8 +102,6 @@ public class RuntimeHelper {
             return classVarAssign(graph, (ClassVarAsgnNode) node, src);
         case CLASSVARDECLNODE:
             return classVarDeclaration(graph, (ClassVarDeclNode) node, src);
-        case GLOBALASGNNODE:
-            return globalAssign(graph, (GlobalAsgnNode) node, src);
         case ARGUMENTNODE:
         case RESTARG:
             return argumentAssign(graph, (ArgumentNode) node, src);
@@ -304,7 +303,17 @@ public class RuntimeHelper {
         runtime.setGlobalVar(newName, holder); // no propagation ?
     }
 
-    public static void argsAssign(Graph graph, ArgsNode argsNode, Vertex[] args) {
+    public static void blockAssign(Graph graph, BlockArgNode node, Block block) {
+        Scope scope = graph.getRuntime().getContext().getCurrentScope();
+        VertexHolder holder = (VertexHolder) scope.getValue(node.getName());
+        if (holder == null) {
+            holder = graph.createFreeVertexHolder();
+            scope.setValue(node.getName(), holder);
+        }
+        holder.getVertex().addType((Proc) block);
+    }
+
+    public static void argsAssign(Graph graph, ArgsNode argsNode, Vertex[] args, Block block) {
         Scope scope = graph.getRuntime().getContext().getCurrentScope();
         ListNode pre = argsNode.getPre();
         ListNode post = argsNode.getPost();
@@ -359,7 +368,7 @@ public class RuntimeHelper {
             }
         }
         if (argsNode.getBlock() != null) {
-            // FIXME
+            blockAssign(graph, argsNode.getBlock(), block);
         }
     }
 
@@ -468,7 +477,7 @@ public class RuntimeHelper {
             case ITERNODE: {
                 IterNode inode = (IterNode) iterNode;
                 DynamicScope scope = new DynamicScope(context.getCurrentScope().getModule(), context.getCurrentScope());
-                block = new Block(inode.getVarNode(), inode.getBodyNode(), context.getCurrentFrame(), scope);
+                block = new Proc(graph.getRuntime(), inode.getVarNode(), inode.getBodyNode(), context.getCurrentFrame(), scope);
                 break;
             }
             case BLOCKPASSNODE:
@@ -546,28 +555,18 @@ public class RuntimeHelper {
         return vertex;
     }
 
-    public static void methodPartialUpdate(Graph graph, MethodDefNode node, Method newMethod, DynamicMethod oldMethod, IRubyObject receiver) {
-        NodeDiff nodeDiff = graph.getNodeDiff();
-        Map<TemplateAttribute, Template> oldTemplates = null;
-        boolean templateShared = false;
-        
-        if (oldMethod instanceof Method) {
-            oldTemplates = ((Method) oldMethod).getTemplates();
-            if (nodeDiff != null
-                && nodeDiff.noDiff(node.getArgsNode(), oldMethod.getArgsNode())
-                && nodeDiff.noDiff(node.getBodyNode(), oldMethod.getBodyNode())) { // XXX nested class, defn
-                // FIXME annotation diff
-                newMethod.setTemplates(oldTemplates);
-                templateShared = true;
-                Logger.debug(SourceLocation.of(node), "template shared: %s", newMethod);
-            }
-        }
+    public static void methodPartialUpdate(Graph graph, MethodDefNode node, DynamicMethod newMethod, DynamicMethod oldMethod, IRubyObject receiver) {
+        if (newMethod instanceof DefaultMethod && oldMethod instanceof DefaultMethod) {
+            DefaultMethod newmeth = (DefaultMethod) newMethod;
+            DefaultMethod oldmeth = (DefaultMethod) oldMethod;
+            NodeDiff nodeDiff = graph.getNodeDiff();
 
-        if (!templateShared) {
-            if (oldTemplates != null && !oldTemplates.isEmpty()) {
-                dummyCallForTemplates(graph, node, newMethod, oldTemplates);
-            } else {
-                dummyCall(graph, node, newMethod, receiver);
+            if (nodeDiff != null
+                && nodeDiff.noDiff(node.getArgsNode(), oldmeth.getArgsNode())
+                && nodeDiff.noDiff(node.getBodyNode(), oldmeth.getBodyNode())) { // XXX nested class, defn
+                // FIXME annotation diff
+                newmeth.shareTemplates(oldmeth.getTemplates());
+                Logger.debug(SourceLocation.of(node), "templates shared: %s", newmeth);
             }
         }
     }
@@ -592,7 +591,7 @@ public class RuntimeHelper {
         }
     }
 
-    private static void dummyCall(Graph graph, MethodDefNode node, Method method, IRubyObject receiver) {
+    public static void dummyCall(Graph graph, MethodDefNode node, Method method, IRubyObject receiver) {
         if (node.getBodyNode() != null) {
             Context context = graph.getRuntime().getContext();
             context.pushFrame(context.getFrameModule(), node.getName(), receiver, null, Visibility.PUBLIC);
@@ -604,7 +603,7 @@ public class RuntimeHelper {
         Logger.debug(SourceLocation.of(node), "dummy call: %s", method);
     }
 
-    private static void dummyCallForTemplates(Graph graph, MethodDefNode node, Method method, Map<TemplateAttribute, Template> templates) {
+    public static void dummyCallForTemplates(Graph graph, MethodDefNode node, Method method, Map<TemplateAttribute, Template> templates) {
         String name = node.getName();
         for (TemplateAttribute attr : templates.keySet()) {
             createTemplate(graph, null, name, method, attr);
@@ -615,7 +614,7 @@ public class RuntimeHelper {
     private static Vertex applyTemplateAttribute(Graph graph, CallVertex vertex, String name, TemplateAttribute attr, boolean callSuper) {
         IRubyObject receiver = attr.getReceiver();
         IRubyObject[] args = attr.getArgs();
-        RubyClass receiverType;
+        RubyClass receiverType = null;
         if (callSuper) {
             RubyModule module = graph.getRuntime().getContext().getFrameModule();
             if (module instanceof RubyClass) {
@@ -625,7 +624,7 @@ public class RuntimeHelper {
                 Logger.error("Cannot call super in module");
                 return null;
             }
-        } else {
+        } else if (receiver != null) {
             receiverType = receiver.getMetaClass();
         }
         if (receiverType != null) {
@@ -636,8 +635,9 @@ public class RuntimeHelper {
                 Template template = method.getTemplate(attr);
                 if (template == null) {
                     template = createTemplate(graph, vertex, name, method, attr);
+                    Logger.debug(SourceLocation.of(vertex), "template created: %s", method);
                 } else {
-                    template.reproduceSideEffect(graph, receiver, args);
+                    template.reproduceSideEffect(graph, receiver, args, vertex.getBlock());
                     Logger.debug(SourceLocation.of(vertex), "template reused: %s", method);
                 }
                 return template.getReturnVertex();
@@ -648,16 +648,18 @@ public class RuntimeHelper {
 
     private static Template createTemplate(Graph graph, CallVertex vertex, String name, Method method, TemplateAttribute attr) {
         IRubyObject receiver = attr.getReceiver();
-        Vertex[] argVertices = new Vertex[attr.getArgs().length];
+        IRubyObject[] args = attr.getArgs();
+        Vertex[] argVertices = new Vertex[args.length];
         for (int i = 0; i < argVertices.length; i++) {
-            argVertices[i] = graph.createFreeSingleTypeVertex(attr.getArg(i));
+            argVertices[i] = graph.createFreeSingleTypeVertex(args[i]);
         }
 
         Ruby runtime = graph.getRuntime();
         Context context = runtime.getContext();
 
+        Block block = attr.getBlock();
         Scope scope = new LocalScope(method.getModule());
-        context.pushFrame(context.getFrameModule(), name, receiver, attr.getBlock(), Visibility.PUBLIC);
+        context.pushFrame(context.getFrameModule(), name, receiver, block, Visibility.PUBLIC);
         context.pushScope(scope);
 
         Template template = new Template(method, context.getCurrentFrame(), scope, attr);
@@ -668,16 +670,12 @@ public class RuntimeHelper {
 
         AnnotationResolver.Result result = AnnotationHelper.resolveMethodAnnotation(graph, template);
         if (result == AnnotationResolver.Result.UNRESOLVED) {
-            Logger.warn(SourceLocation.of(vertex), "annotation unmatched: %s", template.getMethod());
+            Logger.warn(SourceLocation.of(vertex), "annotation unmatched: %s", method);
         }
 
-        // FIXME more efficient way
-        argsAssign(graph, (ArgsNode) method.getArgsNode(), argVertices);
-        if (method.getBodyNode() != null) {
-            Vertex ret = graph.createVertex(method.getBodyNode());
-            if (ret != null && result != AnnotationResolver.Result.RESOLVED) {
-                graph.addEdgeAndCopyTypeSet(ret, returnVertex);
-            }
+        Vertex ret = method.call(graph, template, receiver, args, argVertices, block);
+        if (ret != null && result != AnnotationResolver.Result.RESOLVED) {
+            graph.addEdgeAndCopyTypeSet(ret, returnVertex);
         }
 
         context.popScope();
@@ -773,25 +771,20 @@ public class RuntimeHelper {
         return result;
     }
 
-    public static Vertex yield(Graph graph, Block block, IRubyObject arg, boolean expanded) {
-        return yield(graph, block, Arrays.asList(arg), expanded);
+    public static Vertex yield(Graph graph, Block block, IRubyObject arg, boolean expanded, Vertex returnVertex) {
+        return yield(graph, block, Arrays.asList(arg), expanded, returnVertex);
     }
 
-    public static Vertex yield(Graph graph, Block block, IRubyObject[] args, boolean expanded) {
-        return yield(graph, block, Arrays.asList(args), expanded);
+    public static Vertex yield(Graph graph, Block block, IRubyObject[] args, boolean expanded, Vertex returnVertex) {
+        return yield(graph, block, Arrays.asList(args), expanded, returnVertex);
     }
     
-    public static Vertex yield(Graph graph, Block block, Collection<IRubyObject> args, boolean expanded) {
+    public static Vertex yield(Graph graph, Block block, Collection<IRubyObject> args, boolean expanded, Vertex returnVertex) {
         if (block == null) {
             return Graph.NULL_VERTEX;
         }
         Ruby runtime = graph.getRuntime();
         Context context = runtime.getContext();
-        Frame frame = context.getCurrentFrame();
-        Template template = getFrameTemplate(frame);
-        if (template == null) {
-            return Graph.NULL_VERTEX;
-        }
         
         Node varNode = block.getVarNode();
         boolean noargblock = false;
@@ -801,7 +794,6 @@ public class RuntimeHelper {
         Node rest = null;
         ListNode pre = null;
         Vertex vertex = graph.createFreeVertex();
-        Vertex returnVertex = template.getReturnVertex();
 
         if (varNode == null || varNode instanceof ZeroArgNode) {
             noargblock = true;
@@ -865,12 +857,20 @@ public class RuntimeHelper {
     }
 
     public static Vertex yield(Graph graph, YieldVertex vertex) {
-        YieldNode node = (YieldNode) vertex.getNode();
-        Block block = vertex.getBlock();
+        Template template = vertex.getTemplate();
+        if (template == null) {
+            return vertex;
+        }
+
+        Proc block = (Proc) vertex.getBlock();
         Vertex argsVertex = vertex.getArgsVertex();
-        Vertex returnVertex = yield(graph, block, (argsVertex != null ? argsVertex.getTypeSet() : TypeSet.EMPTY), node.getExpandArguments());
+        Vertex returnVertex = yield(graph, block, (argsVertex != null ? argsVertex.getTypeSet() : TypeSet.EMPTY), vertex.getExpandArguments(), template.getReturnVertex());
         if (returnVertex != null) {
             graph.addEdgeAndCopyTypeSet(returnVertex, vertex);
+        }
+        
+        if (block != null) {
+            block.recordYield(vertex);
         }
         return vertex;
     }
@@ -1096,6 +1096,7 @@ public class RuntimeHelper {
 
     public static void setMethodsVisibility(Graph graph, TypeSet receivers, Vertex[] args, Visibility visibility) {
         if (args == null || args.length == 0) {
+            // FIXME module check
             graph.getRuntime().getContext().getCurrentFrame().setVisibility(visibility);
         } else {
             for (IRubyObject receiver : receivers) {

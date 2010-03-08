@@ -323,6 +323,21 @@ f {|x, *y|
 }
 EOF
 
+type-inference --test=Method.Yield.Template --should-be=Fixnum
+def f
+  yield 1
+end
+f {|x| x_|_}
+EOF
+
+type-inference --test=Method.Yield.Template.NoChange --keep-env --should-be=Fixnum
+f {|x| x_|_}
+EOF
+
+type-inference --test=Method.Yield.Template.Change --keep-env --should-be=Fixnum
+f {|y| y_|_}
+EOF
+
 type-inference --test=Module.Attr1 --should-be=Fixnum
 class C
   attr :foo
@@ -475,6 +490,61 @@ EOF
 
 type-inference --test=String.Unpack1 --should-be=String
 ''.unpack('a')[0]_|_
+EOF
+
+type-inference --test=Proc.NoArg --should-be=Fixnum
+def f(&b)
+  b.call
+end
+f { 1_|_ }
+EOF
+
+type-inference --test=Proc.OneArg --should-be=Fixnum
+def f(&b)
+  b.call(1)
+end
+f {|x| x_|_ }
+EOF
+
+type-inference --test=Proc.ManyArgs --should-be=Float
+def f(&b)
+  b.call(1, 2.3)
+end
+f {|x, y| y_|_ }
+EOF
+
+type-inference --test=Proc.ManyArgs2 --should-be=Float
+def f(&b)
+  b[1, 2.3]
+end
+f {|x, y| y_|_ }
+EOF
+
+type-inference --test=Proc.Result --should-be=String
+def f(&b)
+  b.call
+end
+f { '' }_|_
+EOF
+
+type-inference --test=Proc.Pass --should-be=String
+def f(&b)
+  g('', &b)
+end
+def g(a, &b)
+  b.call(a)
+end
+f {|x| x_|_}
+EOF
+
+type-inference --test=Proc.PassAsArg --should-be=String
+def f(&b)
+  g('', b)
+end
+def g(a, b)
+  b.call(a)
+end
+f {|x| x_|_}
 EOF
 
 type-inference --test=Annotation.Method.Return --should-be=String

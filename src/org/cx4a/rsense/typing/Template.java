@@ -1,16 +1,24 @@
 package org.cx4a.rsense.typing;
 
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.Collections;
+
+import org.jruby.ast.YieldNode;
 
 import org.cx4a.rsense.ruby.Frame;
 import org.cx4a.rsense.ruby.Scope;
 import org.cx4a.rsense.ruby.IRubyObject;
+import org.cx4a.rsense.ruby.Block;
 import org.cx4a.rsense.typing.runtime.Method;
 import org.cx4a.rsense.typing.runtime.TypeVarMap;
 import org.cx4a.rsense.typing.runtime.VertexHolder;
 import org.cx4a.rsense.typing.runtime.RuntimeHelper;
 import org.cx4a.rsense.typing.runtime.MonomorphicObject;
+import org.cx4a.rsense.typing.runtime.Proc;
 import org.cx4a.rsense.typing.vertex.Vertex;
+import org.cx4a.rsense.typing.vertex.YieldVertex;
 import org.cx4a.rsense.typing.annotation.TypeVariable;
 
 public class Template {
@@ -48,11 +56,12 @@ public class Template {
         return scope;
     }
 
-    public void reproduceSideEffect(Graph graph, IRubyObject receiver, IRubyObject[] args) {
+    public void reproduceSideEffect(Graph graph, IRubyObject receiver, IRubyObject[] args, Block block) {
         reproduceSideEffect(graph, attr.getReceiver(), receiver);
         for (int i = 0; i < attr.getArgs().length && i < args.length; i++) {
             reproduceSideEffect(graph, attr.getArg(i), args[i]);
         }
+        reproduceYield(graph, receiver, args, block);
     }
 
     private void reproduceSideEffect(Graph graph, IRubyObject from, IRubyObject to) {
@@ -68,6 +77,16 @@ public class Template {
                     // FIXME
                     //graph.propagateEdges(src);
                 }
+            }
+        }
+    }
+
+    private void reproduceYield(Graph graph, IRubyObject receiver, IRubyObject[] args, Block block) {
+        Proc templateProc = (Proc) attr.getBlock();
+        if (templateProc != null && block != null) {
+            Proc proc = (Proc) block;
+            for (YieldVertex vertex : templateProc.getYields()) {
+                RuntimeHelper.yield(graph, new YieldVertex(vertex.getNode(), this, block, vertex.getArgsVertex(), vertex.getExpandArguments()));
             }
         }
     }

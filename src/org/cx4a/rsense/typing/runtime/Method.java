@@ -7,21 +7,26 @@ import java.util.HashMap;
 import org.jruby.ast.Node;
 import org.jruby.lexer.yacc.ISourcePosition;
 
+import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.ruby.RubyModule;
 import org.cx4a.rsense.ruby.MetaClass;
 import org.cx4a.rsense.ruby.Visibility;
 import org.cx4a.rsense.ruby.DynamicMethod;
+import org.cx4a.rsense.ruby.Block;
+import org.cx4a.rsense.typing.Graph;
 import org.cx4a.rsense.typing.Template;
 import org.cx4a.rsense.typing.TemplateAttribute;
+import org.cx4a.rsense.typing.vertex.Vertex;
 import org.cx4a.rsense.typing.annotation.MethodType;
 
-public class Method extends DynamicMethod {
+public abstract class Method extends DynamicMethod {
     private String name;
     private Map<TemplateAttribute, Template> templates;
+    private boolean templatesShared;
     private List<MethodType> annotations;
 
-    public Method(RubyModule cbase, String name, Node bodyNode, Node argsNode, Visibility visibility, ISourcePosition position) {
-        super(cbase, bodyNode, argsNode, visibility, position);
+    public Method(RubyModule cbase, String name, Visibility visibility, ISourcePosition position) {
+        super(cbase, visibility, position);
         this.name = name;
         templates = new HashMap<TemplateAttribute, Template>();
     }
@@ -34,8 +39,9 @@ public class Method extends DynamicMethod {
         return templates;
     }
 
-    public void setTemplates(Map<TemplateAttribute, Template> templates) {
+    public void shareTemplates(Map<TemplateAttribute, Template> templates) {
         this.templates = templates;
+        this.templatesShared = true;
     }
     
     public Template getTemplate(TemplateAttribute key) {
@@ -46,6 +52,10 @@ public class Method extends DynamicMethod {
         templates.put(key, template);
     }
 
+    public boolean isTemplatesShared() {
+        return templatesShared;
+    }
+
     public List<MethodType> getAnnotations() {
         return annotations;
     }
@@ -53,6 +63,8 @@ public class Method extends DynamicMethod {
     public void setAnnotations(List<MethodType> annotations) {
         this.annotations = annotations;
     }
+
+    public abstract Vertex call(Graph graph, Template template, IRubyObject receiver, IRubyObject[] args, Vertex[] argVertices, Block block);
 
     @Override
     public String toString() {

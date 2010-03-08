@@ -2,10 +2,12 @@ package org.cx4a.rsense.ruby;
 
 public class DynamicScope extends LocalScope {
     private Scope scope;
+    private int snapshot;
 
     public DynamicScope(RubyModule cref, Scope scope) {
         super(cref);
         this.scope = scope;
+        this.snapshot = scope.hashCode();
     }
 
     @Override
@@ -21,5 +23,24 @@ public class DynamicScope extends LocalScope {
         } else {
             super.setValue(name, value);
         }
+    }
+
+    @Override
+    public int hashCode() {
+        return snapshot;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+
+        if (!(other instanceof DynamicScope)) {
+            return false;
+        }
+
+        DynamicScope o = (DynamicScope) other;
+        return snapshot == o.snapshot;
     }
 }

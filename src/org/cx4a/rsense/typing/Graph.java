@@ -142,7 +142,9 @@ import org.cx4a.rsense.typing.runtime.VertexHolder;
 import org.cx4a.rsense.typing.runtime.Array;
 import org.cx4a.rsense.typing.runtime.Hash;
 import org.cx4a.rsense.typing.runtime.Method;
+import org.cx4a.rsense.typing.runtime.DefaultMethod;
 import org.cx4a.rsense.typing.runtime.SpecialMethod;
+import org.cx4a.rsense.typing.runtime.Proc;
 import org.cx4a.rsense.typing.runtime.RuntimeHelper;
 import org.cx4a.rsense.typing.runtime.AnnotationHelper;
 import org.cx4a.rsense.typing.runtime.TypeVarMap;
@@ -165,21 +167,27 @@ import org.cx4a.rsense.typing.annotation.MethodType;
 public class Graph implements NodeVisitor {
     public static final Vertex NULL_VERTEX = new Vertex();
 
-    protected static class DelayedMethodPartialUpdate {
+    protected static class DummyCall {
         private MethodDefNode node;
         private Method newMethod;
-        private DynamicMethod oldMethod;
+        private Method oldMethod;
         private IRubyObject receiver;
 
-        public DelayedMethodPartialUpdate(MethodDefNode node, Method newMethod, DynamicMethod oldMethod, IRubyObject receiver) {
+        public DummyCall(MethodDefNode node, Method newMethod, Method oldMethod, IRubyObject receiver) {
             this.node = node;
             this.newMethod = newMethod;
-            this.oldMethod = oldMethod;
             this.receiver = receiver;
         }
 
         public void force(Graph graph) {
-            RuntimeHelper.methodPartialUpdate(graph, node, newMethod, oldMethod, receiver);
+            if (!newMethod.isTemplatesShared()) {
+                Map<TemplateAttribute, Template> templates = oldMethod != null ? oldMethod.getTemplates() : null;
+                if (templates != null && !templates.isEmpty()) {
+                    RuntimeHelper.dummyCallForTemplates(graph, node, newMethod, templates);
+                } else {
+                    RuntimeHelper.dummyCall(graph, node, newMethod, receiver);
+                }
+            }
         }
     }
 
@@ -188,14 +196,14 @@ public class Graph implements NodeVisitor {
     protected InstanceFactory instanceFactory;
     protected Map<String, SpecialMethod> specialMethods;
     protected NodeDiff nodeDiff;
-    protected Queue<DelayedMethodPartialUpdate> methodPartialUpdateQueue = new LinkedList<DelayedMethodPartialUpdate>();
+    protected Queue<DummyCall> dummyCallQueue = new LinkedList<DummyCall>();
     
     public Graph(Ruby runtime) {
         this.runtime = runtime;
         this.context = runtime.getContext();
         this.instanceFactory = new InstanceFactory(runtime);
         this.specialMethods = new HashMap<String, SpecialMethod>();
-        initSpecialMethods();
+        init();
     }
 
     public Ruby getRuntime() {
@@ -222,7 +230,7 @@ public class Graph implements NodeVisitor {
         this.nodeDiff = nodeDiff;
     }
 
-    private void initSpecialMethods() {
+    private void init() {
         addSpecialMethod("new", new SpecialMethod() {
                 public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
                     TypeSet accumulator = result.getAccumulator();
@@ -292,58 +300,52 @@ public class Graph implements NodeVisitor {
 
         addSpecialMethod("[]", new SpecialMethod() {
                 public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
-                    TypeSet typeSet = new TypeSet();
-                    if (args != null && args.length > 0) {
-                        for (IRubyObject receiver : receivers) {
-                            if (receiver instanceof Hash) {
+                    Collection<IRubyObject> arg = null;
+                    TypeSet ts = new TypeSet();
+                    for (IRubyObject receiver : receivers) {
+                        if (receiver instanceof Hash) {
+                            if (args != null && args.length > 0) {
                                 Hash hash = (Hash) receiver;
                                 Object key = Hash.getRealKey(args[0].getNode());
                                 if (!hash.isModified() && key != null) {
                                     Vertex v = hash.get(key);
                                     if (v != null) {
-                                        typeSet.addAll(v.getTypeSet());
+                                        ts.addAll(v.getTypeSet());
                                     }
                                 }
-                            } else if (receiver instanceof Array) {
+                            }
+                        } else if (receiver instanceof Array) {
+                            if (args != null && args.length > 0) {
                                 Array array = (Array) receiver;
                                 Integer n = Vertex.getFixnum(args[0]);
                                 if (!array.isModified() && n != null) {
                                     Vertex v = array.getElement(n);
                                     if (v != null) {
-                                        typeSet.addAll(v.getTypeSet());
+                                        ts.addAll(v.getTypeSet());
                                     }
                                 }
                             }
+                        } else if (receiver instanceof Proc) {
+                            if (arg == null) {
+                                if (args == null) {
+                                    arg = Arrays.asList((IRubyObject) new Array(runtime, new Vertex[0]));
+                                } else if (args.length == 1) {
+                                    arg = args[0].getTypeSet();
+                                } else {
+                                    arg = Arrays.asList((IRubyObject) new Array(runtime, args));
+                                }
+                            }
+                            Vertex returnVertex = createFreeVertex();
+                            RuntimeHelper.yield(Graph.this, (Proc) receiver, arg, true, returnVertex);
+                            ts.addAll(returnVertex.getTypeSet());
                         }
                     }
 
-                    if (typeSet.isEmpty()) {
+                    if (ts.isEmpty()) {
                         result.setCallNextMethod(true);
                     } else {
-                        result.setResultTypeSet(typeSet);
+                        result.setResultTypeSet(ts);
                     }
-                }
-            });
-
-        addSpecialMethod("class", new SpecialMethod() {
-                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
-                    TypeSet ts = new TypeSet();
-                    for (IRubyObject receiver : receivers) {
-                        ts.add(receiver.getMetaClass());
-                    }
-                    result.setResultTypeSet(ts);
-                }
-            });
-
-        addSpecialMethod("superclass", new SpecialMethod() {
-                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
-                    TypeSet ts = new TypeSet();
-                    for (IRubyObject receiver : receivers) {
-                        if (receiver instanceof RubyClass) {
-                            ts.add(((RubyClass) receiver).getSuperClass());
-                        }
-                    }
-                    result.setResultTypeSet(ts);
                 }
             });
 
@@ -439,6 +441,60 @@ public class Graph implements NodeVisitor {
                     }
                 }
             });
+
+        addSpecialMethod("call", new SpecialMethod() {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                    TypeSet ts = new TypeSet();
+                    TypeSet arg = null;
+                    for (IRubyObject receiver : receivers) {
+                        if (receiver instanceof Proc) {
+                            if (arg == null) {
+                                if (args == null) {
+                                    arg = new TypeSet();
+                                    arg.add(new Array(runtime, new Vertex[0]));
+                                } else if (args.length == 1) {
+                                    arg = args[0].getTypeSet();
+                                } else {
+                                    arg = new TypeSet();
+                                    arg.add(new Array(runtime, args));
+                                }
+                            }
+                            YieldVertex vertex = new YieldVertex(null,
+                                                                 RuntimeHelper.getFrameTemplate(runtime.getContext().getCurrentFrame()),
+                                                                 (Proc) receiver,
+                                                                 createFreeVertex(arg),
+                                                                 true);
+                            RuntimeHelper.yield(Graph.this, vertex);
+                            ts.addAll(vertex.getTypeSet());
+                        }
+                    }
+                    if (ts.isEmpty()) {
+                        result.setCallNextMethod(true);
+                    } else {
+                        result.setResultTypeSet(ts);
+                    }
+                }
+            });
+
+        RubyClass objectClass = runtime.getObject();
+        RubyClass classClass = runtime.getClassClass();
+        RubyClass procClass = runtime.getProc();
+        
+        objectClass.addMethod("class", new Method(objectClass, "class", Visibility.PUBLIC, null) {
+                public Vertex call(Graph graph, Template template, IRubyObject receiver, IRubyObject[] args, Vertex[] argVertices, Block block) {
+                    return graph.createFreeSingleTypeVertex(receiver.getMetaClass());
+                }
+            });
+
+        classClass.addMethod("superclass", new Method(classClass, "superclass", Visibility.PUBLIC, null) {
+                public Vertex call(Graph graph, Template template, IRubyObject receiver, IRubyObject[] args, Vertex[] argVertices, Block block) {
+                    if (receiver instanceof RubyClass) {
+                        return graph.createFreeSingleTypeVertex(((RubyClass) receiver).getSuperClass());
+                    } else {
+                        return null;
+                    }
+                }
+            });
     }
 
     public void load(Node newAST) {
@@ -461,8 +517,8 @@ public class Graph implements NodeVisitor {
             createVertex(newAST);
         }
 
-        DelayedMethodPartialUpdate entry;
-        while ((entry = methodPartialUpdateQueue.poll()) != null) {
+        DummyCall entry;
+        while ((entry = dummyCallQueue.poll()) != null) {
             entry.force(this);
         }
 
@@ -475,6 +531,10 @@ public class Graph implements NodeVisitor {
 
     public Vertex createFreeVertex() {
         return new Vertex();
+    }
+
+    public Vertex createFreeVertex(TypeSet typeSet) {
+        return new Vertex(null, typeSet);
     }
 
     public Vertex createFreeSingleTypeVertex(IRubyObject type) {
@@ -654,6 +714,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitBlockPassNode(BlockPassNode node) {
+        // Never reach here
         throw new UnsupportedOperationException();
     }
     
@@ -830,20 +891,22 @@ public class Graph implements NodeVisitor {
             visibility = Visibility.PRIVATE;
         }
 
-        DynamicMethod oldMethod = cbase.getMethod(name);
-        Method newMethod = new Method(cbase, name, bodyNode, argsNode, visibility, node.getPosition());
+        Method oldMethod = (Method) cbase.getMethod(name);
+        Method newMethod = new DefaultMethod(cbase, name, bodyNode, argsNode, visibility, node.getPosition());
         cbase.addMethod(name, newMethod);
         
         if (moduleFunction) {
-            Method singletonMethod = new Method(cbase, name, bodyNode, argsNode, visibility, node.getPosition());
+            Method singletonMethod = new DefaultMethod(cbase, name, bodyNode, argsNode, visibility, node.getPosition());
             singletonMethod.setVisibility(Visibility.PUBLIC);
             cbase.getSingletonClass().addMethod(name, singletonMethod);
         }
 
         IRubyObject receiver = newInstanceOf((cbase instanceof RubyClass) ? (RubyClass) cbase : runtime.getObject());
         
-        methodPartialUpdateQueue.offer(new DelayedMethodPartialUpdate(node, newMethod, oldMethod, receiver));
+        RuntimeHelper.methodPartialUpdate(this, node, newMethod, oldMethod, receiver);
         RuntimeHelper.setMethodTag(newMethod, node, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
+
+        dummyCallQueue.offer(new DummyCall(node, newMethod, oldMethod, receiver));
 
         return NULL_VERTEX;
     }
@@ -861,12 +924,14 @@ public class Graph implements NodeVisitor {
             Node bodyNode = node.getBodyNode();
             Node argsNode = node.getArgsNode();
 
-            DynamicMethod oldMethod = rubyClass.getMethod(name);
-            Method newMethod = new Method(context.getCurrentScope().getModule(), name, bodyNode, argsNode, Visibility.PUBLIC, node.getPosition());
+            Method oldMethod = (Method) rubyClass.getMethod(name);
+            Method newMethod = new DefaultMethod(context.getCurrentScope().getModule(), name, bodyNode, argsNode, Visibility.PUBLIC, node.getPosition());
             rubyClass.addMethod(name, newMethod);
 
-            methodPartialUpdateQueue.offer(new DelayedMethodPartialUpdate(node, newMethod, oldMethod, receiver));
+            RuntimeHelper.methodPartialUpdate(this, node, newMethod, oldMethod, receiver);
             RuntimeHelper.setMethodTag(newMethod, node, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
+
+            dummyCallQueue.offer(new DummyCall(node, newMethod, oldMethod, receiver));
         }
 
         return NULL_VERTEX;
@@ -933,7 +998,7 @@ public class Graph implements NodeVisitor {
     public Object visitForNode(ForNode node) {
         Vertex vertex = createEmptyVertex(node);
         Vertex receiverVertex = createVertex(node.getIterNode());
-        Block block = new Block(node.getVarNode(), node.getBodyNode(), context.getCurrentFrame(), context.getCurrentScope());
+        Block block = new Proc(runtime, node.getVarNode(), node.getBodyNode(), context.getCurrentFrame(), context.getCurrentScope());
         CallVertex callVertex = new CallVertex(node, "each", receiverVertex, null, block);
         RuntimeHelper.call(this, callVertex);
         addEdgeAndCopyTypeSet(vertex, callVertex);
@@ -1321,7 +1386,7 @@ public class Graph implements NodeVisitor {
         if (node.getArgsNode() != null) {
             argsVertex = createVertex(node.getArgsNode());
         }
-        YieldVertex vertex = new YieldVertex(node, context.getFrameBlock(), argsVertex);
+        YieldVertex vertex = new YieldVertex(node, RuntimeHelper.getFrameTemplate(context.getCurrentFrame()), context.getFrameBlock(), argsVertex, node.getExpandArguments());
         return RuntimeHelper.yield(this, vertex);
     }
     

@@ -66,4 +66,30 @@ public class Frame {
         }
         return s;
     }
+
+    @Override
+    public int hashCode() {
+        int code = 0;
+        code ^= name.hashCode();
+        code ^= cbase.hashCode();
+        code ^= self.hashCode();
+        return code;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) {
+            return true;
+        }
+
+        if (!(other instanceof Frame)) {
+            return false;
+        }
+
+        Frame o = (Frame) other;
+
+        return name.equals(o.name)
+            && cbase.equals(o.cbase)
+            && self.equals(o.self);
+    }
 }

@@ -23,8 +23,12 @@ public class Vertex {
     }
 
     public Vertex(Node node) {
+        this(node, new TypeSet());
+    }
+
+    public Vertex(Node node, TypeSet typeSet) {
         this.node = node;
-        typeSet = new TypeSet();
+        this.typeSet = typeSet;
         edges = new ArrayList<Vertex>();
     }
 

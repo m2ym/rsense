@@ -5,14 +5,18 @@ import java.util.List;
 import java.util.ArrayList;
 
 import org.jruby.ast.Node;
+import org.jruby.ast.types.INameNode;
 
 public class NodeDiff {
+    protected List<Node> diff;
+    
     public NodeDiff() {
     }
 
     public List<Node> diff(Node newNode, Node oldNode) {
-        if (isSameStatementSequence(newNode, oldNode)) {
-            return collectStructualNodes(newNode);
+        diff = new ArrayList<Node>();
+        if (isSameSequence(newNode, oldNode)) {
+            return diff;
         } else {
             return null;
         }
@@ -22,23 +26,14 @@ public class NodeDiff {
         return diff(newNode, oldNode) != null;
     }
 
-    protected List<Node> collectStructualNodes(Node node) {
-        List<Node> result = new ArrayList<Node>();
-        if (node != null) {
-            for (Node child : node.childNodes()) {
-                if (isStructuralNode(node)) {
-                    result.add(child);
-                }
-            }
-        }
-        return result;
-    }
-
     protected boolean isSameNode(Node a, Node b) {
-        return a.getNodeType() == b.getNodeType();
+        return a.getClass() == b.getClass()
+            && ((a instanceof INameNode)
+                ? ((INameNode) a).getName().equals(((INameNode) b).getName())
+                : true);
     }
 
-    protected boolean isSameStatementSequence(Node a, Node b) {
+    protected boolean isSameSequence(Node a, Node b) {
         if (a == null && b == null) {
             return true;
         } else if (a == null || b == null || !isSameNode(a, b)) {
@@ -54,24 +49,18 @@ public class NodeDiff {
         Iterator<Node> i = m.iterator();
         Iterator<Node> j = n.iterator();
         while (true) {
-            Node x = getNextStatementNode(i);
-            Node y = getNextStatementNode(j);
+            Node x = getNextNode(i, true);
+            Node y = getNextNode(j, false);
             if (x == null && y == null) {
                 return true;
-            } else if (x == null || y == null || !isSameStatementSequence(x, y)) {
+            } else if (x == null || y == null || !isSameSequence(x, y)) {
                 return false;
             }
         }
     }
 
-    protected Node getNextStatementNode(Iterator<Node> ite) {
-        while (ite.hasNext()) {
-            Node node = ite.next();
-            if (isStatementNode(node)) {
-                return node;
-            }
-        }
-        return null;
+    protected Node getNextNode(Iterator<Node> ite, boolean newNode) {
+        return ite.hasNext() ? ite.next() : null;
     }
 
     protected boolean isStatementNode(Node node) {

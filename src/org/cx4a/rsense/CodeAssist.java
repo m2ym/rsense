@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Iterator;
 
 import org.jruby.ast.Node;
 import org.jruby.ast.NodeType;
@@ -141,6 +142,20 @@ public class CodeAssist {
                 return false;
             }
             return true;
+        }
+
+        @Override
+        protected Node getNextNode(Iterator<Node> ite, boolean newNode) {
+            while (ite.hasNext()) {
+                Node node = ite.next();
+                if (isStatementNode(node)) {
+                    return node;
+                }
+                if (newNode) {
+                    diff.add(node);
+                }
+            }
+            return null;
         }
     }
 

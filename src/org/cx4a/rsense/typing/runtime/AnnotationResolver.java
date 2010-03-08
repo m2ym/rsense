@@ -318,14 +318,14 @@ public class AnnotationResolver {
         boolean succeed = false;
         Vertex returnVertex;
         if (args.length == 1) {
-            returnVertex = RuntimeHelper.yield(graph, block, args[0], true);
+            returnVertex = RuntimeHelper.yield(graph, block, args[0], true, template.getReturnVertex());
         } else {
             Vertex[] elements = new Vertex[args.length];
             for (int i = 0; i < args.length; i++) {
                 elements[i] = graph.createFreeVertex();
                 elements[i].getTypeSet().addAll(args[i]);
             }
-            returnVertex = RuntimeHelper.yield(graph, block, new Array(runtime, elements), true);
+            returnVertex = RuntimeHelper.yield(graph, block, new Array(runtime, elements), true, template.getReturnVertex());
         }
 
         if (returnVertex != null) {

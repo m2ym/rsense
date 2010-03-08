@@ -140,6 +140,10 @@ public class Options extends HashMap<String, String> {
         return containsKey("detect-project");
     }
 
+    public boolean isKeepEnv() {
+        return containsKey("keep-env");
+    }
+
     public boolean isTest() {
         return containsKey("test");
     }

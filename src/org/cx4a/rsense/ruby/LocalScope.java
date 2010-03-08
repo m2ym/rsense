@@ -2,6 +2,7 @@ package org.cx4a.rsense.ruby;
 
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Iterator;
 
 public class LocalScope implements Scope {
     private RubyModule cref;
@@ -22,5 +23,17 @@ public class LocalScope implements Scope {
 
     public void setValue(String name, IRubyObject value) {
         localVars.put(name, value);
+    }
+
+    @Override
+    public int hashCode() {
+        int code = 0;
+        code = cref.hashCode();
+        for (Map.Entry<String, IRubyObject> entry : localVars.entrySet()) {
+            code ^= entry.getKey().hashCode();
+            code <<= 4;
+            code ^= entry.getValue().hashCode();
+        }
+        return code;
     }
 }

@@ -1939,8 +1939,8 @@ class Object
   def send(name, *args) end
   ##% _dump(Integer) -> String
   def _dump(limit) '' end
-  ##% class() -> Class
-  def class() Class.new end
+  ###% class() -> Class
+  #def class() Class.new end
   alias :type :class
   ##% clone() -> self
   def clone() self end
@@ -2052,7 +2052,17 @@ module Precision
 end
 
 class Proc
-  # FIXME
+  ##% call(*a) -> Object
+  def call(*arg) Object.new end
+  alias :[] :call
+  ##% arity() -> Fixnum
+  def arity() 0 end
+  ##% binding() -> Binding
+  def binding() Binding.new end
+  ##% to_proc() -> self
+  def to_proc() self end
+  ##% to_s() -> String
+  def to_s() '' end
 end
 
 module Process

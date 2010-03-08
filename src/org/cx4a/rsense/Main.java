@@ -238,7 +238,7 @@ public class Main {
     }
     
     private void command(String command, Options options) {
-        if (options.isTest()) {
+        if (options.isTest() && !options.isKeepEnv()) {
             codeAssist.clear();
         }
         if (command.equals("code-completion")) {

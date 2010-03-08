@@ -20,4 +20,23 @@ public class VertexHolder extends RubyObject {
     public String toString() {
         return vertex.toString();
     }
+
+    @Override
+    public int hashCode() {
+        return vertex.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (this == object) {
+            return true;
+        }
+
+        if (!(object instanceof VertexHolder)) {
+            return false;
+        }
+
+        VertexHolder o = (VertexHolder) object;
+        return vertex.equals(o.vertex);
+    }
 }
