@@ -547,6 +547,24 @@ end
 f {|x| x_|_}
 EOF
 
+type-inference --test=Range.Begin --should-be=Fixnum
+(0..100).begin_|_
+EOF
+
+type-inference --test=Range.Begin2 --should-be=Fixnum,Float
+(0..100.0).begin_|_
+EOF
+
+type-inference --test=Range.Each --should-be=Fixnum
+(0..100).each {|x| x_|_}
+EOF
+
+type-inference --test=Range.ForEach --should-be=Fixnum
+for x in (0..100)
+  x_|_
+end
+EOF
+
 type-inference --test=Annotation.Method.Return --should-be=String
 ##% f() -> String
 def f() end

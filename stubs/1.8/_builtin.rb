@@ -2080,7 +2080,7 @@ end
 module Process::UID
 end
 
-##% Range<>
+##% Range<t>
 class Range
   include Enumerable
 

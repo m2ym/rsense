@@ -6,4 +6,3 @@
 * Cut branches
 * Recursive customization
 * Integrate document server
-* Range
