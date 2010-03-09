@@ -413,11 +413,9 @@ public class Main {
 
     private void commandVersion(Options options) {
         if (options.isEmacsFormat()) {
-            out.print("\"");
-        }
-        version();
-        if (options.isEmacsFormat()) {
-            out.println("\"");
+            out.println("\"" + versionString() + "\"");
+        } else {
+            version();
         }
     }
 

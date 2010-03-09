@@ -389,7 +389,7 @@ Testing
 
 You can run test scripts easily:
 
-    % make run-test
+    % ant test
 
 ### Writing tests ###
 
@@ -399,7 +399,7 @@ Test will be written as a rsense script file. See test scripts which are located
     1_|_
     EOF
 
-After that, do `make run-test`. It's very easy.
+After that, do `ant test`. It's very easy.
 
 As we see, special options for testing are available on type-inference and code-completion command. `--test=` option names its fixture. `--should-be=` option verifies a result equals expected data. `--should-be-empty` option verifies a result is empty. `--should-contain=` option verifies a result contains expected data. `--should-not-contain` option verifies a result doesn't contain unexpected data.
 

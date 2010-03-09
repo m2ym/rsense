@@ -1,0 +1,83 @@
+<project name="rsense" default="build" basedir=".">
+  <path id="build.class.path">
+    <fileset file="build_lib/*.jar" />
+    <fileset file="lib/*.jar" />
+    <pathelement path="${classpath}" />
+  </path>
+  <path id="exec.class.path">
+    <fileset file="dist/lib/*.jar" />
+    <pathelement path="${classpath}" />
+  </path>
+
+  <target name="init">
+    <mkdir dir="build" />
+  </target>
+
+  <target name="antlr" depends="init">
+    <java fork="true" classpathref="build.class.path" classname="org.antlr.Tool">
+      <arg value="-make" />
+      <arg file="src/org/cx4a/rsense/parser/TypeAnnotation.g" />
+    </java>
+  </target>
+
+  <target name="build" depends="init">
+    <javac fork="true" source="1.6" deprecation="true"
+           srcdir="src" destdir="build"
+           classpathref="build.class.path">
+      <compilerarg value="-Xlint:all" />
+    </javac>
+    <jar jarfile="lib/rsense.jar" basedir="build" />
+  </target>
+
+  <target name="dist" depends="build,doc">
+    <copy todir="dist" preservelastmodified="true" includeEmptyDirs="true">
+      <fileset dir=".">
+        <include name="README.txt" />
+        <include name="bin/**/*" />
+        <include name="doc/**/*" />
+        <include name="etc/**/*" />
+        <include name="lib/**/*" />
+        <include name="stubs/**/*" />
+      </fileset>
+    </copy>
+  </target>
+
+  <target name="test" depends="build">
+    <java fork="true" classpathref="build.class.path" classname="org.cx4a.rsense.Main">
+      <arg value="script" /><arg file="test/script/all.rsense" />
+      <arg value="--test-color" />
+    </java>
+  </target>
+
+  <target name="doc">
+    <exec executable="bluefeather">
+      <arg value="-f" /><arg value="d" />
+      <arg file="doc/*.txt" />
+    </exec>
+  </target>
+
+  <target name="jruby-diff">
+    <exec executable="diff" output="etc/jruby-1.4.0.patch">
+      <arg value="-ruN" />
+      <arg value="-x" /><arg value="ri" />
+      <arg value="-x" /><arg value="cache" />
+      <arg value="-x" /><arg value="DefaultRubyParser.java" />
+      <arg value="-x" /><arg value="YyTables.java" />
+      <arg value="-x" /><arg value="PATH" />
+      <arg value="../jruby-1.4.0-orig" />
+      <arg value="../jruby-1.4.0" />
+    </exec>
+  </target>
+  
+  <target name="clean">
+    <delete quiet="true" includeEmptyDirs="true">
+      <fileset dir="build" />
+      <fileset dir="dist" />
+      <fileset file="hs_err_pid*.log" />
+      <fileset file="lib/rsense.jar" />
+      <fileset file="java.hprof.txt" />
+      <fileset file="doc/*.html" />
+      <fileset file="TypeAnnotation.tokens" />
+    </delete>
+  </target>
+</project>

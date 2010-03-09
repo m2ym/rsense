@@ -114,10 +114,11 @@ public class Options extends HashMap<String, String> {
     }
 
     public String getLoadPath() {
+        String sep = File.separator;
+        String psep = File.pathSeparator;
         String loadPath = get("load-path");
         if (loadPath == null) {
-            String sep = File.pathSeparator;
-            if (sep.equals(";")) {
+            if (psep.equals(";")) {
                 // Windows maybe (ActiveRuby)
                 loadPath = "C:\\Program Files\\ruby-1.8\\lib\\ruby\\1.8";
             } else {
@@ -127,7 +128,7 @@ public class Options extends HashMap<String, String> {
         }
 
         // add stub path
-        loadPath = getRsenseHome() + "/stubs/1.8:" + loadPath;
+        loadPath = getRsenseHome() + sep + "stubs" + sep + "1.8" + psep + loadPath;
         
         return loadPath;
     }

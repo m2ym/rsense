@@ -91,7 +91,7 @@ public class CodeAssist {
                 int count = 0;
                 for (int i = 0; i <= length - mark.length; i++) {
                     int j = 0;
-                    if (Character.isHighSurrogate(buf[i])) {
+                    if (Character.isHighSurrogate(buf[i]) || buf[i] == '\r') {
                     } else {
                         count++;
                     }
@@ -411,7 +411,7 @@ public class CodeAssist {
                     offset = loc.findOffset(len, line, buf, read);
                 }
                 for (int i = 0; i < read; i++) {
-                    if (Character.isHighSurrogate(buf[i])) {
+                    if (Character.isHighSurrogate(buf[i]) || buf[i] == '\r') {
                     } else {
                         len++;
                         if (len == offset) {

@@ -1,4 +1,4 @@
-Title: RSense - The most useful development tools for Ruby
+Title: RSense - Rubyのための最も優れた開発援助ツール
 CSS: style.css
 
 RSense

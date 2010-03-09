@@ -1,6 +1,4 @@
-バイナリー・ファイル../jruby-1.4.0-orig/PATHと../jruby-1.4.0/PATHは違います
-バイナリー・ファイル../jruby-1.4.0-orig/lib/ruby/gems/1.8/cache/rspec-1.2.9.gemと../jruby-1.4.0/lib/ruby/gems/1.8/cache/rspec-1.2.9.gemは違います
-diff -ruN -x ri -x DefaultRubyParser.java -x YyTables.java ../jruby-1.4.0-orig/src/org/jruby/ast/Node.java ../jruby-1.4.0/src/org/jruby/ast/Node.java
+diff -ruN -x ri -x cache -x DefaultRubyParser.java -x YyTables.java -x PATH ../jruby-1.4.0-orig/src/org/jruby/ast/Node.java ../jruby-1.4.0/src/org/jruby/ast/Node.java
 --- ../jruby-1.4.0-orig/src/org/jruby/ast/Node.java	2009-11-03 03:15:09.000000000 +0900
 +++ ../jruby-1.4.0/src/org/jruby/ast/Node.java	2010-01-25 21:30:49.463049702 +0900
 @@ -35,6 +35,7 @@
@@ -44,7 +42,7 @@ diff -ruN -x ri -x DefaultRubyParser.java -x YyTables.java ../jruby-1.4.0-orig/s
      public abstract Object accept(NodeVisitor visitor);
      public abstract List<Node> childNodes();
  
-diff -ruN -x ri -x DefaultRubyParser.java -x YyTables.java ../jruby-1.4.0-orig/src/org/jruby/lexer/yacc/RubyYaccLexer.java ../jruby-1.4.0/src/org/jruby/lexer/yacc/RubyYaccLexer.java
+diff -ruN -x ri -x cache -x DefaultRubyParser.java -x YyTables.java -x PATH ../jruby-1.4.0-orig/src/org/jruby/lexer/yacc/RubyYaccLexer.java ../jruby-1.4.0/src/org/jruby/lexer/yacc/RubyYaccLexer.java
 --- ../jruby-1.4.0-orig/src/org/jruby/lexer/yacc/RubyYaccLexer.java	2009-11-03 03:15:10.000000000 +0900
 +++ ../jruby-1.4.0/src/org/jruby/lexer/yacc/RubyYaccLexer.java	2010-01-26 17:56:26.835726305 +0900
 @@ -38,6 +38,8 @@
@@ -104,7 +102,7 @@ diff -ruN -x ri -x DefaultRubyParser.java -x YyTables.java ../jruby-1.4.0-orig/s
              switch(c) {
              case '\000': /* NUL */
              case '\004': /* ^D */
-diff -ruN -x ri -x DefaultRubyParser.java -x YyTables.java ../jruby-1.4.0-orig/src/org/jruby/parser/DefaultRubyParser.y ../jruby-1.4.0/src/org/jruby/parser/DefaultRubyParser.y
+diff -ruN -x ri -x cache -x DefaultRubyParser.java -x YyTables.java -x PATH ../jruby-1.4.0-orig/src/org/jruby/parser/DefaultRubyParser.y ../jruby-1.4.0/src/org/jruby/parser/DefaultRubyParser.y
 --- ../jruby-1.4.0-orig/src/org/jruby/parser/DefaultRubyParser.y	2009-11-03 03:15:10.000000000 +0900
 +++ ../jruby-1.4.0/src/org/jruby/parser/DefaultRubyParser.y	2010-01-28 00:49:10.412527831 +0900
 @@ -310,9 +310,11 @@
@@ -194,9 +192,9 @@ diff -ruN -x ri -x DefaultRubyParser.java -x YyTables.java ../jruby-1.4.0-orig/s
 +
 +
 +
-diff -ruN -x ri -x DefaultRubyParser.java -x YyTables.java ../jruby-1.4.0-orig/src/org/jruby/parser/ParserSupport.java ../jruby-1.4.0/src/org/jruby/parser/ParserSupport.java
+diff -ruN -x ri -x cache -x DefaultRubyParser.java -x YyTables.java -x PATH ../jruby-1.4.0-orig/src/org/jruby/parser/ParserSupport.java ../jruby-1.4.0/src/org/jruby/parser/ParserSupport.java
 --- ../jruby-1.4.0-orig/src/org/jruby/parser/ParserSupport.java	2009-11-03 03:15:10.000000000 +0900
-+++ ../jruby-1.4.0/src/org/jruby/parser/ParserSupport.java	2010-01-26 18:08:56.143850133 +0900
++++ ../jruby-1.4.0/src/org/jruby/parser/ParserSupport.java	2010-02-05 23:11:47.584267125 +0900
 @@ -35,6 +35,9 @@
   ***** END LICENSE BLOCK *****/
  package org.jruby.parser;
@@ -224,7 +222,7 @@ diff -ruN -x ri -x DefaultRubyParser.java -x YyTables.java ../jruby-1.4.0-orig/s
      public void reset() {
          inSingleton = 0;
          inDefinition = false;
-diff -ruN -x ri -x DefaultRubyParser.java -x YyTables.java ../jruby-1.4.0-orig/tool/yytables.el ../jruby-1.4.0/tool/yytables.el
+diff -ruN -x ri -x cache -x DefaultRubyParser.java -x YyTables.java -x PATH ../jruby-1.4.0-orig/tool/yytables.el ../jruby-1.4.0/tool/yytables.el
 --- ../jruby-1.4.0-orig/tool/yytables.el	1970-01-01 09:00:00.000000000 +0900
 +++ ../jruby-1.4.0/tool/yytables.el	2010-01-21 18:34:36.127027705 +0900
 @@ -0,0 +1,42 @@

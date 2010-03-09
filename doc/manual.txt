@@ -44,12 +44,13 @@ Installation
 * Editors
 
   * Emacs
+  * Vim
 
 ### Build instructions ###
 
-You can compile RSense with `make` command.
+You can compile RSense with `ant` command.
 
-    % make rsense
+    % ant
 
 After that, you may see `rsense.jar` in `lib` directory, which is a main compnent of RSense.
 
@@ -220,18 +221,6 @@ After installation, if you use Emacs, you need to change `rsense-rurema-home` va
 ### Usage ### {#refm_usage}
 
 In Emacs, you can lookup a reference automatically by completing with auto-complete.
-
-Makefile
---------
-
-You can also use `Makefile` as a simple frontend like:
-
-    % make run-code-completion FILE=test.rb LOCATION=123
-    ...
-    % make run-type-inference FILE=test.rb LOCATION=123
-    ...
-    % make run-test
-    ...
 
 [Ruby]: http://www.ruby-lang.org/ "Ruby Programming Language"
 [UNIX philosophy]: http://en.wikipedia.org/wiki/Unix_philosophy

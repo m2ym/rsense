@@ -2,12 +2,69 @@
 
 require 'socket'
 
+$is_win = RUBY_PLATFORM.downcase =~ /mswin(?!ce)|mingw|cygwin|bccwin/
 $rsense_home = ENV['RSENSE_HOME'] || File.dirname(File.dirname(File.expand_path($0)))
-$socket_path = ENV['RSENSE_SOCKET'] || '/tmp/rsense-socket'
-$classpath = ENV['RSENSE_CLASSPATH'] || '.' + ['', 'rsense.jar', 'antlr-runtime-3.2.jar', 'jruby.jar'].join(":#{$rsense_home}/lib/")
+$socket_path = ENV['RSENSE_SOCKET']
+$classpath = ENV['RSENSE_CLASSPATH']
+$pid_file = ENV['RSENSE_PID_FILE']
 $log = ENV['RSENSE_LOG']
 $debug = ENV['RSENSE_DEBUG']
 $end_mark = 'END'
+
+def process_args
+  until ARGV.empty?
+    arg = ARGV[0]
+    case arg
+    when '--'
+      ARGV.shift
+      break
+    when /^--([\w-]+)(?:=(.*))?$/
+      ARGV.shift
+      name = $1
+      value = $2
+      case name
+      when 'home'
+        $rsense_home = value
+      when 'socket'
+        $socket_path = value
+      when 'classpath'
+        $classpath = value
+      when 'pid-file'
+        $pid_file = value
+      when 'log'
+        $log = value
+      when 'debug'
+        $debug = true
+      end
+    else
+      break
+    end
+  end
+
+  unless $socket_path
+    if $is_win
+      $socket_path = 'localhost:77367'
+    else
+      $socket_path = '/tmp/rsense-socket'
+    end
+  end
+  if $socket_path =~ /^(\w+):(\d+)+$/
+    $host = $1
+    $port = $2.to_i
+  end
+
+  unless $pid_file
+    if $is_win
+      $pid_file = File.join($rsense_home, 'rsense-pid')
+    else
+      $pid_file = '/tmp/rsense-pid'
+    end
+  end
+
+  $classpath = '.' + ['', 'rsense.jar', 'antlr-runtime-3.2.jar', 'jruby.jar'].join("#{File::PATH_SEPARATOR}#{$rsense_home}/lib/") unless $classpath
+
+  ARGV << 'help' if ARGV.empty?
+end
 
 def daemonize
   if Process.respond_to? :daemon  # Ruby 1.9
@@ -15,21 +72,44 @@ def daemonize
   else                            # Ruby 1.8
     require 'webrick'
     WEBrick::Daemon.start
-    end
+  end
 end
 
-def start_server
-  fork {
-    daemonize
-    
-    begin
-      options = "--rsense-home=#{$rsense_home} --no-prompt --end-mark=#{$end_mark} #{'--debug' if $debug} #{'--log=' + $log if $log}"
-      io = IO.popen("java -cp #{$classpath} org.cx4a.rsense.Main script #{options}", 'r+')
-      UNIXServer.open($socket_path) {|serv|
-        begin
-          loop do
+def open_server(&block)
+  if $host
+    TCPServer.open($host, $port, &block)
+  else
+    UNIXServer.open($socket_path, &block)
+  end
+end
+
+def close_server
+  File.unlink($socket_path) rescue nil unless $host
+  File.unlink($pid_file) rescue nil
+end
+
+def wait_for_server
+  1.upto(100) do
+    return if File.exists? $pid_file
+    sleep 0.1
+  end
+  puts "No server response.\nTry to kill the process and delete pid file #{$pid_file}."
+  exit 1
+end
+
+def server_process
+  begin
+    options = "--rsense-home=#{$rsense_home} --no-prompt --end-mark=#{$end_mark} #{'--debug' if $debug} #{'--log=' + $log if $log}"
+    io = IO.popen("java -cp #{$classpath} org.cx4a.rsense.Main script #{options}", 'r+')
+    open_server do |serv|
+      begin
+        open($pid_file, 'w') {|f| f.write($$)}
+        puts "start: #{$host ? ($host + ':' + $port.to_s) : $socket_path} (#{$$})"
+        loop do
+          begin
             sock = serv.accept
             cmd = sock.gets
+            puts "recv: #{cmd}"
             if cmd =~ /^(exit|quit)/
               sock.puts('END')
               sock.close
@@ -45,36 +125,65 @@ def start_server
             sock.puts(ret)
             sock.puts('END')
             sock.close_write
+          rescue Errno::EPIPE, Errno::ECONNRESET
           end
-        ensure
-          File.unlink($socket_path)
         end
-      }
-    ensure
-      io.close
+      ensure
+        puts "stop"
+        close_server
+      end
     end
-  }
-
-  ok = false
-  1.upto(10) {
-    if File.socket? $socket_path
-      ok = true
-      break
-    end
-    sleep 1
-  }
-  exit(1) unless ok
+  ensure
+    io.close
+    exit
+  end
 end
 
-start_server unless File.socket? $socket_path
 
-UNIXSocket.open($socket_path) {|sock|
-  sock.puts(ARGV.join(' '))
-  sock.close_write
-  ret = ''
-  while l = sock.gets
-    break if l =~ /^#{$end_mark}/
-    ret << l
+def start_server
+  case ARGV[0]
+  when 'server'
+    close_server
+    server_process
+  when 'zap'
+    # do nothing
+  else
+    return if File.exists? $pid_file
+
+    fork do
+      daemonize
+      server_process
+    end
+    wait_for_server
   end
-  puts ret unless ret.empty?
-}
+end
+
+def open_client(&block)
+  if $host
+    TCPSocket.open($host, $port, &block)
+  else
+    UNIXSocket.open($socket_path, &block)
+  end
+end
+
+def exec_command
+  argv = ARGV
+  if argv[0] == 'zap'
+    File.unlink $pid_file rescue nil
+    argv = ['exit']
+  end
+  open_client {|sock|
+    sock.puts(argv.join(' '))
+    sock.close_write
+    ret = ''
+    while l = sock.gets
+      break if l =~ /^#{$end_mark}/
+      ret << l
+    end
+    puts ret unless ret.empty?
+  }
+end
+
+process_args
+start_server
+exec_command

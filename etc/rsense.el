@@ -24,35 +24,86 @@
 
 ;;; Code:
 
-(defcustom rsense-home (expand-file-name "~/src/rsense")
+(defun rsense-choose-dir (&rest dirs)
+  (loop for dir in dirs
+        if (file-directory-p dir)
+        return (expand-file-name dir)))
+
+(defcustom rsense-home (if (eq system-type 'windows-nt)
+                           "C:\\rsense"
+                         (rsense-choose-dir "~/opt/rsense"
+                                            "~/src/rsense"
+                                            "/opt/rsense"))
   "Home directory of RSense.")
 
-(defcustom rsense-temp-file "/tmp/rsense-buf"
-  "Temporary file for containing uncomplete buffer.")
+(defcustom rsense-socket nil
+  "Specify socket. File name means UNIX domain socket. <host>:<port> means TCP socket.
+Nil means proper socket will be selected.")
+
+(defcustom rsense-classpath nil
+  "Classpath giving to RSense backend.")
+
+(defcustom rsense-pid-file nil
+  "Pid file path giving to RSense backend.")
+
+(defcustom rsense-log-file nil
+  "RSense log file.")
 
 (defcustom rsense-debug t
   "Non-nil means RSense runs on debug mode.")
 
-(defcustom rsense-log-file "/tmp/rsense.log"
-  "RSense log file.")
+(defcustom rsense-temp-file nil
+  "Temporary file for containing uncomplete buffer.")
 
-(defcustom rsense-rurema-home (expand-file-name "~/src/rurema")
+(defcustom rsense-rurema-home (if (eq system-type 'windows-nt)
+                                  "C:\\rurema"
+                                (rsense-choose-dir "~/opt/rurema"
+                                                   "~/src/rurema"
+                                                   "/opt/rurema"))
   "Home directory of Ruby Reference Manual Project.")
 
 (defcustom rsense-rurema-refe "refe-1_8_7"
   "Program name of ReFe.")
 
+(defsubst rsense-interpreter ()
+  (if (boundp 'ruby-program)
+      ruby-program
+    "ruby"))
+
+(defsubst rsense-program ()
+  (concat rsense-home "/bin/rsense"))
+
+(defun rsense-args (&rest args)
+  (delq nil
+        (append (list (concat "--home=" rsense-home)
+                      (if rsense-socket
+                          (concat "--socket=" rsense-socket))
+                      (if rsense-classpath
+                          (concat "--classpath=" rsense-classpath))
+                      (if rsense-pid-file
+                          (concat "--pid-file=" rsense-pid-file))
+                      (if rsense-log-file
+                          (concat "--log=" rsense-log-file))
+                      (if rsense-debug
+                          "--debug")
+                      "--")
+                args)))
+
 (defun rsense-command (&rest command)
-  (setenv "RSENSE_LOG" rsense-log-file)
-  (setenv "RSENSE_DEBUG" (if rsense-debug "true"))
   (car-safe
    (read-from-string
-    (shell-command-to-string (format "%s/bin/rsense %s --format=emacs"
-                                     rsense-home
-                                     (mapconcat 'identity command " ")
-                                     rsense-log-file)))))
+    (with-output-to-string
+      (with-current-buffer standard-output
+        (apply 'call-process
+               (rsense-interpreter)
+               nil t nil
+               (cons (rsense-program)
+                     (apply 'rsense-args
+                            (append command '("--format=emacs"))))))))))
 
 (defun rsense-buffer-command (buffer offset command &optional remove-until prefix)
+  (unless rsense-temp-file
+    (setq rsense-temp-file (make-temp-file "")))
   (with-temp-buffer
     (insert (with-current-buffer buffer (buffer-string)))
     (if remove-until
@@ -67,11 +118,23 @@
                     (format "--encoding=UTF-8")
                     (format "--location=%s" (1- offset)))))
 
-(defun rsense-code-completion (buffer offset &optional remove-until prefix)
-  (rsense-buffer-command buffer offset "code-completion" remove-until prefix))
+(defun rsense-code-completion (&optional buffer offset remove-until prefix)
+  (rsense-buffer-command (or buffer (current-buffer))
+                         (or offset (point))
+                         "code-completion"
+                         remove-until prefix))
 
-(defun rsense-type-inference (buffer offset)
-  (rsense-buffer-command buffer offset "type-inference"))
+(defun rsense-type-inference (&optional buffer offset)
+  (rsense-buffer-command (or buffer (current-buffer))
+                         (or offset (point))
+                         "type-inference"))
+
+(defun rsense-lookup-document (pattern)
+  (shell-command-to-string (format "%s/%s '%s'" rsense-rurema-home rsense-rurema-refe pattern)))
+
+(defun rsense-version ()
+  (interactive)
+  (message "%s" (rsense-command "version")))
 
 (defun rsense-type-help ()
   (interactive)
@@ -80,9 +143,6 @@
                    (mapconcat 'identity result " | ")
                  "No type information")
                :margin t)))
-
-(defun rsense-lookup-document (pattern)
-  (shell-command-to-string (format "%s/%s '%s'" rsense-rurema-home rsense-rurema-refe pattern)))
 
 (defun ac-rsense-documentation (item)
   (ignore-errors
@@ -97,18 +157,11 @@
                                                  (point)
                                                  prefix))))
 
-(defvar ac-source-rsense
+(ac-define-source rsense
   '((candidates . ac-rsense-candidates)
     (prefix . "\\(?:\\.\\|::\\)\\(.*\\)")
     (document . ac-rsense-documentation)
     (cache)))
-
-(defun rsense-complete ()
-  (interactive)
-  (auto-complete '(((candidates . (ac-rsense-candidates "self"))
-                    (prefix . "\\(\\sw\\|\\s_\\)*")
-                    (document . ac-rsense-documentation)
-                    (cache)))))
 
 (provide 'rsense)
 ;;; rsense.el ends here
