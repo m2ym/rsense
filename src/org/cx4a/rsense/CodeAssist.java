@@ -225,6 +225,7 @@ public class CodeAssist {
         File path = config.getParentFile();
         Project project = new Project(path.getName(), path);
         project.setLoadPath(options.getLoadPath());
+        project.setGemPath(options.getGemPath());
         return project;
     }
 
@@ -233,10 +234,10 @@ public class CodeAssist {
     }
     
     private LoadResult load(Project project, File file, String encoding, boolean prepare) {
-        if (project.isLoaded(file)) {
+        if (project.isLoaded(file.getPath())) {
             return LoadResult.alreadyLoaded();
         }
-        project.setLoaded(file);
+        project.setLoaded(file.getPath());
         
         try {
             InputStream in = new FileInputStream(file);
@@ -275,8 +276,18 @@ public class CodeAssist {
     }
 
     private LoadResult require(Project project, String feature, String encoding, int loadPathLevel) {
+        if (project.isLoaded(feature)) {
+            return LoadResult.alreadyLoaded();
+        }
+        project.setLoaded(feature);
+
+        if (File.pathSeparator.equals(";")) { // Windows?
+            feature = feature.replace('/', '\\');
+        }
+        
         List<String> loadPath = project.getLoadPath();
-        for (int i = loadPathLevel; i < loadPath.size(); i++) {
+        int loadPathLen = loadPath.size();
+        for (int i = loadPathLevel; i < loadPathLen; i++) {
             String pathElement = loadPath.get(i);
             int oldLoadPathLevel = context.loadPathLevel;
             context.loadPathLevel = i;
@@ -292,6 +303,33 @@ public class CodeAssist {
                 context.loadPathLevel = oldLoadPathLevel;
             }
         }
+
+        List<String> gemPath = project.getGemPath();
+        int gemPathLen = gemPath.size();
+        String sep = File.separator;
+        for (int i = 0; i < gemPathLen; i++) {
+            String pathElement = gemPath.get(i);
+            int oldLoadPathLevel = context.loadPathLevel;
+            context.loadPathLevel = i + loadPathLen;
+            String oldFeature = context.feature;
+            context.feature = feature;
+            try {
+                File gemsDir = new File(pathElement, "gems");
+                String[] gems = gemsDir.list();
+                if (gems != null) {
+                    for (String gem : gems) {
+                        File file = new File(gemsDir + sep + gem + sep + "lib" + sep + feature + ".rb");
+                        if (file.exists()) {
+                            return load(project, file, encoding, false);
+                        }
+                    }
+                }
+            } finally {
+                context.feature = oldFeature;
+                context.loadPathLevel = oldLoadPathLevel;
+            }
+        }
+        
         Logger.warn("cannot require: %s", feature);
         return LoadResult.failWithNotFound();
     }
@@ -377,6 +415,7 @@ public class CodeAssist {
         this.projects = new HashMap<File, Project>();
         this.sandbox = new Project("(sandbox)", null);
         this.sandbox.setLoadPath(options.getLoadPath());
+        this.sandbox.setGemPath(options.getGemPath());
     }
 
     private void prepare(Project project) {

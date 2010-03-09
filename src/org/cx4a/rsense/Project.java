@@ -20,7 +20,8 @@ public class Project {
     private Ruby runtime;
     private Graph graph;
     private List<String> loadPath;
-    private Set<File> loaded;
+    private List<String> gemPath;
+    private Set<String> loaded;
 
     public Project(String name, File path) {
         this.name = name;
@@ -28,7 +29,8 @@ public class Project {
         this.runtime = new Ruby();
         this.graph = new Graph(runtime);
         this.loadPath = new ArrayList<String>();
-        this.loaded = new HashSet<File>();
+        this.gemPath = new ArrayList<String>();
+        this.loaded = new HashSet<String>();
     }
 
     public String getName() {
@@ -51,23 +53,23 @@ public class Project {
         return loadPath;
     }
 
-    public void setLoadPath(String loadPathStr) {
-        if (loadPathStr != null) {
-            for (String pathElement : loadPathStr.split(File.pathSeparator)) {
-                addLoadPath(pathElement);
-            }
-        }
+    public void setLoadPath(List<String> loadPath) {
+        this.loadPath.addAll(loadPath);
     }
 
-    public void addLoadPath(String pathElement) {
-        this.loadPath.add(pathElement);
+    public List<String> getGemPath() {
+        return gemPath;
     }
 
-    public boolean isLoaded(File file) {
-        return loaded.contains(file);
+    public void setGemPath(List<String> gemPath) {
+        this.gemPath.addAll(gemPath);
     }
 
-    public void setLoaded(File file) {
-        loaded.add(file);
+    public boolean isLoaded(String name) {
+        return loaded.contains(name);
+    }
+
+    public void setLoaded(String name) {
+        loaded.add(name);
     }
 }

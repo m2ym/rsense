@@ -9,6 +9,7 @@ $classpath = ENV['RSENSE_CLASSPATH']
 $pid_file = ENV['RSENSE_PID_FILE']
 $log = ENV['RSENSE_LOG']
 $debug = ENV['RSENSE_DEBUG']
+$config = ENV['RSENSE_CONFIG']
 $end_mark = 'END'
 
 def process_args
@@ -35,6 +36,8 @@ def process_args
         $log = value
       when 'debug'
         $debug = true
+      when 'config'
+        $config = value
       end
     else
       break
@@ -61,7 +64,11 @@ def process_args
     end
   end
 
-  $classpath = '.' + ['', 'rsense.jar', 'antlr-runtime-3.2.jar', 'jruby.jar'].join("#{File::PATH_SEPARATOR}#{$rsense_home}/lib/") unless $classpath
+  sep = File::SEPARATOR
+  psep = File::PATH_SEPARATOR
+  $classpath = '.' + ['', 'rsense.jar', 'antlr-runtime-3.2.jar', 'jruby.jar'].join("#{psep}#{$rsense_home}#{sep}lib#{sep}") unless $classpath
+
+  $config = "#{ENV['HOME']}#{sep}.rsense" unless $config
 
   ARGV << 'help' if ARGV.empty?
 end
@@ -99,7 +106,7 @@ end
 
 def server_process
   begin
-    options = "--rsense-home=#{$rsense_home} --no-prompt --end-mark=#{$end_mark} #{'--debug' if $debug} #{'--log=' + $log if $log}"
+    options = "--home=#{$rsense_home} --no-prompt --end-mark=#{$end_mark} #{'--debug' if $debug} #{'--log=' + $log if $log} --config=#{$config}"
     io = IO.popen("java -cp #{$classpath} org.cx4a.rsense.Main script #{options}", 'r+')
     open_server do |serv|
       begin
@@ -113,7 +120,7 @@ def server_process
             if cmd =~ /^(exit|quit)/
               sock.puts('END')
               sock.close
-              exit
+              return
             end
             io.puts(cmd)
             sock.close_read
@@ -138,7 +145,6 @@ def server_process
     exit
   end
 end
-
 
 def start_server
   case ARGV[0]

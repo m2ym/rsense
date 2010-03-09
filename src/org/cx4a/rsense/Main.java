@@ -107,21 +107,26 @@ public class Main {
                   + "      --prompt=          - Prompt string in interactive shell mode\n"
                   + "      --no-prompt        - Do not show prompt\n"
                   + "\n"
+                  + "  environment            - Print environment.\n"
                   + "  help                   - Print this help.\n"
                   + "\n"
                   + "  version                - Print version information.\n"
                   + "\n"
                   + "script-command:\n"
-                  + "  exit/quit              - Exit script.\n"
+                  + "  exit\n"
+                  + "  quit                   - Exit script.\n"
                   + "\n"
                   + "  clear                  - Clear current environment.\n"
                   + "\n"
                   + "common-options:\n"
-                  + "  --rsense-home=         - Specify RSense home directory\n"
+                  + "  --home=                - Specify RSense home directory\n"
                   + "  --debug                - Print debug messages\n"
                   + "  --log=                 - Log file to output (default stderr)\n"
                   + "  --format=              - Output format (plain, emacs)\n"
                   + "  --encoding=            - Input encoding\n"
+                  + "  --load-path=           - Load path string (: or ; separated)\n"
+                  + "  --gem-path=            - Gem path string (: or ; separated)\n"
+                  + "  --config=              - Config file\n"
                   + "\n"
                   + "test-options:\n"
                   + "  --test=                - Specify fixture name\n"
@@ -151,11 +156,32 @@ public class Main {
             if (arg.startsWith("--")) {
                 String[] lr = arg.substring(2).split("=");
                 if (lr.length >= 1) {
-                    options.put(lr[0], lr.length >= 2 ? lr[1] : "");
+                    options.addOption(lr[0], lr.length >= 2 ? lr[1] : null);
                 }
             } else {
                 options.addRestArg(arg);
             }
+        }
+        try {
+            // load config
+            String config = options.getConfig();
+            if (config != null && new File(config).exists()) {
+                InputStream in = new FileInputStream(config);
+                try {
+                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        String[] lr = line.split("\\s*=\\s*", 2);
+                        if (lr.length >= 1) {
+                            options.addOption(lr[0], lr.length >= 2 ? lr[1] : null);
+                        }
+                    }
+                } finally {
+                    in.close();
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
         return options;
     }
@@ -251,6 +277,8 @@ public class Main {
             script(options);
         } else if (command.equals("clear")) {
             commandClear(options);
+        } else if (command.equals("environment")) {
+            commandEnvironment(options);
         } else if (command.equals("help")) {
             commandHelp(options);
         } else if (command.equals("version")) {
@@ -401,6 +429,21 @@ public class Main {
         codeAssist.clear();
     }
 
+    private void commandEnvironment(Options options) {
+        out.println("version: " + versionString());
+        out.println("home: " + options.getRsenseHome());
+        out.println("debug: " + (options.isDebug() ? "yes" : "no"));
+        out.println("log: " + (options.getLog() != null ? options.getLog() : ""));
+        out.println("load-path:");
+        for (String path : options.getLoadPath()) {
+            out.println("  - " + path);
+        }
+        out.println("gem-path:");
+        for (String path : options.getLoadPath()) {
+            out.println("  - " + path);
+        }
+    }
+    
     private void commandHelp(Options options) {
         if (options.isEmacsFormat()) {
             out.print("\"");

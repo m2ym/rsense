@@ -89,17 +89,23 @@ Nil means proper socket will be selected.")
                       "--")
                 args)))
 
+(defun rsense-command-1 (command no-output)
+  (apply 'call-process
+               (rsense-interpreter)
+               nil (not no-output) nil
+               (cons (rsense-program)
+                     (apply 'rsense-args
+                            (append command '("--format=emacs"))))))
+
 (defun rsense-command (&rest command)
   (car-safe
    (read-from-string
     (with-output-to-string
       (with-current-buffer standard-output
-        (apply 'call-process
-               (rsense-interpreter)
-               nil t nil
-               (cons (rsense-program)
-                     (apply 'rsense-args
-                            (append command '("--format=emacs"))))))))))
+        (rsense-command-1 command nil))))))
+
+(defun rsense-command-no-output (&rest command)
+  (rsense-command-1 command t))
 
 (defun rsense-buffer-command (buffer offset command &optional remove-until prefix)
   (unless rsense-temp-file
@@ -135,6 +141,14 @@ Nil means proper socket will be selected.")
 (defun rsense-version ()
   (interactive)
   (message "%s" (rsense-command "version")))
+
+(defun rsense-version ()
+  (interactive)
+  (message "%s" (rsense-command "version")))
+
+(defun rsense-clear ()
+  (interactive)
+  (rsense-command-no-output "clear"))
 
 (defun rsense-type-help ()
   (interactive)

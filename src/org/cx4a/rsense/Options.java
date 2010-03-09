@@ -2,6 +2,7 @@ package org.cx4a.rsense;
 
 import java.io.File;
 import java.io.Reader;
+import java.io.IOException;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -15,10 +16,51 @@ import java.util.Collections;
 
 import org.cx4a.rsense.util.HereDocReader;
 
-public class Options extends HashMap<String, String> {
+public class Options extends HashMap<String, List<String>> {
     private static final long serialVersionUID = 0L;
 
     private List<String> rest = new ArrayList<String>();
+
+    public Options() {}
+
+    public void addOption(String name) {
+        addOption(name, null);
+    }
+    
+    public void addOption(String name, String value) {
+        List<String> list = get(name);
+        if (list == null) {
+            list = new ArrayList<String>();
+            put(name, list);
+        }
+        if (value != null) {
+            list.add(value);
+        }
+    }
+
+    public void addOptions(String name, List<String> value) {
+        List<String> list = get(name);
+        if (list == null) {
+            list = new ArrayList<String>();
+            put(name, list);
+        }
+        if (value != null) {
+            list.addAll(value);
+        }
+    }
+        
+    public boolean hasOption(String name) {
+        return containsKey(name);
+    }
+
+    public String getOption(String name) {
+        List<String> list = get(name);
+        return list != null && !list.isEmpty() ? list.get(0) : null;
+    }
+
+    public List<String> getOptions(String name) {
+        return get(name);
+    }
 
     public void addRestArg(String arg) {
         rest.add(arg);
@@ -29,20 +71,16 @@ public class Options extends HashMap<String, String> {
     }
 
     public boolean isFormatGiven() {
-        return containsKey("format");
+        return hasOption("format");
     }
 
     public boolean isEncodingGiven() {
-        return containsKey("encoding");
+        return hasOption("encoding");
     }
 
     public String getFormat() {
-        String format = get("format");
+        String format = getOption("format");
         return format != null ? format : defaultFormat();
-    }
-
-    public void setFormat(String format) {
-        put("format", format);
     }
 
     public boolean isPlainFormat() {
@@ -54,25 +92,21 @@ public class Options extends HashMap<String, String> {
     }
 
     public String getEncoding() {
-        String encoding = get("encoding");
+        String encoding = getOption("encoding");
         return encoding != null ? encoding : defaultEncoding();
     }
 
-    public void setEncoding(String encoding) {
-        put("encoding", encoding);
-    }
-
     public String getPrompt() {
-        return containsKey("no-prompt") ? "" : get("prompt");
+        return hasOption("no-prompt") ? "" : getOption("prompt");
     }
 
     public File getFile() {
-        String file = get("file");
+        String file = getOption("file");
         return file == null ? null : new File(file);
     }
 
     public boolean isFileStdin() {
-        return !containsKey("file") || "-".equals(get("file"));
+        return !hasOption("file") || "-".equals(getOption("file"));
     }
 
     public HereDocReader getHereDocReader(Reader reader) {
@@ -80,7 +114,7 @@ public class Options extends HashMap<String, String> {
     }
 
     public CodeAssist.Location getLocation() {
-        String location = get("location");
+        String location = getOption("location");
         if (location == null) {
             return CodeAssist.Location.markLocation("_|_");
         }
@@ -97,68 +131,59 @@ public class Options extends HashMap<String, String> {
     }
 
     public String getEndMark() {
-        return get("end-mark");
+        return getOption("end-mark");
     }
 
     public boolean isDebug() {
-        return containsKey("debug");
+        return hasOption("debug");
     }
 
     public String getLog() {
-        return get("log");
+        return getOption("log");
     }
 
     public String getRsenseHome() {
-        String rsenseHome = get("rsense-home");
+        String rsenseHome = getOption("home");
         return rsenseHome != null ? rsenseHome : ".";
     }
 
-    public String getLoadPath() {
+    public List<String> getLoadPath() {
+        List<String> loadPath = getPathList("load-path");
         String sep = File.separator;
         String psep = File.pathSeparator;
-        String loadPath = get("load-path");
-        if (loadPath == null) {
-            if (psep.equals(";")) {
-                // Windows maybe (ActiveRuby)
-                loadPath = "C:\\Program Files\\ruby-1.8\\lib\\ruby\\1.8";
-            } else {
-                // Unix maybe
-                loadPath = "/usr/lib/ruby/1.8";
-            }
-        }
 
         // add stub path
-        loadPath = getRsenseHome() + sep + "stubs" + sep + "1.8" + psep + loadPath;
+        loadPath.add(getRsenseHome() + sep + "stubs" + sep + "1.8");
         
         return loadPath;
     }
 
+    public List<String> getGemPath() {
+        return getPathList("gem-path");
+    }
+
     public String getProject() {
-        return get("project");
+        return getOption("project");
     }
 
     public boolean isDetectProject() {
-        return containsKey("detect-project");
+        return hasOption("detect-project");
     }
 
     public boolean isKeepEnv() {
-        return containsKey("keep-env");
+        return hasOption("keep-env");
     }
 
     public boolean isTest() {
-        return containsKey("test");
+        return hasOption("test");
     }
 
     public boolean isTestColor() {
-        return containsKey("test-color");
-    }
-
-    public void setTestColor(boolean testColor) {
-        put("test-color", "");
+        return hasOption("test-color");
     }
 
     public String getTest() {
-        return get("test");
+        return getOption("test");
     }
 
     public Set<String> getShouldContain() {
@@ -170,7 +195,7 @@ public class Options extends HashMap<String, String> {
     }
 
     public Set<String> getShouldBe() {
-        if (containsKey("should-be-empty")) {
+        if (hasOption("should-be-empty")) {
             return Collections.<String>emptySet();
         } else {
             return getStringSet("should-be");
@@ -178,12 +203,35 @@ public class Options extends HashMap<String, String> {
     }
 
     public boolean isShouldBeGiven() {
-        return containsKey("should-be") || containsKey("should-be-empty");
+        return hasOption("should-be") || hasOption("should-be-empty");
     }
 
+    public boolean isPrintAST() {
+        return hasOption("print-ast");
+    }
+
+    public void inherit(Options parent) {
+        addOption("home", parent.getRsenseHome());
+        if (parent.isDebug()) {
+            addOption("debug");
+        }
+        addOption("log", parent.getLog());
+        addOptions("load-path", parent.getOptions("load-path"));
+        addOptions("gem-path", parent.getOptions("gem-path"));
+        addOption("format", parent.getFormat());
+        addOption("encoding", parent.getEncoding());
+        if (parent.isTestColor()) {
+            addOption("test-color");
+        }
+    }
+
+    public String getConfig() {
+        return getOption("config");
+    }
+    
     private Set<String> getStringSet(String name) {
         Set<String> result;
-        String str = get(name);
+        String str = getOption(name);
         if (str == null) {
             result = Collections.<String>emptySet();
         } else {
@@ -192,20 +240,19 @@ public class Options extends HashMap<String, String> {
         return result;
     }
 
-    public boolean isPrintAST() {
-        return containsKey("print-ast");
-    }
-
-    public void inherit(Options parent) {
-        if (!isFormatGiven()) {
-            setFormat(parent.getFormat());
+    private List<String> getPathList(String name) {
+        List<String> list = getOptions(name);
+        List<String> result = new ArrayList<String>();
+        if (list != null) {
+            for (String paths : list) {
+                for (String path : paths.split(File.pathSeparator)) {
+                    result.add(path);
+                }
+            }
         }
-        if (!isEncodingGiven()) {
-            setEncoding(parent.getEncoding());
-        }
-        setTestColor(parent.isTestColor());
+        return result;
     }
-
+    
     public static String defaultFormat() {
         return "plain";
     }

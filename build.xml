@@ -21,7 +21,7 @@
   </target>
 
   <target name="build" depends="init">
-    <javac fork="true" source="1.6" deprecation="true"
+    <javac fork="true" debug="true" source="1.6" deprecation="true"
            srcdir="src" destdir="build"
            classpathref="build.class.path">
       <compilerarg value="-Xlint:all" />
