@@ -192,14 +192,14 @@ public class AnnotationResolver {
             TypeApplication app = (TypeApplication) argType;
             List<TypeExpression> types = app.getTypes();
             IRubyObject ret = resolveIdentity(template, app.getIdentity());
-            if (arg.getMetaClass() != ret) {
+            if (!(ret instanceof RubyModule) || !arg.isKindOf((RubyModule) ret)) {
                 return false;
-            } else if (ret != null && ret instanceof RubyClass) {
-                RubyClass klass = (RubyClass) ret;
+            } else {
+                RubyModule klass = (RubyModule) ret;
                 ClassType klassType = RuntimeHelper.getClassAnnotation(klass);
                 TypeVarMap typeVarMap = RuntimeHelper.getTypeVarMap(arg);
-                if (classType != null && typeVarMap != null) {
-                    List<TypeVariable> vars = classType.getTypes();
+                if (klassType != null && typeVarMap != null) {
+                    List<TypeVariable> vars = klassType.getTypes();
                     for (int i = 0; i < vars.size(); i++) {
                         TypeVariable var = vars.get(i);
                         Vertex vertex = typeVarMap.get(var);

@@ -13,8 +13,8 @@ public interface IRubyObject {
     public IRubyObject getInstVar(String name);
     public void setInstVar(String name, IRubyObject value);
     public boolean isNil();
-    public boolean isInstanceOf(RubyClass klass);
-    public boolean isKindOf(RubyClass klass);
+    public boolean isInstanceOf(RubyModule klass);
+    public boolean isKindOf(RubyModule klass);
     public Object getTag();
     public void setTag(Object tag);
 }

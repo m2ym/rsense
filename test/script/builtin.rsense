@@ -660,6 +660,12 @@ def f(*a) end
 f('', 1, '')_|_
 EOF
 
+type-inference --test=Annotation.Method.Arg.Inheritance --should-be=Fixnum,Float
+##% f(?Enumerable<v>) -> v
+def f(enum = nil) end
+f([1, 2.3])_|_
+EOF
+
 type-inference --test=Math --should-be=Float
 Math.sin(5)_|_
 EOF

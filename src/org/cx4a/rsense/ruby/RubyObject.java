@@ -67,11 +67,11 @@ public class RubyObject implements IRubyObject {
         return this == getRuntime().getNil();
     }
 
-    public boolean isInstanceOf(RubyClass klass) {
+    public boolean isInstanceOf(RubyModule klass) {
         return runtime.isInstanceOf(this, klass);
     }
 
-    public boolean isKindOf(RubyClass klass) {
+    public boolean isKindOf(RubyModule klass) {
         return runtime.isKindOf(this, klass);
     }
 

@@ -125,4 +125,18 @@ public class RubyClass extends RubyModule {
         }
         return result;
     }
+
+    @Override
+    public List<RubyModule> getIncludes(boolean inheritedToo) {
+        List<RubyModule> result = super.getIncludes(inheritedToo);
+        if (inheritedToo) {
+            result = new ArrayList<RubyModule>(result);
+            RubyClass sclass = superClass;
+            while (sclass != null) {
+                result.addAll(sclass.getIncludes(inheritedToo));
+                sclass = sclass.getSuperClass();
+            }
+        }
+        return result;
+    }
 }

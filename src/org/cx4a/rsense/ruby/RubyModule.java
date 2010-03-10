@@ -202,6 +202,10 @@ public class RubyModule extends RubyObject {
         includes.add(module);
     }
 
+    public List<RubyModule> getIncludes(boolean inheritedToo) {
+        return includes;
+    }
+
     public String toMethodPathString() {
         return toString() + "#";
     }

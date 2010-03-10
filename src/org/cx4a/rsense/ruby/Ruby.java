@@ -96,12 +96,11 @@ public class Ruby {
         return context;
     }
 
-    public boolean isInstanceOf(IRubyObject object, RubyClass klass) {
+    public boolean isInstanceOf(IRubyObject object, RubyModule klass) {
         return object.getMetaClass() == klass;
     }
 
-    public boolean isKindOf(IRubyObject object, RubyClass klass) {
-        // FIXME included modules
+    public boolean isKindOf(IRubyObject object, RubyModule klass) {
         // FIXME speedup
         RubyClass oclass = object.getMetaClass();
         while (oclass != null) {
@@ -109,6 +108,9 @@ public class Ruby {
                 return true;
             }
             oclass = oclass.getSuperClass();
+        }
+        if (object.getMetaClass().getIncludes(true).contains(klass)) {
+            return true;
         }
         return false;
     }
