@@ -1,3 +1,5 @@
+* Profile guided typing
+  http://www.cs.umd.edu/~davidan/papers/druby-tr-4935.pdf
 * proc, lambda
 * Template clone
 * Exceptions (raise/rescue)

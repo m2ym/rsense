@@ -328,11 +328,10 @@ public class Graph implements NodeVisitor {
                         } else if (receiver instanceof Proc) {
                             if (arg == null) {
                                 if (args == null) {
-                                    arg = Arrays.asList((IRubyObject) new Array(runtime, new Vertex[0]));
+                                    arg = Arrays.asList((IRubyObject) RuntimeHelper.createArray(Graph.this, new Vertex[0]));
                                 } else if (args.length == 1) {
                                     arg = args[0].getTypeSet();
-                                } else {
-                                    arg = Arrays.asList((IRubyObject) new Array(runtime, args));
+                                } else { arg = Arrays.asList((IRubyObject) RuntimeHelper.createArray(Graph.this, args));
                                 }
                             }
                             Vertex returnVertex = createFreeVertex();
@@ -478,12 +477,12 @@ public class Graph implements NodeVisitor {
                             if (arg == null) {
                                 if (args == null) {
                                     arg = new TypeSet();
-                                    arg.add(new Array(runtime, new Vertex[0]));
+                                    arg.add(RuntimeHelper.createArray(Graph.this, new Vertex[0]));
                                 } else if (args.length == 1) {
                                     arg = args[0].getTypeSet();
                                 } else {
                                     arg = new TypeSet();
-                                    arg.add(new Array(runtime, args));
+                                    arg.add(RuntimeHelper.createArray(Graph.this, args));
                                 }
                             }
                             YieldVertex vertex = new YieldVertex(null,

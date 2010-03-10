@@ -136,7 +136,7 @@ public class AnnotationResolver {
                     for (int j = 0; j < len; j++) {
                         elements[j] = graph.createFreeSingleTypeVertex(args[j]);
                     }
-                    arg = new Array(runtime, elements);
+                    arg = RuntimeHelper.createArray(graph, elements);
                     break;
                 }
                 default:
@@ -327,7 +327,7 @@ public class AnnotationResolver {
                 elements[i] = graph.createFreeVertex();
                 elements[i].getTypeSet().addAll(args[i]);
             }
-            YieldVertex vertex = new YieldVertex(null, template, block, graph.createFreeSingleTypeVertex(new Array(runtime, elements)), true);
+            YieldVertex vertex = new YieldVertex(null, template, block, graph.createFreeSingleTypeVertex(RuntimeHelper.createArray(graph, elements)), true);
             returnVertex = RuntimeHelper.yield(graph, vertex);
         }
 
@@ -444,7 +444,7 @@ public class AnnotationResolver {
                     elements[i] = graph.createFreeVertex();
                     elements[i].getTypeSet().addAll(ts);
                 }
-                result.add(new Array(runtime, elements));
+                result.add(RuntimeHelper.createArray(graph, elements));
             }
             return result;
         }

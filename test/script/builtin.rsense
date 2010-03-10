@@ -91,6 +91,12 @@ a << []
 a.each {|v| v_|_ }
 EOF
 
+type-inference --test=Array.Push --should-be=Fixnum,Float,String
+a = []
+a.push(1, 2.3, '')
+a[0]_|_
+EOF
+
 type-inference --test=Hash.StaticAccess1 --should-be=Fixnum
 a = { :a => 1 }
 a[:a]_|_

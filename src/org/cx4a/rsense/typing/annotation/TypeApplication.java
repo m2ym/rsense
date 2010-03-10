@@ -22,4 +22,16 @@ public class TypeApplication implements TypeExpression {
     public Type getType() {
         return Type.APPLICATION;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(ident.toString());
+        sb.append('<');
+        for (TypeExpression type : types) {
+            sb.append(type.toString());
+        }
+        sb.append('>');
+        return sb.toString();
+    }
 }
