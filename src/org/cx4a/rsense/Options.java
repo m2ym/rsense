@@ -149,11 +149,11 @@ public class Options extends HashMap<String, List<String>> {
 
     public List<String> getLoadPath() {
         List<String> loadPath = getPathList("load-path");
-        String sep = File.separator;
-        String psep = File.pathSeparator;
 
         // add stub path
-        loadPath.add(getRsenseHome() + sep + "stubs" + sep + "1.8");
+        String sep = File.separator;
+        String psep = File.pathSeparator;
+        loadPath.add(0, getRsenseHome() + sep + "stubs" + sep + "1.8");
         
         return loadPath;
     }

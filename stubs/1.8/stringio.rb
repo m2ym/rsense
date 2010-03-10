@@ -3,7 +3,7 @@ class StringIO < Data
   def self.new(string = '', mode = 'r+') super() end
   ##% self.open(?String, ?a) -> StringIO
   def self.open(string = '', mode = 'r+') super() end
-  ##% self.open(?String, ?a) {StringIO -> ()} -> StringIO
+  ##% self.open(?String, ?a) {StringIO -> ?} -> StringIO
   def self.open(string = '', mode = 'r+')
     io = StringIO.new
     yield io
@@ -105,7 +105,7 @@ class StringIO < Data
   def seek(offset, whence = IO::SEEK_SET) 0 end
   ##% string() -> String
   def string() '' end
-  ##% string=(String) -> ()
+  ##% string=(String) -> ?
   def string=(buf) nil end
   ##% sync() -> Boolean
   def sync() BOOLEAN end

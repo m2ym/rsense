@@ -12,3 +12,18 @@ type-inference --test=Socket --should-be=TCPSocket
 require 'socket'
 TCPSocket.open('foo', 80)_|_
 EOF
+
+type-inference --test=StringIO --should-be=StringIO
+require 'stringio'
+StringIO.new_|_
+EOF
+
+type-inference --test=Date --should-be=Date
+require 'date'
+Date.today_|_
+EOF
+
+type-inference --test=DateTime --should-be=DateTime
+require 'date'
+DateTime.now_|_
+EOF
