@@ -269,16 +269,16 @@ Mostly done.
 | dl               |        |
 | drb              |        |
 | e2mmap           |        |
-| English          |        |
+| English          |   =    |
 | Env              |        |
 | erb              |        |
 | eregex           |        |
 | etc              |        |
 | expect           |        |
 | fcntl            |        |
-| fileutils        |        |
+| fileutils        |   -    |
 | finalize         |        |
-| find             |        |
+| find             |   =    |
 | forwardable      |        |
 | ftools           |        |
 | gdbm             |        |
@@ -297,7 +297,7 @@ Mostly done.
 | logger           |        |
 | mailread         |        |
 | mathn            |        |
-| matrix           |        |
+| matrix           |   -    |
 | md5              |        |
 | mkmf             |        |
 | monitor          |        |
@@ -330,7 +330,7 @@ Mostly done.
 | pstore           |        |
 | pty              |        |
 | racc/parser      |        |
-| rational         |        |
+| rational         |   OK   |
 | rbconfig         |        |
 | readbytes        |        |
 | readline         |        |
@@ -341,7 +341,7 @@ Mostly done.
 | rinda/tuplespace |        |
 | rss              |        |
 | rubyunit         |        |
-| scanf            |        |
+| scanf            |   -    |
 | sdbm             |        |
 | securerandom     |        |
 | set              |        |

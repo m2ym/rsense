@@ -27,3 +27,8 @@ type-inference --test=DateTime --should-be=DateTime
 require 'date'
 DateTime.now_|_
 EOF
+
+type-inference --test=Rational --should-be=Rational
+require 'rational'
+Rational(0, 0)_|_
+EOF
