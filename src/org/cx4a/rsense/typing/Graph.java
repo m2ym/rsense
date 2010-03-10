@@ -399,6 +399,29 @@ public class Graph implements NodeVisitor {
                 }
             });
 
+        addSpecialMethod("alias_method", new SpecialMethod() {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                    boolean callNextMethod = true;
+                    if (args != null && args.length == 2) {
+                        for (IRubyObject receiver : receivers) {
+                            if (receiver instanceof RubyModule) {
+                                callNextMethod = false;
+                                String newName = Vertex.getStringOrSymbol(args[0]);
+                                String oldName = Vertex.getStringOrSymbol(args[1]);
+                                if (newName != null && oldName != null) {
+                                    RubyModule module = (RubyModule) receiver;
+                                    DynamicMethod method = module.getMethod(oldName);
+                                    if (method != null) {
+                                        module.addMethod(newName, method);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    result.setCallNextMethod(callNextMethod);
+                }
+            });
+        
         addSpecialMethod("unpack", new SpecialMethod() {
                 public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
                     if (args != null && args.length > 0) {
@@ -436,7 +459,11 @@ public class Graph implements NodeVisitor {
                                     ts.add(RuntimeHelper.createArray(Graph.this, elements.toArray(new Vertex[0])));
                                 }
                             }
-                            result.setResultTypeSet(ts);
+                            if (ts.isEmpty()) {
+                                result.setCallNextMethod(true);
+                            } else {
+                                result.setResultTypeSet(ts);
+                            }
                         }
                     }
                 }

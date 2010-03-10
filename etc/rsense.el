@@ -150,6 +150,10 @@ Nil means proper socket will be selected.")
   (interactive)
   (rsense-command-no-output "clear"))
 
+(defun rsense-exit ()
+  (interactive)
+  (rsense-command-no-output "exit"))
+
 (defun rsense-type-help ()
   (interactive)
   (let ((result (assoc-default 'type (rsense-type-inference (current-buffer) (point)))))

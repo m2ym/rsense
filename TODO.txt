@@ -6,3 +6,4 @@
 * Cut branches
 * Recursive customization
 * Integrate document server
+* Aliasing new method (date.rb)

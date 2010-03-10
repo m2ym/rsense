@@ -465,6 +465,22 @@ end
 C.new.foo_|_
 EOF
 
+type-inference --test=Class.Method.Alias.Grammer --should-be=Fixnum
+class C
+  def f() 1 end
+  alias :g :f
+end
+C.new.g_|_
+EOF
+
+type-inference --test=Class.Method.Alias.Method --should-be=Fixnum
+class C
+  def f() 1 end
+  alias_method(:g, :f)
+end
+C.new.g_|_
+EOF
+
 type-inference --test=Class.SingletonMethod1 --should-be=Fixnum
 class C
   def self.foo() 1 end
