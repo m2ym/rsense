@@ -2066,18 +2066,215 @@ class Proc
 end
 
 module Process
+  PRIO_PGRP       =  0
+  PRIO_PROCESS    =  0
+  PRIO_USER       =  0
+  RLIMIT_AS       =  0
+  RLIMIT_CORE     =  0
+  RLIMIT_CPU      =  0
+  RLIMIT_DATA     =  0
+  RLIMIT_FSIZE    =  0
+  RLIMIT_MEMLOCK  =  0
+  RLIMIT_NOFILE   =  0
+  RLIMIT_NPROC    =  0
+  RLIMIT_RSS      =  0
+  RLIMIT_SBSIZE   =  0
+  RLIMIT_STACK    =  0
+  RLIM_INFINITY   =  0
+  RLIM_SAVED_CUR  =  0
+  RLIM_SAVED_MAX  =  0
+  WNOHANG         =  0
+  WUNTRACED       =  0
+  
+  ##% self.abort(?String) -> ?
+  def self.abort(message = '') end
+  ##% self.detach(Integer) -> Thread
+  def self.detach(pid) Thread.current end
+  ##% self.exec(String, *String) -> ?
+  def self.exec(command, *args) end
+  ##% self.exit(?Boolean) -> ?
+  def self.exit(status = true) end
+  ##% self.exit!(?Boolean) -> ?
+  def self.exit!(status = true) end
+  ##% self.fork() -> Integer
+  ##% self.fork() {() -> ?} -> Integer
+  def self.fork() yield; 0 end
+
+  module_function
+  ##% egid() -> Integer
+  def egid() 0 end
+  ##% egid=(Integer) -> ?
+  def egid=(gid) end
+  ##% euid() -> Integer
+  def euid() 0 end
+  ##% euid=(Integer) -> ?
+  def euid=(gid) end
+  ##% getpgid(?Integer) -> Integer
+  def getpgid(pid = 0) 0 end
+  ##% getpgrp() -> Integer
+  def getpgrp() 0 end
+  ##% getpriority(Integer, Integer) -> Integer
+  def getpriority(which, who) 0 end
+  ##% getrlimit(Integer) -> (Integer, Integer)
+  def getrlimit(resource) [0, 0] end
+  ##% gid() -> Integer
+  def gid() 0 end
+  ##% gid=(Integer) -> ?
+  def gid=(gid) end
+  ##% groups() -> Array<Integer>
+  def groups() [0] end
+  ##% groups=(a) -> ?
+  def groups=(gids) end
+  ##% initgroups(String, Integer) -> Array<Integer>
+  def initgroups(user, group) [0] end
+  ##% kill(Integer or String, Integer, *Integer) -> Integer
+  def kill(signal, pid, *rest) 0 end
+  ##% maxgroups() -> Integer
+  def maxgroups() 0 end
+  ##% maxgroups=(Integer) -> ?
+  def maxgroups=(num) end
+  ##% pid() -> Integer
+  def pid() 0 end
+  ##% ppid() -> Integer
+  def ppid() 0 end
+  ##% setpgid(Integer, Integer) -> Integer
+  def setpgid(pid, pgrp) 0 end
+  ##% setpgrp() -> Integer
+  def setpgrp() 0 end
+  ##% setpriority(Integer, Integer, Integer) -> Integer
+  def setpriority(which, who, prio) 0 end
+  ##% setrlimit(Integer, Integer, ?Integer) -> nil
+  def setrlimit(resource, cur_limit, max_limit = nil) nil end
+  ##% setsid() -> Integer
+  def setsid() 0 end
+  ##% times() -> Struct::Tms
+  def times() Struct::Tms.new end
+  ##% uid() -> Integer
+  def uid() 0 end
+  ##% uid=(Integer) -> ?
+  def uid=(id) end
+  ##% wait() -> Integer
+  def wait() 0 end
+  ##% wait2() -> (Integer, Process::Status)
+  def wait2() [0, Process::Status.new] end
+  ##% waitall() -> Array<(Integer, Process::Status)>
+  def waitall() [[0, Process::Status.new]] end
+  ##% waitpid(Integer, ?Integer) -> Integer
+  def waitpid(pid, flags = 0) 0 end
+  ##% waitpid2(Integer, ?Integer) -> (Integer, Process::Status)
+  def waitpid2(pid, flags = 0) [0, Process::Status.new] end
 end
 
 module Process::GID
+  module_function
+  ##% change_privilege(Integer) -> Integer
+  def change_privilege(id) 0 end
+  ##% eid() -> Integer
+  def eid() 0 end
+  ##% grant_privilege(Integer) -> Integer
+  def grant_privilege(id) 0 end
+  alias :eid= :grant_privilege
+  ##% re_exchange() -> Integer
+  def re_exchange() 0 end
+  ##% re_exchangeable?() -> Boolean
+  def re_exchangeable?() BOOLEAN end
+  ##% rid() -> Integer
+  def rid() 0 end
+  ##% sid_available?() -> Boolean
+  def sid_available?() BOOLEAN end
+  ##% switch() -> Integer
+  ##% switch() {() -> a} -> a
+  def switch() yield; 0 end
 end
 
-module Process::Status
+class Process::Status
+  ##% &(Integer) -> Integer
+  def &(other) Integer end
+  ##% ==(a) -> Boolean
+  def ==(other) BOOLEAN end
+  ##% ">>"(Integer) -> Integer
+  def >>(num) 0 end
+  ##% coredump?() -> Boolean
+  def coredump?() BOOLEAN end
+  ##% exited?() -> Boolean
+  def exited?() BOOLEAN end
+  ##% exitstatus() -> Integer
+  def exitstatus() 0 end
+  ##% inspect() -> String
+  def inspect() '' end
+  ##% pid() -> Integer
+  def pid() 0 end
+  ##% signaled?() -> Boolean
+  def signaled?() BOOLEAN end
+  ##% stopped?() -> Boolean
+  def stopped?() BOOLEAN end
+  ##% stopsig() -> Integer
+  def stopsig() 0 end
+  ##% success?() -> Boolean
+  def success?() BOOLEAN end
+  ##% termsig() -> Integer
+  def termsig() 0 end
+  ##% to_i() -> Integer
+  def to_i() 0 end
+  alias :to_int :to_i
+  ##% to_s() -> String
+  def to_s() '' end
 end
 
 module Process::Sys
+  module_function
+  ##% getegid() -> Integer
+  def getegid() 0 end
+  ##% geteuid() -> Integer
+  def geteuid() 0 end
+  ##% getgid() -> Integer
+  def getgid() 0 end
+  ##% getuid() -> Integer
+  def getuid() 0 end
+  ##% issetugid() -> Boolean
+  def issetugid() BOOLEAN end
+  ##% setegid(Integer) -> nil
+  def setegid(id) nil end
+  ##% seteuid(Integer) -> nil
+  def seteuid(id) nil end
+  ##% setgid(Integer) -> nil
+  def setgid(id) nil end
+  ##% setregid(Integer, Integer) -> nil
+  def setregid(rid, eid) nil end
+  ##% setresgid(Integer, Integer, Integer) -> nil
+  def setresgid(rid, eid, sid) nil end
+  ##% setresuid(Integer, Integer, Integer) -> nil
+  def setresuid(rid, eid, sid) nil end
+  ##% setreuid(Integer, Integer) -> nil
+  def setreuid(rid, eid) nil end
+  ##% setrgid(Integer) -> nil
+  def setrgid(id) nil end
+  ##% setruid(Integer) -> nil
+  def setruid(id) nil end
+  ##% setuid(Integer) -> nil
+  def setuid(id) nil end
 end
 
 module Process::UID
+  module_function
+  ##% change_privilege(Integer) -> Integer
+  def change_privilege(id) 0 end
+  ##% eid() -> Integer
+  def eid() 0 end
+  ##% grant_privilege(Integer) -> Integer
+  def grant_privilege(id) 0 end
+  alias :eid= :grant_privilege
+  ##% re_exchange() -> Integer
+  def re_exchange() 0 end
+  ##% re_exchangeable?() -> Boolean
+  def re_exchangeable?() BOOLEAN end
+  ##% rid() -> Integer
+  def rid() 0 end
+  ##% sid_available?() -> Boolean
+  def sid_available?() BOOLEAN end
+  ##% switch() -> Integer
+  ##% switch() {() -> a} -> a
+  def switch() yield; 0 end
 end
 
 ##% Range<t>
@@ -2162,7 +2359,7 @@ module Signal
   ##% list() -> Hash<String, Integer>
   def list() {'' => 1} end
   ##% trap(String or Symbol, String or Proc) -> String or Proc
-  ##% trap(String or Symbol) {? -> ?} -> String or Proc
+  ##% trap(String or Symbol) {() -> ?} -> String or Proc
   def trap(signal, command = nil) yield; '' end
 end
 
