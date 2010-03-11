@@ -642,7 +642,7 @@ public class Graph implements NodeVisitor {
     }
 
     public Object visitAliasNode(AliasNode node) {
-        RubyModule module = context.getCurrentScope().getModule();
+        RubyModule module = context.getFrameModule();
         DynamicMethod method = module.getMethod(node.getOldName());
         if (method != null) {
             module.addMethod(node.getNewName(), method);
