@@ -999,13 +999,15 @@ public class RuntimeHelper {
     }
     
     public static void setClassTag(RubyModule klass, Node node, List<TypeAnnotation> annotations) {
-        if (klass.getTag() == null) {
+        if (getClassAnnotation(klass) == null) {
+            ClassType type = null;
             for (TypeAnnotation annot : annotations) {
                 if (annot instanceof ClassType) {
-                    klass.setTag(new ClassTag(node, (ClassType) annot));
-                    return;
+                    type = (ClassType) annot;
+                    break;
                 }
             }
+            klass.setTag(new ClassTag(node, type));
         }
     }
 

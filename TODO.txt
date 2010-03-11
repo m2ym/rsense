@@ -1,12 +1,20 @@
 * Profile guided typing
   http://www.cs.umd.edu/~davidan/papers/druby-tr-4935.pdf
-* proc, lambda
-* Template clone
+* proc/lambda
 * Exceptions (raise/rescue)
 * Struct
 * callcc
-* Cut branches
 * Recursive customization
 * Integrate document server
 * Aliasing new method (date.rb)
 * Scanf type inference
+* Aliased method name
+* Performance tuning
+  * CPU usage
+  * Memory footprint
+  * Cloning template
+  * Cut branches
+* Pushing elements to returned array
+  def ary() $ary ||= [] end
+  ary << ''
+  ary[0] # should be String

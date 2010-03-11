@@ -176,6 +176,7 @@ public class Graph implements NodeVisitor {
         public DummyCall(MethodDefNode node, Method newMethod, Method oldMethod, IRubyObject receiver) {
             this.node = node;
             this.newMethod = newMethod;
+            this.oldMethod = oldMethod;
             this.receiver = receiver;
         }
 
