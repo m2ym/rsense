@@ -1,7 +1,11 @@
 package org.cx4a.rsense;
 
 import java.io.File;
+import java.io.InputStream;
+import java.io.FileInputStream;
 import java.io.Reader;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
 import java.io.IOException;
 
 import java.util.List;
@@ -170,6 +174,10 @@ public class Options extends HashMap<String, List<String>> {
         return hasOption("detect-project");
     }
 
+    public File getDetectProject() {
+        return getOption("detect-project") != null ? new File(getOption("detect-project")) : null;
+    }
+
     public boolean isKeepEnv() {
         return hasOption("keep-env");
     }
@@ -210,6 +218,14 @@ public class Options extends HashMap<String, List<String>> {
         return hasOption("print-ast");
     }
 
+    public String getName() {
+        return getOption("name");
+    }
+
+    public boolean isVerbose() {
+        return hasOption("verbose");
+    }
+
     public void inherit(Options parent) {
         addOption("home", parent.getRsenseHome());
         if (parent.isDebug()) {
@@ -228,7 +244,27 @@ public class Options extends HashMap<String, List<String>> {
     public String getConfig() {
         return getOption("config");
     }
-    
+
+    public void loadConfig(File config) {
+        try {
+            InputStream in = new FileInputStream(config);
+            try {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    String[] lr = line.split("\\s*=\\s*", 2);
+                    if (lr.length >= 1) {
+                        addOption(lr[0], lr.length >= 2 ? lr[1] : null);
+                    }
+                }
+            } finally {
+                in.close();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private Set<String> getStringSet(String name) {
         Set<String> result;
         String str = getOption(name);

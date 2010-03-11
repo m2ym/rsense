@@ -8,7 +8,6 @@ import java.util.HashMap;
 
 public class RubyClass extends RubyModule {
     protected RubyClass superClass;
-    protected Map<String, IRubyObject> classVars;
 
     public static RubyClass newClass(Ruby runtime, String baseName, RubyClass superClass) {
         return newClass(runtime, baseName, superClass, null);
@@ -41,7 +40,6 @@ public class RubyClass extends RubyModule {
     protected RubyClass(Ruby runtime, RubyClass metaClass, RubyClass superClass, RubyModule parent) {
         super(runtime, metaClass, parent);
         this.superClass = superClass;
-        this.classVars = new HashMap<String, IRubyObject>();
     }
 
     public RubyClass getRealClass() {
@@ -62,14 +60,6 @@ public class RubyClass extends RubyModule {
 
     public void addSubclass(RubyClass subclass) {
         // FIXME
-    }
-
-    public IRubyObject getClassVar(String name) {
-        return classVars.get(name);
-    }
-
-    public void setClassVar(String name, IRubyObject value) {
-        classVars.put(name, value);
     }
 
     @Override

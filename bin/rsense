@@ -186,7 +186,7 @@ def exec_command
       break if l =~ /^#{$end_mark}/
       ret << l
     end
-    puts ret unless ret.empty?
+    puts ret if ret !~ /\A\s*\z/
   }
 end
 

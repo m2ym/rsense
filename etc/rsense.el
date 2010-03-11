@@ -122,7 +122,8 @@ Nil means proper socket will be selected.")
     (rsense-command command
                     (format "--file=%s" rsense-temp-file)
                     (format "--encoding=UTF-8")
-                    (format "--location=%s" (1- offset)))))
+                    (format "--location=%s" (1- offset))
+                    (format "--detect-project=%s" (buffer-file-name buffer)))))
 
 (defun rsense-code-completion (&optional buffer offset remove-until prefix)
   (rsense-buffer-command (or buffer (current-buffer))

@@ -181,7 +181,7 @@ public class RuntimeHelper {
     }
     
     public static Vertex classVarDeclaration(Graph graph, ClassVarDeclNode node, Vertex src) {
-        RubyClass klass = (RubyClass) graph.getRuntime().getContext().getFrameModule();
+        RubyModule klass = graph.getRuntime().getContext().getFrameModule();
         if (src == null) {
             src = graph.createVertex(node.getValueNode());
         }
@@ -566,7 +566,8 @@ public class RuntimeHelper {
                 && nodeDiff.noDiff(node.getBodyNode(), oldmeth.getBodyNode())) { // XXX nested class, defn
                 // FIXME annotation diff
                 newmeth.shareTemplates(oldmeth.getTemplates());
-                Logger.debug(SourceLocation.of(node), "templates shared: %s", newmeth);
+            } else {
+                Logger.debug(SourceLocation.of(node), "templates not shared: %s", newmeth);
             }
         }
     }
@@ -579,6 +580,7 @@ public class RuntimeHelper {
             if (nodeDiff != null && oldTag != null) {
                 List<Node> partialDiff = nodeDiff.diff(bodyNode, oldTag.getBodyNode());
                 if (partialDiff != null) {
+                    Logger.debug(SourceLocation.of(bodyNode), "class partial update: %s %s", klass, partialDiff.size());
                     for (Node dirty : partialDiff) {
                         graph.createVertex(dirty);
                     }
@@ -933,11 +935,13 @@ public class RuntimeHelper {
             IRubyObject object = graph.createVertex(((Colon2Node) node).getLeftNode()).singleType();
             if (object instanceof RubyModule) {
                 return (RubyModule) object;
+            } else {
+                return null;
             }
         } else if (node instanceof Colon3Node) {
             return graph.getRuntime().getObject();
         }
-        Logger.fixme("Namespace unresolved");
+        Logger.fixme("Namespace unresolved: %s", node);
         return null;
     }
 

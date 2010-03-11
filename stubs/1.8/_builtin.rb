@@ -1573,7 +1573,7 @@ module Kernel
   def set_trace_func(*) end
   ##% sleep(?Numeric) -> Integer
   def sleep(sec = 0) 0 end
-  ##% split(?String, ?Integer) -> Array<String> or Array<Array<String> >
+  ##% split(?(String or Regexp), ?Integer) -> Array<String> or Array<Array<String> >
   def split(sep = $;, limit = 0) [''] || [['']] end
   ##% srand(?a) -> Integer
   def srand(seed = nil) 0 end
@@ -2319,7 +2319,7 @@ class Regexp
   
   ##% self.compile(String, Fixnum or Boolean, String) -> Regexp
   def self.compile(string, option = nil, code = nil) Regexp.new end
-  ##% self.escape(String, String) -> String
+  ##% self.escape(String, ?String) -> String
   def self.escape(string, kcode = $KCODE) '' end
   ##% self.last_match() -> MatchData
   ##% self.last_match(Integer) -> MatchData
@@ -2515,7 +2515,7 @@ class String
   ##% scan(String or Regexp) {String -> ?} -> self
   def scan(re) [''] || [['']] end
   alias :slice! :[]
-  ##% split(?String, ?Integer) -> Array<String> or Array<Array<String> >
+  ##% split(?(String or Regexp), ?Integer) -> Array<String> or Array<Array<String> >
   def split(sep = $;, limit = 0) [''] || [['']] end
   ##% squeeze(*String) -> String
   def squeeze(*chars) '' end

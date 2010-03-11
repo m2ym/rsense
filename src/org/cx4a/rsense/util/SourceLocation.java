@@ -29,7 +29,11 @@ public class SourceLocation {
 
     public static SourceLocation of(Node node) {
         ISourcePosition pos = node.getPosition();
-        return pos != null ? new SourceLocation(pos.getFile(), pos.getStartLine() + 1) : null;
+        if (pos != null && pos != ISourcePosition.INVALID_POSITION) {
+            return new SourceLocation(pos.getFile(), pos.getStartLine() + 1);
+        } else {
+            return null;
+        }
     }
     
     public static SourceLocation of(Vertex vertex) {

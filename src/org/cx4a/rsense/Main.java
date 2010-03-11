@@ -107,7 +107,14 @@ public class Main {
                   + "      --prompt=          - Prompt string in interactive shell mode\n"
                   + "      --no-prompt        - Do not show prompt\n"
                   + "\n"
+                  + "  clear                  - Clear current environment.\n"
+                  + "\n"
+                  + "  list-project           - List loaded projects.\n"
+                  + "\n"
+                  + "  close-project          - Close specified project.\n"
+                  + "\n"
                   + "  environment            - Print environment.\n"
+                  + "\n"
                   + "  help                   - Print this help.\n"
                   + "\n"
                   + "  version                - Print version information.\n"
@@ -116,17 +123,19 @@ public class Main {
                   + "  exit\n"
                   + "  quit                   - Exit script.\n"
                   + "\n"
-                  + "  clear                  - Clear current environment.\n"
-                  + "\n"
                   + "common-options:\n"
                   + "  --home=                - Specify RSense home directory\n"
                   + "  --debug                - Print debug messages\n"
                   + "  --log=                 - Log file to output (default stderr)\n"
                   + "  --format=              - Output format (plain, emacs)\n"
+                  + "  --verbose              - Verbose output\n"
                   + "  --encoding=            - Input encoding\n"
                   + "  --load-path=           - Load path string (: or ; separated)\n"
                   + "  --gem-path=            - Gem path string (: or ; separated)\n"
                   + "  --config=              - Config file\n"
+                  + "  --project=             - Specify project name\n"
+                  + "  --detect-project       - Detect project from --file option\n"
+                  + "  --detect-project=      - Detect project from specified location\n"
                   + "\n"
                   + "test-options:\n"
                   + "  --test=                - Specify fixture name\n"
@@ -162,27 +171,15 @@ public class Main {
                 options.addRestArg(arg);
             }
         }
-        try {
-            // load config
-            String config = options.getConfig();
-            if (config != null && new File(config).exists()) {
-                InputStream in = new FileInputStream(config);
-                try {
-                    BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-                    String line;
-                    while ((line = reader.readLine()) != null) {
-                        String[] lr = line.split("\\s*=\\s*", 2);
-                        if (lr.length >= 1) {
-                            options.addOption(lr[0], lr.length >= 2 ? lr[1] : null);
-                        }
-                    }
-                } finally {
-                    in.close();
-                }
+
+        String config = options.getConfig();
+        if (config != null) {
+            File configFile = new File(config);
+            if (configFile.isFile()) {
+                options.loadConfig(configFile);
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
+
         return options;
     }
 
@@ -264,6 +261,7 @@ public class Main {
     }
     
     private void command(String command, Options options) {
+        Logger.info("command: %s", command);
         if (options.isTest() && !options.isKeepEnv()) {
             codeAssist.clear();
         }
@@ -277,6 +275,10 @@ public class Main {
             script(options);
         } else if (command.equals("clear")) {
             commandClear(options);
+        } else if (command.equals("list-project")) {
+            commandListProject(options);
+        } else if (command.equals("close-project")) {
+            commandCloseProject(options);
         } else if (command.equals("environment")) {
             commandEnvironment(options);
         } else if (command.equals("help")) {
@@ -427,6 +429,41 @@ public class Main {
 
     private void commandClear(Options options) {
         codeAssist.clear();
+    }
+
+    private void commandListProject(Options options) {
+        boolean first = true;
+        boolean verbose = options.isVerbose();
+        for (Map.Entry<String, Project> entry : codeAssist.getProjects().entrySet()) {
+            String name = entry.getKey();
+            Project project = entry.getValue();
+            
+            if (verbose) {
+                if (!first) {
+                    out.println();
+                }
+                first = false;
+
+                out.printf("%s:\n", name);
+                out.printf("  path: %s\n", project.getPath());
+                out.println("  load-path:");
+                for (File dir : project.getLoadPath()) {
+                    out.println("    - " + dir.toString());
+                }
+                out.println("  gem-path:");
+                for (File dir : project.getGemPath()) {
+                    out.println("    - " + dir.toString());
+                }
+            } else {
+                out.println(name);
+            }
+        }
+    }
+
+    private void commandCloseProject(Options options) {
+        for (String name : options.getRestArgs()) {
+            codeAssist.closeProject(name);
+        }
     }
 
     private void commandEnvironment(Options options) {

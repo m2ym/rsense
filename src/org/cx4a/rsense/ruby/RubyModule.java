@@ -14,6 +14,7 @@ public class RubyModule extends RubyObject {
     private RubyModule parent;
     private Map<String, DynamicMethod> methods;
     private Map<String, IRubyObject> constants;
+    private Map<String, IRubyObject> classVars;
     private List<RubyModule> includes;
 
     public static RubyModule newModule(Ruby runtime, String baseName, RubyModule parent) {
@@ -36,6 +37,7 @@ public class RubyModule extends RubyObject {
         this.parent = parent;
         this.methods = new HashMap<String, DynamicMethod>();
         this.constants = new HashMap<String, IRubyObject>();
+        this.classVars = new HashMap<String, IRubyObject>();
         this.includes = new ArrayList<RubyModule>();
     }
 
@@ -114,6 +116,14 @@ public class RubyModule extends RubyObject {
 
     public boolean isConstantDefined(String name) {
         return constants.containsKey(name);
+    }
+
+    public IRubyObject getClassVar(String name) {
+        return classVars.get(name);
+    }
+
+    public void setClassVar(String name, IRubyObject value) {
+        classVars.put(name, value);
     }
 
     public RubyClass defineOrGetClassUnder(String name, RubyClass superClass) {

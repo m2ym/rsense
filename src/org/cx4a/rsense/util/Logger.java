@@ -4,7 +4,7 @@ import java.io.PrintStream;
 
 public class Logger {
     public enum Level {
-        ERROR, WARN, MESSAGE, INFO, DEBUG, FIXME,
+        FIXME, ERROR, WARN, MESSAGE, INFO, DEBUG
     }
 
     private PrintStream out;

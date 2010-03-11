@@ -34,6 +34,7 @@ import org.cx4a.rsense.util.NodeDiff;
 
 public class CodeAssist {
     public static final String TYPE_INFERENCE_METHOD_NAME = "__rsense_type_inference__";
+    public static final String PROJECT_CONFIG_NAME = ".project.rsense";
 
     public static class Location {
         // 3 ways to specify location
@@ -162,7 +163,7 @@ public class CodeAssist {
     private org.jruby.Ruby rubyRuntime;
     private final Options options;
     private final Context context;
-    private Map<File, Project> projects;
+    private Map<String, Project> projects;
     private Project sandbox;
 
     private SpecialMethod typeInferenceMethod = new SpecialMethod() {
@@ -201,18 +202,45 @@ public class CodeAssist {
         clear();
     }
 
+    public void openProject(Project project) {
+        projects.put(project.getName(), project);
+        Logger.message("project opened: %s", project.getName());
+    }
+
+    public void closeProject(String name) {
+        Project project = projects.remove(name);
+        if (project != null) {
+            Logger.message("project closed: %s", project.getName());
+        }
+    }
+
+    public Map<String, Project> getProjects() {
+        return projects;
+    }
+
     public Project getProject(Options options) {
         Project project = projects.get(options.getProject());
-        if (!options.isFileStdin()) {
-            File file = options.getFile();
-            if (project == null && options.isDetectProject()) {
-                File parent;
-                while ((parent = file.getParentFile()) != null) {
-                    File config = new File(parent, ".rsense");
-                    if (config.exists()) {
-                        // found config file
-                        project = newProjectFromConfig(config, options);
-                        break;
+        if (project == null && options.isDetectProject()) {
+            File file = options.getDetectProject();
+            if (file == null && !options.isFileStdin()) {
+                file = options.getFile();
+            }
+            if (file != null) {
+                File parent = file;
+                while ((parent = parent.getParentFile()) != null) {
+                    for (String name : new String[] {PROJECT_CONFIG_NAME,
+                                                     "Makefile",
+                                                     "Rakefile.rb",
+                                                     "Rakefile",
+                                                     "lib"}) {
+                        
+                        if (new File(parent, name).exists()) {
+                            project = getProjectByPath(parent);
+                            if (project == null) {
+                                project = newProject(parent, options);
+                            }
+                            return project;
+                        }
                     }
                 }
             }
@@ -221,11 +249,33 @@ public class CodeAssist {
         return project != null ? project : sandbox;
     }
 
-    private Project newProjectFromConfig(File config, Options options) {
-        File path = config.getParentFile();
-        Project project = new Project(path.getName(), path);
+    public Project getProjectByPath(File path) {
+        for (Project project : projects.values()) {
+            if (project.getPath().equals(path)) {
+                return project;
+            }
+        }
+        return null;
+    }
+
+    private Project newProject(File path, Options options) {
+        File config = new File(path, PROJECT_CONFIG_NAME);
+        if (config.isFile()) {
+            options.loadConfig(config);
+        } else {
+            // Guess config
+            options.addOption("load-path", "lib");
+        }
+
+        String name = options.getName();
+        if (name == null) {
+            name = path.getName();
+        }
+        Project project = new Project(name, path);
         project.setLoadPath(options.getLoadPath());
         project.setGemPath(options.getGemPath());
+        openProject(project);
+
         return project;
     }
 
@@ -280,15 +330,16 @@ public class CodeAssist {
             return LoadResult.alreadyLoaded();
         }
         project.setLoaded(feature);
+        Logger.info("feature required: %s", feature);
 
         if (File.pathSeparator.equals(";")) { // Windows?
             feature = feature.replace('/', '\\');
         }
         
-        List<String> loadPath = project.getLoadPath();
+        List<File> loadPath = project.getLoadPath();
         int loadPathLen = loadPath.size();
         for (int i = loadPathLevel; i < loadPathLen; i++) {
-            String pathElement = loadPath.get(i);
+            File pathElement = loadPath.get(i);
             int oldLoadPathLevel = context.loadPathLevel;
             context.loadPathLevel = i;
             String oldFeature = context.feature;
@@ -304,11 +355,11 @@ public class CodeAssist {
             }
         }
 
-        List<String> gemPath = project.getGemPath();
+        List<File> gemPath = project.getGemPath();
         int gemPathLen = gemPath.size();
         String sep = File.separator;
         for (int i = 0; i < gemPathLen; i++) {
-            String pathElement = gemPath.get(i);
+            File pathElement = gemPath.get(i);
             int oldLoadPathLevel = context.loadPathLevel;
             context.loadPathLevel = i + loadPathLen;
             String oldFeature = context.feature;
@@ -412,10 +463,11 @@ public class CodeAssist {
     }
 
     public void clear() {
-        this.projects = new HashMap<File, Project>();
-        this.sandbox = new Project("(sandbox)", null);
+        this.projects = new HashMap<String, Project>();
+        this.sandbox = new Project("(sandbox)", new File("."));
         this.sandbox.setLoadPath(options.getLoadPath());
         this.sandbox.setGemPath(options.getGemPath());
+        openProject(this.sandbox);
     }
 
     private void prepare(Project project) {

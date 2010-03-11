@@ -535,6 +535,7 @@ public class Graph implements NodeVisitor {
         if (oldAST != null && nodeDiff != null) {
             partialDiff = nodeDiff.diff(newAST, oldAST);
             if (partialDiff != null) {
+                Logger.debug("partial load: %s", partialDiff.size());
                 for (Node dirty : partialDiff) {
                     createVertex(dirty);
                 }
