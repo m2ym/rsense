@@ -908,6 +908,7 @@ public class Graph implements NodeVisitor {
     
     public Object visitDefnNode(DefnNode node) {
         RubyModule cbase = context.getCurrentScope().getModule();
+        RubyModule klass = context.getFrameModule();
         String name = node.getName();
         Node bodyNode = node.getBodyNode();
         Node argsNode = node.getArgsNode();
@@ -917,17 +918,17 @@ public class Graph implements NodeVisitor {
             visibility = Visibility.PRIVATE;
         }
 
-        Method oldMethod = (Method) cbase.getMethod(name);
+        Method oldMethod = (Method) klass.getMethod(name);
         Method newMethod = new DefaultMethod(cbase, name, bodyNode, argsNode, visibility, node.getPosition());
-        cbase.addMethod(name, newMethod);
+        klass.addMethod(name, newMethod);
         
         if (moduleFunction) {
             Method singletonMethod = new DefaultMethod(cbase, name, bodyNode, argsNode, visibility, node.getPosition());
             singletonMethod.setVisibility(Visibility.PUBLIC);
-            cbase.getSingletonClass().addMethod(name, singletonMethod);
+            klass.getSingletonClass().addMethod(name, singletonMethod);
         }
 
-        IRubyObject receiver = newInstanceOf((cbase instanceof RubyClass) ? (RubyClass) cbase : runtime.getObject());
+        IRubyObject receiver = newInstanceOf((klass instanceof RubyClass) ? (RubyClass) klass : runtime.getObject());
         
         RuntimeHelper.methodPartialUpdate(this, node, newMethod, oldMethod, receiver);
         RuntimeHelper.setMethodTag(newMethod, node, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
@@ -944,6 +945,7 @@ public class Graph implements NodeVisitor {
             return NULL_VERTEX;
         }
 
+        RubyModule cbase = context.getCurrentScope().getModule();
         String name = node.getName();
         for (IRubyObject receiver : receiverVertex.getTypeSet()) {
             RubyClass rubyClass = receiver.getSingletonClass();
@@ -951,7 +953,7 @@ public class Graph implements NodeVisitor {
             Node argsNode = node.getArgsNode();
 
             Method oldMethod = (Method) rubyClass.getMethod(name);
-            Method newMethod = new DefaultMethod(context.getCurrentScope().getModule(), name, bodyNode, argsNode, Visibility.PUBLIC, node.getPosition());
+            Method newMethod = new DefaultMethod(cbase, name, bodyNode, argsNode, Visibility.PUBLIC, node.getPosition());
             rubyClass.addMethod(name, newMethod);
 
             RuntimeHelper.methodPartialUpdate(this, node, newMethod, oldMethod, receiver);

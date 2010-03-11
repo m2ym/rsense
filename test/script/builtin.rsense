@@ -48,6 +48,16 @@ end
 D.new.f_|_
 EOF
 
+type-inference --test=Constant5 --should-be=Fixnum
+class C
+  A = 1
+  class << self
+    def f() A end
+  end
+end
+C.f_|_
+EOF
+
 type-inference --test=Array --should-be=Array
 []_|_
 EOF
@@ -508,6 +518,24 @@ class C
   def get() @x end
 end
 C.new(2.3).get_|_
+EOF
+
+type-inference --test=SingletonClass.Method1 --should-be=Fixnum
+class C
+end
+class << C
+  def f() 1 end
+end
+C.f_|_
+EOF
+
+type-inference --test=SingletonClass.Method2 --should-be=Fixnum
+class C
+  class << self
+    def f() 1 end
+  end
+end
+C.f_|_
 EOF
 
 type-inference --test=String.Unpack1 --should-be=String
