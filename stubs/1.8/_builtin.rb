@@ -1508,7 +1508,7 @@ module Kernel
   ##% raise() -> nil
   ##% raise(String) -> nil
   ##% raise(?, ?String, Array<String>) -> nil
-  def raise() end
+  def raise(*) end
   alias :fail :raise
   ##% fork() -> Integer
   ##% fork() {() -> ?} -> Integer
@@ -2396,11 +2396,95 @@ class Symbol
 end
 
 class Thread
-  # FIXME
+  ##% self.abort_on_exception() -> Boolean
+  def self.abort_on_exception() BOOLEAN end
+  ##% self.abort_on_exception=(Boolean) -> ?
+  def self.abort_on_exception=(newstate) end
+  ##% self.critical() -> Boolean
+  def self.critical() BOOLEAN end
+  ##% self.critical=(Boolean) -> ?
+  def self.critical=(newstate) end
+  ##% self.current() -> Thread
+  def self.current() Thread.new {} end
+  ##% self.exit() -> ?
+  def self.exit() end
+  ##% self.start(*a) {*a -> ?} -> Thread
+  def self.start(*arg) yield *arg; Thread.current end
+  ##% self.fork(*a) {*a -> ?} -> Thread
+  def self.fork(*arg) yield *arg; Thread.current end
+  ##% self.kill(Thread) -> Thread
+  def self.kill(thread) thread end
+  ##% self.list() -> [Thead]
+  def self.list() [Thread.current] end
+  ##% self.main() -> Thread
+  def self.main() Thread.current end
+  ##% self.new(*a) {*a -> ?} -> Thread
+  def self.new(*arg) yield *arg; super() end
+  ##% self.pass() -> nil
+  def self.pass() nil end
+  ##% self.stop() -> nil
+  def self.stop() nil end
+
+  ##% [](Symbol or String) -> Object
+  def [](name) Object.new end
+  ##% []=(Symbol or String, a) -> a
+  def []=(name, val) val end
+  ##% abort_on_exception() -> Boolean
+  def abort_on_exception() BOOLEAN end
+  ##% abort_on_exception=(Boolean) -> ?
+  def abort_on_exception=(newstate) end
+  ##% alive?() -> Boolean
+  def alive?() BOOLEAN end
+  ##% exit() -> self
+  def exit() self end
+  alias :kill :exit
+  alias :terminate :exit
+  ##% exit!() -> self
+  def exit!() self end
+  alias :kill! :exit!
+  alias :terminate! :exit!
+  ##% group() -> ThreadGroup
+  def group() ThreadGroup.new end
+  ##% join() -> self
+  ##% join(Numeric) -> self
+  def join(limit = nil) self end
+  ##% key?(Symbol or String) -> Boolean
+  def key?(name) BOOLEAN end
+  ##% keys() -> Array<Symbol>
+  def keys() [:a] end
+  ##% priority() -> Integer
+  def priority() 0 end
+  ##% priority=(Integer) -> nil
+  def priority=(val) nil end
+  ##% raise() -> nil
+  ##% raise(String) -> nil
+  ##% raise(?, ?String, Array<String>) -> nil
+  def raise(*) end
+  ##% run() -> self
+  def run() self end
+  ##% safe_level() -> Integer
+  def safe_level() 0 end
+  ##% status() -> String or FalseClass
+  def status() '' || false end
+  ##% stop?() -> Boolean
+  def stop?() BOOLEAN end
+  ##% value() -> Object
+  def value() Object.new end
+  ##% wakeup() -> self
+  def wakeup() self end
 end
 
 class ThreadGroup
-  # FIXME
+  Default = ThreadGroup.new
+
+  ##% add(Thread) -> self
+  def add(thread) self end
+  ##% enclose() -> self
+  def enclose() self end
+  ##% enclosed?() -> Boolean
+  def enclosed?() BOOLEAN end
+  ##% list() -> Array<Thread>
+  def list() [Thread.current] end
 end
 
 class Time
