@@ -111,7 +111,9 @@ public class Main {
                   + "\n"
                   + "  list-project           - List loaded projects.\n"
                   + "\n"
-                  + "  close-project          - Close specified project.\n"
+                  + "  open-project <dir>     - Open project in <dir>.\n"
+                  + "\n"
+                  + "  close-project <name>   - Close project named <name>.\n"
                   + "\n"
                   + "  environment            - Print environment.\n"
                   + "\n"
@@ -277,6 +279,8 @@ public class Main {
             commandClear(options);
         } else if (command.equals("list-project")) {
             commandListProject(options);
+        } else if (command.equals("open-project")) {
+            commandOpenProject(options);
         } else if (command.equals("close-project")) {
             commandCloseProject(options);
         } else if (command.equals("environment")) {
@@ -467,6 +471,12 @@ public class Main {
         }
         if (options.isEmacsFormat()) {
             out.println(")");
+        }
+    }
+
+    private void commandOpenProject(Options options) {
+        for (String name : options.getRestArgs()) {
+            codeAssist.openProject(name, options);
         }
     }
 

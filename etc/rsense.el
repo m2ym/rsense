@@ -184,6 +184,7 @@ Nil means proper socket will be selected.")
 (ac-define-source rsense
   '((candidates . ac-rsense-candidates)
     (prefix . "\\(?:\\.\\|::\\)\\(.*\\)")
+    (requires . 0)
     (document . ac-rsense-documentation)
     (cache)))
 

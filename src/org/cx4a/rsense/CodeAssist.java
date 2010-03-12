@@ -202,6 +202,15 @@ public class CodeAssist {
         clear();
     }
 
+    public void openProject(String path, Options options) {
+        File dir = new File(path);
+        if (dir.isDirectory()) {
+            openProject(newProject(dir, options));
+        } else {
+            Logger.message("failed to open project: %s", path);
+        }
+    }
+
     public void openProject(Project project) {
         projects.put(project.getName(), project);
         Logger.message("project opened: %s", project.getName());
