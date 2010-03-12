@@ -147,6 +147,11 @@ Nil means proper socket will be selected.")
   (interactive)
   (message "%s" (rsense-command "version")))
 
+(defun rsense-close-project (&optional project)
+  (interactive (list (completing-read "Project: "
+                                      (rsense-command "list-project"))))
+  (rsense-command-no-output "close-project" project))
+
 (defun rsense-clear ()
   (interactive)
   (rsense-command-no-output "clear"))

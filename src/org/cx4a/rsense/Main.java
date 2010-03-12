@@ -434,6 +434,9 @@ public class Main {
     private void commandListProject(Options options) {
         boolean first = true;
         boolean verbose = options.isVerbose();
+        if (options.isEmacsFormat()) {
+            out.print("(");
+        }
         for (Map.Entry<String, Project> entry : codeAssist.getProjects().entrySet()) {
             String name = entry.getKey();
             Project project = entry.getValue();
@@ -455,8 +458,15 @@ public class Main {
                     out.println("    - " + dir.toString());
                 }
             } else {
-                out.println(name);
+                if (options.isEmacsFormat()) {
+                    out.print("\"" + name + "\" ");
+                } else {
+                    out.println(name);
+                }
             }
+        }
+        if (options.isEmacsFormat()) {
+            out.println(")");
         }
     }
 

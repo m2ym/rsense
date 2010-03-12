@@ -232,6 +232,7 @@ public class CodeAssist {
                                                      "Makefile",
                                                      "Rakefile.rb",
                                                      "Rakefile",
+                                                     "setup.rb",
                                                      "lib"}) {
                         
                         if (new File(parent, name).exists()) {
