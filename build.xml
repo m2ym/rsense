@@ -1,4 +1,6 @@
 <project name="rsense" default="build" basedir=".">
+  <property file="src/resources/org/cx4a/rsense/rsense.properties" />
+
   <path id="build.class.path">
     <fileset file="build_lib/*.jar" />
     <fileset file="lib/*.jar" />
@@ -8,6 +10,8 @@
     <fileset file="dist/lib/*.jar" />
     <pathelement path="${classpath}" />
   </path>
+
+  <property name="dist.dir" value="rsense-${rsense.version}" />
 
   <target name="init">
     <mkdir dir="build" />
@@ -26,11 +30,13 @@
            classpathref="build.class.path">
       <compilerarg value="-Xlint:all" />
     </javac>
-    <jar jarfile="lib/rsense.jar" basedir="build" />
+    <jar jarfile="lib/rsense.jar" basedir="build">
+      <fileset dir="src/resources" />
+    </jar>
   </target>
 
-  <target name="dist" depends="build,doc">
-    <copy todir="dist" preservelastmodified="true" includeEmptyDirs="true">
+  <target name="dist" depends="build">
+    <copy todir="${dist.dir}" preservelastmodified="true" includeEmptyDirs="true">
       <fileset dir=".">
         <include name="README.txt" />
         <include name="bin/**/*" />
@@ -38,8 +44,21 @@
         <include name="etc/**/*" />
         <include name="lib/**/*" />
         <include name="stubs/**/*" />
+        <include name="src/**/*" />
       </fileset>
     </copy>
+  </target>
+
+  <target name="zip" depends="dist">
+    <zip destfile="${dist.dir}.zip" basedir="${dist.dir}" />
+  </target>
+
+  <target name="tar.bz2" depends="dist">
+    <exec executable="tar">
+      <arg value="cjf" />
+      <arg value="${dist.dir}.tar.bz2" />
+      <arg value="${dist.dir}" />
+    </exec>
   </target>
 
   <target name="test" depends="build">
@@ -72,12 +91,15 @@
   <target name="clean">
     <delete quiet="true" includeEmptyDirs="true">
       <fileset dir="build" />
-      <fileset dir="dist" />
+      <fileset dir="${dist.dir}" />
+      <fileset file="rsense-*.tar.bz2" />
+      <fileset file="rsense-*.zip" />
       <fileset file="hs_err_pid*.log" />
       <fileset file="lib/rsense.jar" />
       <fileset file="java.hprof.txt" />
       <fileset file="doc/*.html" />
       <fileset file="TypeAnnotation.tokens" />
+      <fileset file="src/org/cx4a/rsense/parser/TypeAnnotation*.java" />
     </delete>
   </target>
 </project>

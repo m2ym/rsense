@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Collection;
+import java.util.Properties;
 
 import java.io.File;
 import java.io.InputStream;
@@ -32,6 +33,7 @@ public class Main {
         public int failure = 0;
     }
 
+    private Properties properties;
     private File currentDir;
     private InputStream in;
     private PrintStream out;
@@ -47,6 +49,9 @@ public class Main {
         in = System.in;
         out = System.out;
         inReader = new InputStreamReader(in);
+
+        properties = new Properties();
+        properties.load(this.getClass().getResourceAsStream("rsense.properties"));
 
         if (args.length == 0 || args[0].equals("help")) {
             usage();
@@ -95,6 +100,7 @@ public class Main {
                   + "  code-completion        - Code completion at specified position.\n"
                   + "      --file=            - File to analyze\n"
                   + "      --location=        - Location where you want to complete (pos, line:col, str)\n"
+                  + "      --prefix=          - Specify prefix string to complete\n"
                   + "\n"
                   + "  type-inference         - Infer type at specified position.\n"
                   + "      --file=            - File to analyze\n"
@@ -157,7 +163,7 @@ public class Main {
     }
 
     private String versionString() {
-        return "RSense 0.0.1";
+        return "RSense " + properties.getProperty("rsense.version");
     }
 
     private Options parseOptions(String[] args, int offset) {
@@ -315,6 +321,7 @@ public class Main {
                 Logger.debug("AST:\n%s", result.getAST());
             }
 
+            String prefix = options.getPrefix();
             if (options.isTest()) {
                 Set<String> data = new HashSet<String>();
                 for (CodeCompletionResult.CompletionCandidate completion : result.getCandidates()) {
@@ -326,21 +333,25 @@ public class Main {
                     out.print("(");
                     out.print("(completion");
                     for (CodeCompletionResult.CompletionCandidate completion : result.getCandidates()) {
-                        out.print(" (");
-                        out.print("\"" + completion.getCompletion() + "\"");
-                        out.print(" \"" + completion.getQualifiedName() + "\"");
-                        out.print(")");
+                        if (prefix == null || completion.getCompletion().startsWith(prefix)) {
+                            out.print(" (");
+                            out.print("\"" + completion.getCompletion() + "\"");
+                            out.print(" \"" + completion.getQualifiedName() + "\"");
+                            out.print(")");
+                        }
                     }
                     out.println(")");
                     codeAssistError(result, options);
                     out.println(")");
                 } else {
                     for (CodeCompletionResult.CompletionCandidate completion : result.getCandidates()) {
-                        out.print("completion: ");
-                        out.print(completion);
-                        out.print(" ");
-                        out.print(completion.getQualifiedName());
-                        out.println();
+                        if (prefix == null || completion.getCompletion().startsWith(prefix)) {
+                            out.print("completion: ");
+                            out.print(completion.getCompletion());
+                            out.print(" ");
+                            out.print(completion.getQualifiedName());
+                            out.println();
+                        }
                     }
                     codeAssistError(result, options);
                 }

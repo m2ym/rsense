@@ -1,6 +1,17 @@
-let g:rsense_home = "~/src/rsense"
+if exists('g:loaded_rsense')
+    finish
+endif
+let g:loaded_rsense = 1
 
-fun! RSenseComplete(findstart, base)
+if !exists('g:rsenseHome')
+    let g:rsenseHome = "~/src/rsense"
+endif
+
+if !exists('g:rsenseUseOmniFunc')
+    let g:rsenseUseOmniFunc = 0
+endif
+
+function! RSenseComplete(findstart, base)
     if a:findstart
         let cur_text = strpart(getline('.'), 0, col('.') - 1)
         return match(cur_text, '[^\.:]*$')
@@ -9,7 +20,7 @@ fun! RSenseComplete(findstart, base)
         let file = tempname()
         call writefile(buf, file)
 
-        let command = printf('%s/bin/rsense code-completion --file=%s --location=%s:%s', g:rsense_home, file, line('.'), col('.') - 1)
+        let command = printf('ruby %s/bin/rsense code-completion --file=%s --location=%s:%s --prefix=%s', g:rsenseHome, file, line('.'), col('.') - 1, a:base)
         let result = split(system(command), "\n")
         let completions = []
         for item in result
@@ -17,5 +28,17 @@ fun! RSenseComplete(findstart, base)
         endfor
         return completions
     endif
-endfun
-autocmd FileType ruby setlocal omnifunc=RSenseComplete
+endfunction
+
+function! RSenseVersion()
+    return system(printf('ruby %s/bin/rsense version', g:rsenseHome))
+endfunction
+
+function! SetupRSense()
+    if g:rsenseUseOmniFunc
+        setlocal omnifunc=RSenseComplete
+    endif
+    setlocal completefunc=RSenseComplete
+endfunction
+
+autocmd FileType ruby call SetupRSense()

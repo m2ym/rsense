@@ -222,6 +222,10 @@ public class Options extends HashMap<String, List<String>> {
         return getOption("name");
     }
 
+    public String getPrefix() {
+        return getOption("prefix");
+    }
+
     public boolean isVerbose() {
         return hasOption("verbose");
     }

@@ -1,4 +1,4 @@
-;;; rsense.el --- RSense frontend for Emacs
+;;; rsense.el --- RSense client for Emacs
 
 ;; Copyright (C) 2010  Tomohiro Matsuyama
 
@@ -24,16 +24,7 @@
 
 ;;; Code:
 
-(defun rsense-choose-dir (&rest dirs)
-  (loop for dir in dirs
-        if (file-directory-p dir)
-        return (expand-file-name dir)))
-
-(defcustom rsense-home (if (eq system-type 'windows-nt)
-                           "C:\\rsense"
-                         (rsense-choose-dir "~/opt/rsense"
-                                            "~/src/rsense"
-                                            "/opt/rsense"))
+(defcustom rsense-home nil
   "Home directory of RSense.")
 
 (defcustom rsense-socket nil
@@ -55,22 +46,18 @@ Nil means proper socket will be selected.")
 (defcustom rsense-temp-file nil
   "Temporary file for containing uncomplete buffer.")
 
-(defcustom rsense-rurema-home (if (eq system-type 'windows-nt)
-                                  "C:\\rurema"
-                                (rsense-choose-dir "~/opt/rurema"
-                                                   "~/src/rurema"
-                                                   "/opt/rurema"))
+(defcustom rsense-rurema-home nil
   "Home directory of Ruby Reference Manual Project.")
 
 (defcustom rsense-rurema-refe "refe-1_8_7"
   "Program name of ReFe.")
 
-(defsubst rsense-interpreter ()
+(defun rsense-interpreter ()
   (if (boundp 'ruby-program)
       ruby-program
     "ruby"))
 
-(defsubst rsense-program ()
+(defun rsense-program ()
   (concat rsense-home "/bin/rsense"))
 
 (defun rsense-args (&rest args)
@@ -107,17 +94,13 @@ Nil means proper socket will be selected.")
 (defun rsense-command-no-output (&rest command)
   (rsense-command-1 command t))
 
-(defun rsense-buffer-command (buffer offset command &optional remove-until prefix)
+(defun rsense-buffer-command (buffer offset command &optional remove-until)
   (unless rsense-temp-file
-    (setq rsense-temp-file (make-temp-file "")))
+    (setq rsense-temp-file (make-temp-file temporary-file-directory)))
   (with-temp-buffer
     (insert (with-current-buffer buffer (buffer-string)))
     (if remove-until
         (delete-region offset remove-until))
-    (when prefix
-      (goto-char offset)
-      (insert prefix)
-      (incf offset (length prefix)))
     (write-region (point-min) (point-max) rsense-temp-file nil 0)
     (rsense-command command
                     (format "--file=%s" rsense-temp-file)
@@ -125,11 +108,11 @@ Nil means proper socket will be selected.")
                     (format "--location=%s" (1- offset))
                     (format "--detect-project=%s" (buffer-file-name buffer)))))
 
-(defun rsense-code-completion (&optional buffer offset remove-until prefix)
+(defun rsense-code-completion (&optional buffer offset remove-until)
   (rsense-buffer-command (or buffer (current-buffer))
                          (or offset (point))
                          "code-completion"
-                         remove-until prefix))
+                         remove-until))
 
 (defun rsense-type-inference (&optional buffer offset)
   (rsense-buffer-command (or buffer (current-buffer))
@@ -137,17 +120,56 @@ Nil means proper socket will be selected.")
                          "type-inference"))
 
 (defun rsense-lookup-document (pattern)
-  (shell-command-to-string (format "%s/%s '%s'" rsense-rurema-home rsense-rurema-refe pattern)))
+  (when (file-directory-p rsense-rurema-home)
+    (shell-command-to-string (format "%s/%s '%s'" rsense-rurema-home rsense-rurema-refe pattern))))
 
-(defun rsense-version ()
+(defun rsense-complete ()
   (interactive)
-  (message "%s" (rsense-command "version")))
+  (if (save-excursion (re-search-backward "\\(?:\\.\\|::\\)\\(.*\\)\\=" (line-beginning-position) t))
+      (let* ((offset (match-beginning 1))
+             (point (match-end 0))
+             (prefix (match-string 1))
+             (list (all-completions prefix
+                                    (assoc-default 'completion
+                                                   (rsense-code-completion (current-buffer)
+                                                                           offset
+                                                                           point))))
+             (common (try-completion prefix list))
+             (buffer "*Completions*"))
+        (when (and (stringp common)
+                   (not (equal prefix common)))
+          (delete-region offset point)
+          (insert common)
+          (setq prefix common))
+        (cond
+         ((null list)
+          (message "No completions"))
+         ((eq (length list) 1)
+          (let ((window (get-buffer-window buffer)))
+            (if window
+                (with-selected-window window
+                  (or (window-dedicated-p window)
+                      (bury-buffer))))))
+         (t
+          (with-output-to-temp-buffer buffer
+            (display-completion-list list prefix))
+          (display-buffer buffer))))))
 
-(defun rsense-version ()
+(defun rsense-type-help ()
   (interactive)
-  (message "%s" (rsense-command "version")))
+  (let* ((result (assoc-default 'type (rsense-type-inference (current-buffer) (point))))
+         (msg (if result
+                  (mapconcat 'identity result " | ")
+                "No type information")))
+    (if (featurep 'popup)
+        (popup-tip msg :margin t)
+      (message "Type: %s" msg))))
 
-(defun rsense-close-project (&optional project)
+(defun rsense-open-project (dir)
+  (interactive "DDirectory: ")
+  (rsense-command-no-output "open-project" (expand-file-name dir)))
+
+(defun rsense-close-project (project)
   (interactive (list (completing-read "Project: "
                                       (rsense-command "list-project"))))
   (rsense-command-no-output "close-project" project))
@@ -160,33 +182,41 @@ Nil means proper socket will be selected.")
   (interactive)
   (rsense-command-no-output "exit"))
 
-(defun rsense-type-help ()
+(defun rsense-version ()
   (interactive)
-  (let ((result (assoc-default 'type (rsense-type-inference (current-buffer) (point)))))
-    (popup-tip (if result
-                   (mapconcat 'identity result " | ")
-                 "No type information")
-               :margin t)))
+  (message "%s" (rsense-command "version")))
 
 (defun ac-rsense-documentation (item)
   (ignore-errors
     (rsense-lookup-document (cadr item))))
 
-(defun ac-rsense-candidates (&optional prefix)
+(defun ac-rsense-candidates ()
   (mapcar (lambda (entry)
             (cons (car entry) entry))
           (assoc-default 'completion
                          (rsense-code-completion (current-buffer)
                                                  ac-point
-                                                 (point)
-                                                 prefix))))
+                                                 (point)))))
 
-(ac-define-source rsense
+(defvar ac-source-rsense-method
   '((candidates . ac-rsense-candidates)
-    (prefix . "\\(?:\\.\\|::\\)\\(.*\\)")
+    (prefix . "\\.\\(.*\\)")
     (requires . 0)
+    (symbol . "f")
     (document . ac-rsense-documentation)
     (cache)))
+
+(defvar ac-source-rsense-constant
+  '((candidates . ac-rsense-candidates)
+    (prefix . "::\\(.*\\)")
+    (requires . 0)
+    (symbol . "c")
+    (document . ac-rsense-documentation)
+    (cache)))
+
+(defun ac-complete-rsense ()
+  (interactive)
+  (auto-complete '(ac-source-rsense-method ac-source-rsense-constant)))
 
 (provide 'rsense)
 ;;; rsense.el ends here

@@ -14,15 +14,15 @@ RSense
 
 * * * *
 
-スクリーンショット
-------------------
+RSenseとは？
+------------
 
-![](rsense.png)
+RSenseはJavaで書かれた[Ruby][]のための開発補助ツールです。[UNIXの思想][UNIX philosophy]に従うことで、RSenseはどこからでも簡単に使えるようになっています。EmacsやVimなどのエディタからも利用できます。RSenseは透明性を保つことで簡単に学習・拡張・修正できるよう設計されています。
 
 特徴
 ----
 
-現在利用機能が利用可能です。
+現在利用可能な機能は以下のようになっています。
 
 * コード補完（メソッド名補完など）
 * 型検査
@@ -34,25 +34,37 @@ RSense
 * 呼び出し元ジャンプ
 * リファクタリング
 
+スクリーンショット
+------------------
+
+![](rsense-emacs-2.png)
+![](rsense-vim.png)
+
 ダウンロード
 ------------
 
-ダウンロードパッケージはまだ用意されていません。
+### 最新安定板 ###
 
-次のURLからソースコードのリポジトリにアクセスできます。
+* [rsense-0.1.tar.bz2](/pub/rsense/rsense-0.1.tar.bz2)
+* [rsense-0.1.zip](/pub/rsense/rsense-0.1.zip)
+
+ユーザーマニュアル
+------------------
+
+[RSenseユーザーマニュアル](manual.ja.txt)
+
+ソースコード
+------------
+
+ソースコードは以下のGitリポジトリから取得できます。
 
 * <http://cx4a.org/repo/rsense.git>
-* <http://github.com/m2ym/rsense> （ミラー）
-
-使い方
-------
-
-[ユーザーマニュアル](manual.txt)を読んでください。
+* <http://github.com/m2ym/rsense> (GitHubミラー)
 
 ライセンス
 ----------
 
-ソフトウェアの価値を最大化するために[GPLv3][]のもとでライセンスしています。[GPLv3][]や[フリーソフトウェア][Free Software]について詳しくない方は、[この本][Free software Free society]を読んでみることをお薦めします。
+このソフトウェアは[GPLv3][]のもとで配布されます。
 
 開発
 ----
@@ -60,6 +72,5 @@ RSense
 どのような貢献も歓迎です。RSenseをハックしたい方はまず[開発ガイド](devel.txt)を読むことから始めるとよいでしょう。
 
 [Ruby]: http://www.ruby-lang.org/ "Ruby Programming Language"
+[UNIX philosophy]: http://en.wikipedia.org/wiki/Unix_philosophy
 [GPLv3]: http://gplv3.fsf.org/
-[Free Software]: http://www.gnu.org/philosophy/free-sw.html
-[Free software Free society]: http://shop.fsf.org/product/free-software-free-society/

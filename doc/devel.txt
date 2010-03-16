@@ -13,7 +13,7 @@ RSense Development Guide
 
 * * *
 
-Frontend model
+Frontend Model
 --------------
 
 RSense provides just a frontend which can be used from a terminal. It means there is no way to embed RSense into other frontends (e.g. Editors, IDE). So how we can use it from other frontends? Let us explain.
@@ -41,7 +41,7 @@ is equivalent to:
     some-command --some-option1=foo --some-option2=foo
     ^D
 
-A main difference of these ways is that in a script mode you can execute a series of command. It enables us to save initialization time and do continuous processing. Actually, it is used as a test script. See also [testing](#testing).
+A main difference of these ways is that in a script mode you can execute a series of command. It enables us to save initialization time and do continuous processing. Actually, it is used as a test script. See also [testing](#Testing).
 
 After executing the server, as we said, `bin/rsense` sends a command from a terminal to the server. So we can operate RSense transparency as it seems like a single command.
 
@@ -51,19 +51,19 @@ Using from other frontends is very easy. All of they have to do is just a execut
 
 All complex things will be done automatically.
 
-Type inference algorithm
+Type Inference Algorithm
 ------------------------
 
 RSense uses a type inference algorithm called *CPA* (Cartesian Product Algorithm) which is developed by Ole Agensen. With some restriction of CPA such like data-polymorphism, RSense uses a modified CPA indeed. We think CPA is very simple to implement and a best way to accomplish what RSense tries to privde.
 
-Type annotation
+Type Annotation
 ---------------
 
 In RSense, *type annotation* is needed to resolve a data-polymorphism problem and ad-hoc parameter polymorphism.
 
 Type annotation is written as a comment which takes a form of `##% ...`. Type annotation can be written before class declaration and method declaration.
 
-### Method type annotation ###
+### Method Type Annotation ###
 
 By adding type annotation to method, method call will be analyzed more precissly. Consider a method which takes one argument. If the argument is `String`, it will return `Fixnum`, otherwise returns `Float`. Such strange methods are often seen in Ruby world, you know. Anyway, it is difficult to analyze such methods. In this case, a result of `f()` will be infered as `Fixnum` and `Float` without type annotation.
 
@@ -158,7 +158,7 @@ Now we can resolve the problem.
 
 For more detail, you should read next secion.
 
-### Class type annotation ###
+### Class Type Annotation ###
 
 By adding type annotation to class, class can be data-polymorphic. Think following code.
 
@@ -250,7 +250,7 @@ Mostly done.
 | OK     | It has fully done.                               |
 
 | Name             | Status |
-|------------------|--------|
+|------------------|:------:|
 | abbrev           |   =    |
 | base64           |   =    |
 | benchmark        |        |
@@ -379,7 +379,7 @@ Mostly done.
 | yaml             |        |
 | zlib             |        |
 
-Partial update
+Partial Update
 --------------
 
 A most important thing for RSense is speed. If users have to wait 10 senconds to do type inspection, it is finally a garbage. So, we have to keep RSense faster as much as possible. One of ways to make RSense faster is a technique called *partial update*. When RSense is requested to do code-completion or type-inference, RSense checks for AST cache. If there is AST cache, RSense analyzes an edit delta and apply updating to modified portion of the source code.
@@ -391,7 +391,7 @@ You can run test scripts easily:
 
     % ant test
 
-### Writing tests ###
+### Writing Tests ###
 
 Test will be written as a rsense script file. See test scripts which are located in `test/script`. For example, if you want to write a new fixture, add the following code to `test/script/builtin.rsense`.
 
@@ -403,7 +403,7 @@ After that, do `ant test`. It's very easy.
 
 As we see, special options for testing are available on type-inference and code-completion command. `--test=` option names its fixture. `--should-be=` option verifies a result equals expected data. `--should-be-empty` option verifies a result is empty. `--should-contain=` option verifies a result contains expected data. `--should-not-contain` option verifies a result doesn't contain unexpected data.
 
-Source tree
+Source Tree
 -----------
 
     rsense/
@@ -421,7 +421,7 @@ Source tree
     |- stubs/                                - Type annotation stubs
     |- test/                                 - Test cases and test scripts
 
-Related work and keywords
+Related Work and Keywords
 -------------------------
 
 CPA

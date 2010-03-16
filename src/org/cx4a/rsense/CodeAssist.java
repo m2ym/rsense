@@ -237,14 +237,19 @@ public class CodeAssist {
             if (file != null) {
                 File parent = file;
                 while ((parent = parent.getParentFile()) != null) {
-                    for (String name : new String[] {PROJECT_CONFIG_NAME,
-                                                     "Makefile",
-                                                     "Rakefile.rb",
-                                                     "Rakefile",
-                                                     "setup.rb",
-                                                     "lib"}) {
-                        
-                        if (new File(parent, name).exists()) {
+                    for (String[] list : new String[][] {new String[] {PROJECT_CONFIG_NAME},
+                                                         new String[] {"Rakefile.rb"},
+                                                         new String[] {"Rakefile"},
+                                                         new String[] {"setup.rb"},
+                                                         new String[] {"Makefile", "lib"}}) {
+                        boolean found = true;
+                        for (String name : list) {
+                            if (!new File(parent, name).exists()) {
+                                found = false;
+                                break;
+                            }
+                        }
+                        if (found) {
                             project = getProjectByPath(parent);
                             if (project == null) {
                                 project = newProject(parent, options);

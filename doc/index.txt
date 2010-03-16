@@ -14,15 +14,15 @@ RSense
 
 * * * *
 
-Screenshots
------------
+What is RSense?
+---------------
 
-![](rsense.png)
+RSense is a development tools for [Ruby][], which is written in Java. Following [UNIX philosophy][], RSense can be used from anywhere easily. Generally, it is used from editors such like Emacs, Vim, etc. We are struggling to keep a transparency for hackers to learn, extend, and fix easily.
 
 Features
 --------
 
-Main afvailable features are:
+Main available features are:
 
 * Code completion
 * Type inspection
@@ -34,25 +34,37 @@ In the future, the following features will be also available:
 * Caller jump
 * Refactoring
 
+Screenshots
+-----------
+
+![](rsense-emacs-2.png)
+![](rsense-vim.png)
+
 Downloads
 ---------
 
-There is no downloads yet.
+### Latest Stable ###
 
-You can access a source code from git repository.
+* [rsense-0.1.tar.bz2](/pub/rsense/rsense-0.1.tar.bz2)
+* [rsense-0.1.zip](/pub/rsense/rsense-0.1.zip)
+
+User Manual
+-----------
+
+[RSense User Manual](manual.txt)
+
+Source Code
+-----------
+
+Git repositories are available:
 
 * <http://cx4a.org/repo/rsense.git>
-* <http://github.com/m2ym/rsense> (Mirror)
-
-Usage
------
-
-Read [this manual](manual.txt).
+* <http://github.com/m2ym/rsense> (GitHub mirror)
 
 License
 -------
 
-To maximize the software's value for users, we chose to use [GPLv3][]. If you don't familiar with [GPLv3][] and [Free Software][], I really suggest you to read [this book][Free software Free society].
+This software is distributed under the term of [GPLv3][].
 
 Contribution
 ------------
@@ -60,6 +72,5 @@ Contribution
 We welcome any contribution. Read [development guide](devel.txt).
 
 [Ruby]: http://www.ruby-lang.org/ "Ruby Programming Language"
+[UNIX philosophy]: http://en.wikipedia.org/wiki/Unix_philosophy
 [GPLv3]: http://gplv3.fsf.org/
-[Free Software]: http://www.gnu.org/philosophy/free-sw.html
-[Free software Free society]: http://shop.fsf.org/product/free-software-free-society/
