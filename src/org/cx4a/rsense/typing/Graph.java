@@ -661,7 +661,8 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitArgsNode(ArgsNode node) {
-        throw new UnsupportedOperationException();
+        unsupportedNode(node);
+        return NULL_VERTEX;
     }
     
     public Object visitArgsCatNode(ArgsCatNode node) {
@@ -695,7 +696,8 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitArgsPushNode(ArgsPushNode node) {
-        throw new UnsupportedOperationException();
+        unsupportedNode(node);
+        return NULL_VERTEX;
     }
     
     public Object visitArrayNode(ArrayNode node) {
@@ -730,7 +732,8 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitBlockArgNode(BlockArgNode node) {
-        throw new UnsupportedOperationException();
+        unsupportedNode(node);
+        return NULL_VERTEX;
     }
     
     public Object visitBlockNode(BlockNode node) {
@@ -743,7 +746,8 @@ public class Graph implements NodeVisitor {
     
     public Object visitBlockPassNode(BlockPassNode node) {
         // Never reach here
-        throw new UnsupportedOperationException();
+        unsupportedNode(node);
+        return NULL_VERTEX;
     }
     
     public Object visitBreakNode(BreakNode node) {
@@ -983,12 +987,12 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitEncodingNode(EncodingNode node) {
-        throw new UnsupportedOperationException();
+        unsupportedNode(node);
+        return NULL_VERTEX;
     }
     
     public Object visitEnsureNode(EnsureNode node) {
         // FIXME
-        //throw new UnsupportedOperationException();
         if (node.getEnsureNode() != null) {
             createVertex(node.getEnsureNode());
         }
@@ -997,7 +1001,8 @@ public class Graph implements NodeVisitor {
     
     public Object visitEvStrNode(EvStrNode node) {
         // never reach here
-        throw new UnsupportedOperationException();
+        unsupportedNode(node);
+        return NULL_VERTEX;
     }
     
     public Object visitFCallNode(FCallNode node) {
@@ -1073,7 +1078,8 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitIterNode(IterNode node) {
-        throw new UnsupportedOperationException();
+        unsupportedNode(node);
+        return NULL_VERTEX;
     }
     
     public Object visitLocalAsgnNode(LocalAsgnNode node) {
@@ -1090,7 +1096,8 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitMultipleAsgnNode(MultipleAsgn19Node node) {
-        throw new UnsupportedOperationException();
+        unsupportedNode(node);
+        return NULL_VERTEX;
     }
     
     public Object visitMatch2Node(Match2Node node) {
@@ -1236,11 +1243,13 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitPreExeNode(PreExeNode node) {
-        throw new UnsupportedOperationException();
+        unsupportedNode(node);
+        return NULL_VERTEX;
     }
     
     public Object visitPostExeNode(PostExeNode node) {
-        throw new UnsupportedOperationException();
+        unsupportedNode(node);
+        return NULL_VERTEX;
     }
     
     public Object visitRedoNode(RedoNode node) {
@@ -1252,19 +1261,29 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitRescueBodyNode(RescueBodyNode node) {
-        // FIXME
-        //throw new UnsupportedOperationException();
+        if (node.getBodyNode() != null) {
+            return createVertex(node.getBodyNode());
+        }
         return NULL_VERTEX;
     }
     
     public Object visitRescueNode(RescueNode node) {
-        // FIXME
-        //throw new UnsupportedOperationException();
-        return NULL_VERTEX;
+        Vertex result = NULL_VERTEX;
+        if (node.getBodyNode() != null) {
+            result = createVertex(node.getBodyNode());
+        }
+        if (node.getRescueNode() != null) {
+            createVertex(node.getRescueNode());
+        }
+        if (node.getElseNode() != null) {
+            result = createVertex(node.getElseNode());
+        }
+        return result;
     }
     
     public Object visitRestArgNode(RestArgNode node) {
-        throw new UnsupportedOperationException();
+        unsupportedNode(node);
+        return NULL_VERTEX;
     }
     
     public Object visitRetryNode(RetryNode node) {
@@ -1367,7 +1386,6 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitUndefNode(UndefNode node) {
-        //throw new UnsupportedOperationException();
         Logger.warn("undef is not supported yet.");
         return NULL_VERTEX;
     }
@@ -1394,7 +1412,8 @@ public class Graph implements NodeVisitor {
     
     public Object visitWhenNode(WhenNode node) {
         // never reach here
-        throw new UnsupportedOperationException();
+        unsupportedNode(node);
+        return NULL_VERTEX;
     }
     
     public Object visitWhileNode(WhileNode node) {
@@ -1517,4 +1536,7 @@ public class Graph implements NodeVisitor {
         return propagateEdges(propagation, dest);
     }
 
+    private void unsupportedNode(Node node) {
+        Logger.fixme("unsupported node: %s", node);
+    }
 }
