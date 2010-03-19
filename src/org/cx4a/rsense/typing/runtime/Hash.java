@@ -4,6 +4,7 @@ import java.util.Arrays;
 
 import org.cx4a.rsense.ruby.Ruby;
 import org.cx4a.rsense.ruby.RubyObject;
+import org.cx4a.rsense.ruby.RubyClass;
 import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.typing.TypeSet;
 import org.cx4a.rsense.typing.vertex.Vertex;
@@ -37,7 +38,15 @@ public class Hash extends Array {
     protected Key[] keys;
 
     public Hash(Ruby runtime, Vertex[] elements) {
-        super(runtime, runtime.getHash(), elements);
+        this(runtime, runtime.getHash(), elements);
+    }
+
+    public Hash(Ruby runtime, RubyClass metaClass, Vertex[] elements) {
+        this(runtime, runtime.getHash(), elements, new TypeVarMap());
+    }
+
+    public Hash(Ruby runtime, RubyClass metaClass, Vertex[] elements, TypeVarMap tvmap) {
+        super(runtime, metaClass, elements, tvmap);
         if (elements != null) {
             keys = new Key[elements.length / 2];
             for (int i = 0, j = 0; i < elements.length; i += 2, j++) {
@@ -79,6 +88,11 @@ public class Hash extends Array {
                 vertex.copyTypeSet(elements[i]);
             }
         }
+    }
+
+    @Override
+    public PolymorphicObject clone() {
+        return new Hash(runtime, metaClass, elements, getTypeVarMap().clone());
     }
 
     @Override

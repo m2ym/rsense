@@ -10,11 +10,14 @@ import org.cx4a.rsense.typing.vertex.Vertex;
 import org.cx4a.rsense.typing.annotation.TypeVariable;
 
 public class MonomorphicObject extends PolymorphicObject {
+    private PolymorphicObject entity;
+    
     // keep initial state of monomorphic
     private TypeVarMap fixedTypeVarMap;
     
     public MonomorphicObject(PolymorphicObject entity, TypeVarMap tvmap) {
         super(entity.getRuntime(), entity.getMetaClass(), tvmap);
+        this.entity = entity;
 
         fixedTypeVarMap = new TypeVarMap();
         TypeVarMap etvmap = entity.getTypeVarMap();
@@ -28,6 +31,11 @@ public class MonomorphicObject extends PolymorphicObject {
                 fixedTypeVarMap.put(entry.getKey(), v);
             }
         }
+    }
+
+    @Override
+    public PolymorphicObject clone() {
+        return new MonomorphicObject(entity, getTypeVarMap().clone());
     }
 
     @Override

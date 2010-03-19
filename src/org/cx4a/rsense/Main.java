@@ -64,11 +64,8 @@ public class Main {
         String command = args[0];
         Options options = parseOptions(args, 1);
 
+        Logger.getInstance().setLevel(options.getLogLevel());
         init(options);
-
-        if (options.isDebug()) {
-            Logger.getInstance().setLevel(Logger.Level.DEBUG);
-        }
         if (options.getLog() != null) {
             PrintStream log = new PrintStream(new FileOutputStream(options.getLog(), true));
             try {
@@ -133,8 +130,9 @@ public class Main {
                   + "\n"
                   + "common-options:\n"
                   + "  --home=                - Specify RSense home directory\n"
-                  + "  --debug                - Print debug messages\n"
+                  + "  --debug                - Print debug messages (shorthand of --log-evel=debug)\n"
                   + "  --log=                 - Log file to output (default stderr)\n"
+                  + "  --log-level=           - Log level (fixme, error, warn, message, info, debug)\n"
                   + "  --format=              - Output format (plain, emacs)\n"
                   + "  --verbose              - Verbose output\n"
                   + "  --encoding=            - Input encoding\n"

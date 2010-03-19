@@ -48,6 +48,10 @@ public class PolymorphicObject extends RubyObject {
         }
     }
 
+    public PolymorphicObject clone() {
+        return new PolymorphicObject(runtime, metaClass, getTypeVarMap().clone());
+    }
+
     @Override
     public String toString() {
         return "<pobj:" + getMetaClass().toString() + getTypeVarMap() + ">";

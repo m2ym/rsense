@@ -101,9 +101,53 @@ a << []
 a.each {|v| v_|_ }
 EOF
 
-type-inference --test=Array.Push --should-be=Fixnum,Float,String
+type-inference --test=Array.Push1 --should-be=Fixnum,String
+a = [1]
+a << ''
+a[0]_|_
+EOF
+
+type-inference --test=Array.Push2 --should-be=Fixnum,String
+a = []
+a << 1
+a << ''
+a[0]_|_
+EOF
+
+type-inference --test=Array.Push3 --should-be=Fixnum,Float,String
 a = []
 a.push(1, 2.3, '')
+a[0]_|_
+EOF
+
+type-inference --test=Array.DataPolymorphism1 --should-be=String
+a = []
+a << 1
+b = []
+b << ''
+b[0]_|_
+EOF
+
+type-inference --test=Array.DataPolymorphism2 --should-be=Fixnum
+a = []
+a << 1
+a << ''
+b = []
+b << 1
+b[0]_|_
+EOF
+
+type-inference --test=Array.DataPolymorphism3 --should-be=String,Fixnum
+a = []
+a << 1
+a << ''
+a[0]_|_
+EOF
+
+type-inference --test=Array.DataPolymorphism4 --keep-env --should-be=String,Fixnum
+a = []
+a << 1
+a << ''
 a[0]_|_
 EOF
 
@@ -133,6 +177,50 @@ type-inference --test=Hash.DynamicAccess3 --should-be=Fixnum,Float
 a = {:a => 1}
 a[:b] = 2.3
 a[:a]_|_
+EOF
+
+type-inference --test=Hash.Put1 --should-be=Fixnum
+a = {}
+a[:a] = 0
+a[:a]_|_
+EOF
+
+type-inference --test=Hash.Put2 --should-be=Fixnum,String
+a = {}
+a[:a] = 0
+a[:a] = ''
+a[:a]_|_
+EOF
+
+type-inference --test=Hash.DataPolymorphism1 --should-be=String
+a = {}
+a[:a] = 0
+b = {}
+b[:a] = ''
+b[:a]_|_
+EOF
+
+type-inference --test=Hash.DataPolymorphism2 --should-be=Fixnum
+a = {}
+a[:a] = 0
+a[:a] = ''
+b = {}
+b[:a] = 0
+b[:a]_|_
+EOF
+
+type-inference --test=Hash.DataPolymorphism3 --should-be=Fixnum,String
+a = {}
+a[:a] = 0
+a[:a] = ''
+a[0]_|_
+EOF
+
+type-inference --test=Hash.DataPolymorphism4 --keep-end --should-be=Fixnum,String
+a = {}
+a[:a] = 0
+a[:a] = ''
+a[0]_|_
 EOF
 
 type-inference --test=LocalVar --should-be=Fixnum

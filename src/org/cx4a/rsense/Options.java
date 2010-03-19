@@ -19,6 +19,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import org.cx4a.rsense.util.HereDocReader;
+import org.cx4a.rsense.util.Logger;
 
 public class Options extends HashMap<String, List<String>> {
     private static final long serialVersionUID = 0L;
@@ -146,6 +147,14 @@ public class Options extends HashMap<String, List<String>> {
         return getOption("log");
     }
 
+    public Logger.Level getLogLevel() {
+        if (isDebug()) {
+            return Logger.Level.DEBUG;
+        }
+        String level = getOption("log-level");
+        return level != null ? Logger.Level.valueOf(level.toUpperCase()) : Logger.Level.MESSAGE;
+    }
+
     public String getRsenseHome() {
         String rsenseHome = getOption("home");
         return rsenseHome != null ? rsenseHome : ".";
@@ -236,6 +245,7 @@ public class Options extends HashMap<String, List<String>> {
             addOption("debug");
         }
         addOption("log", parent.getLog());
+        addOption("log-level", parent.getOption("log-level"));
         addOptions("load-path", parent.getOptions("load-path"));
         addOptions("gem-path", parent.getOptions("gem-path"));
         addOption("format", parent.getFormat());

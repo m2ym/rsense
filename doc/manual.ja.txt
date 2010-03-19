@@ -90,6 +90,7 @@ Java Runtime Environment 1.5あるいはそれ以降のバージョンをイン�
 インストール後はサーバー/クライアントモデルの複雑さを隠蔽する`bin/rsense`スクリプトが実行できることを確認してください。
 
     $ cd $RSENSE_HOME
+    $ chmod +x bin/rsense
     $ bin/rsense version
     RSense 0.1
 
@@ -517,7 +518,9 @@ Rubyリファレンスマニュアル
 
   UNIX系システム:
   ~~~~
-  $ chmox +x bin/ruby
+  $ bin/ruby server
+  ...
+  ^C
   $ bin/ruby version
   RSense 0.1
   ~~~~
@@ -525,6 +528,9 @@ Rubyリファレンスマニュアル
   Windows:
   ~~~~
   > ruby bin\ruby version
+  > ruby bin\ruby server
+  ...
+  ^C
   RSense 0.1
   ~~~~
 

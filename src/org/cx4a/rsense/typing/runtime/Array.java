@@ -19,6 +19,11 @@ public class Array extends PolymorphicObject {
         this.elements = elements;
     }
 
+    public Array(Ruby runtime, RubyClass metaClass, Vertex[] elements, TypeVarMap tvmap) {
+        super(runtime, metaClass, tvmap);
+        this.elements = elements;
+    }
+
     public Vertex getTypeVarVertex() {
         return getTypeVarMap().get(TypeVariable.valueOf("t"));
     }
@@ -51,6 +56,11 @@ public class Array extends PolymorphicObject {
 
     public int length() {
         return elements != null ? elements.length : 0;
+    }
+
+    @Override
+    public PolymorphicObject clone() {
+        return new Array(runtime, metaClass, elements, getTypeVarMap().clone());
     }
 
     @Override

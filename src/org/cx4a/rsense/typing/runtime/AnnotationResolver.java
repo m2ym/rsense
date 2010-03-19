@@ -51,9 +51,9 @@ public class AnnotationResolver {
         if (method.getAnnotations() != null) {
             ClassType classType = RuntimeHelper.getEnclosingClassAnnotation(method.getModule());
             TemplateAttribute attr = template.getAttribute();
-            IRubyObject receiver = attr.getReceiver();
+            IRubyObject receiver = attr.getMutableReceiver();
+            IRubyObject[] args = attr.getMutableArgs();
             Vertex returnVertex = template.getReturnVertex();
-            IRubyObject[] args = attr.getArgs();
 
             for (MethodType type : method.getAnnotations()) {
                 List<TypeVariable> types = type.getTypes();

@@ -14,6 +14,14 @@ public class TypeSet extends HashSet<IRubyObject> {
 
     private boolean megamorphic;
 
+    public TypeSet() {
+        super();
+    }
+
+    public TypeSet(TypeSet other) {
+        super(other);
+    }
+
     public boolean add(IRubyObject e) {
         if (megamorphic) return false;
 

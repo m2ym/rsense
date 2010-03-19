@@ -15,6 +15,11 @@ public class TemplateAttribute {
     private IRubyObject[] args;
     private Block block;
 
+    // For to keep original state of receiver and args
+    // See AnnotationResolver
+    private IRubyObject mutableReceiver;
+    private IRubyObject[] mutableArgs;
+
     public TemplateAttribute(IRubyObject[] args) {
         this.args = args;
     }
@@ -47,6 +52,40 @@ public class TemplateAttribute {
         this.block = block;
     }
 
+    public IRubyObject getMutableReceiver() {
+        return getMutableReceiver(true);
+    }
+    
+    public IRubyObject getMutableReceiver(boolean create) {
+        if (mutableReceiver == null && create) {
+            mutableReceiver = cloneObject(receiver);
+        }
+        return mutableReceiver;
+    }
+
+    public IRubyObject[] getMutableArgs() {
+        return getMutableArgs(true);
+    }
+
+    public IRubyObject[] getMutableArgs(boolean create) {
+        if (mutableArgs == null && create) {
+            mutableArgs = new IRubyObject[args.length];
+            for (int i = 0; i < args.length; i++) {
+                mutableArgs[i] = cloneObject(args[i]);
+            }
+        }
+        return mutableArgs;
+    }
+
+    public IRubyObject getMutableArg(int i) {
+        return getMutableArg(i, true);
+    }
+
+    public IRubyObject getMutableArg(int i, boolean create) {
+        IRubyObject[] args = getMutableArgs(create);
+        return args != null ? args[i] : null;
+    }
+
     public TemplateAttribute clone() {
         IRubyObject[] newargs = new IRubyObject[args.length];
         System.arraycopy(args, 0, newargs, 0, args.length);
@@ -54,6 +93,15 @@ public class TemplateAttribute {
         clone.receiver = receiver;
         clone.block = block;
         return clone;
+    }
+
+    private IRubyObject cloneObject(IRubyObject object) {
+        if (object instanceof PolymorphicObject) {
+            return ((PolymorphicObject) object).clone();
+        } else {
+            // immutable
+            return object;
+        }
     }
 
     @Override

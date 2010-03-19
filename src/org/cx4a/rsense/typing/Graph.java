@@ -608,22 +608,34 @@ public class Graph implements NodeVisitor {
         return result;
     }
 
-    public boolean propagateEdges(Vertex dest) {
+    public boolean propagateEdges(Vertex src) {
         startPropagation();
-        boolean result = propagateEdges(propagation, dest);
+        boolean result = propagateEdges(propagation, src);
         endPropagation();
         return result;
     }
 
-    public boolean propagateEdges(Propagation propagation, Vertex dest) {
-        int size = dest.getEdges().size();
+    public boolean propagateEdges(Propagation propagation, Vertex src) {
+        int size = src.getEdges().size();
         for (int i = 0; i < size; i++) {
-            Vertex edge = dest.getEdges().get(i);
-            if (!edge.accept(propagation, dest)) {
+            Vertex edge = src.getEdges().get(i);
+            if (!edge.accept(propagation, src)) {
                 return false;
             }
         }
         return true;
+    }
+
+    public boolean propagateEdge(Vertex src, Vertex dest) {
+        startPropagation();
+        boolean result = propagateEdge(propagation, src, dest);
+        endPropagation();
+        return result;
+    }
+
+    public boolean propagateEdge(Propagation propagation, Vertex src, Vertex dest) {
+        src.addEdge(dest);
+        return dest.accept(propagation, src);
     }
 
     private void startPropagation() {

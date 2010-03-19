@@ -90,6 +90,7 @@ For later sections, `RSENSE_HOME` environment variable should be read as a direc
 After installation, make sure that you can execute `bin/rsnese` script which hides a complexity about server/client model.
 
     $ cd $RSENSE_HOME
+    $ chmod +x bin/rsense
     $ bin/rsense version
     RSense 0.1
 
@@ -516,7 +517,9 @@ Check list:
 
   For UNIX-like systems:
   ~~~~
-  $ chmox +x bin/ruby
+  $ bin/ruby server
+  ...
+  ^C
   $ bin/ruby version
   RSense 0.1
   ~~~~
@@ -524,6 +527,9 @@ Check list:
   For Windows:
   ~~~~
   > ruby bin\ruby version
+  > ruby bin\ruby server
+  ...
+  ^C
   RSense 0.1
   ~~~~
 

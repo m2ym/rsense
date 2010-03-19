@@ -1,5 +1,6 @@
 package org.cx4a.rsense.typing.runtime;
 
+import java.util.Map;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Collections;
@@ -64,5 +65,13 @@ public class TypeVarMap extends HashMap<TypeVariable, Vertex> {
         }
 
         return result;
+    }
+
+    public TypeVarMap clone() {
+        TypeVarMap clone = new TypeVarMap();
+        for (Map.Entry<TypeVariable, Vertex> entry : entrySet()) {
+            clone.put(entry.getKey(), new Vertex(null, new TypeSet(entry.getValue().getTypeSet())));
+        }
+        return clone;
     }
 }

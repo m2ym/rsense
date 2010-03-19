@@ -19,6 +19,7 @@ import org.cx4a.rsense.typing.runtime.MonomorphicObject;
 import org.cx4a.rsense.typing.runtime.Proc;
 import org.cx4a.rsense.typing.vertex.Vertex;
 import org.cx4a.rsense.typing.vertex.YieldVertex;
+import org.cx4a.rsense.typing.vertex.TypeVarVertex;
 import org.cx4a.rsense.typing.annotation.TypeVariable;
 import org.cx4a.rsense.util.Logger;
 
@@ -58,9 +59,9 @@ public class Template {
     }
 
     public void reproduceSideEffect(Graph graph, IRubyObject receiver, IRubyObject[] args, Block block) {
-        reproduceSideEffect(graph, attr.getReceiver(), receiver);
+        reproduceSideEffect(graph, attr.getMutableReceiver(false), receiver);
         for (int i = 0; i < attr.getArgs().length && i < args.length; i++) {
-            reproduceSideEffect(graph, attr.getArg(i), args[i]);
+            reproduceSideEffect(graph, attr.getMutableArg(i, false), args[i]);
         }
         reproduceYield(graph, receiver, args, block);
     }
@@ -73,10 +74,7 @@ public class Template {
                 Vertex src = entry.getValue();
                 Vertex dest = b.getTypeVarMap().get(entry.getKey());
                 if (dest != null) {
-                    src.addEdge(dest);
-                    dest.copyTypeSet(src);
-                    // FIXME
-                    //graph.propagateEdges(src);
+                    graph.propagateEdge(src, dest);
                 }
             }
         }

@@ -25,7 +25,7 @@
   </target>
 
   <target name="build" depends="antlr">
-    <javac fork="true" debug="true" source="1.6" deprecation="true"
+    <javac fork="true" source="1.5" target="1.5" debug="true" deprecation="true"
            srcdir="src" destdir="build"
            classpathref="build.class.path">
       <compilerarg value="-Xlint:all" />
@@ -64,6 +64,7 @@
   <target name="test" depends="build">
     <java fork="true" classpathref="build.class.path" classname="org.cx4a.rsense.Main">
       <arg value="script" /><arg file="test/script/all.rsense" />
+      <arg value="--log-level=error" />
       <arg value="--test-color" />
     </java>
   </target>
