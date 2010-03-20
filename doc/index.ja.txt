@@ -40,13 +40,19 @@ RSenseはJavaで書かれた[Ruby][]のための開発補助ツールです。[U
 ![](rsense-emacs-2.png)
 ![](rsense-vim.png)
 
+デモ
+----
+
+* [YouTube](http://www.youtube.com/watch?v=V-tpOJgugh4)
+* [Ogg Theora with video tag](demo.txt)
+
 ダウンロード
 ------------
 
 ### 最新安定板 ###
 
-* [rsense-0.1.tar.bz2](/pub/rsense/rsense-0.1.tar.bz2)
-* [rsense-0.1.zip](/pub/rsense/rsense-0.1.zip)
+* [rsense-0.2.tar.bz2](/pub/rsense/rsense-0.2.tar.bz2)
+* [rsense-0.2.zip](/pub/rsense/rsense-0.2.zip)
 
 ユーザーマニュアル
 ------------------
