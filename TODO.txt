@@ -15,3 +15,5 @@
   * Cloning template
   * Cut branches
   * Statistics
+* InstVar megamorphic
+* stubs load-path

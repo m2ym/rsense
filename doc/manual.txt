@@ -36,6 +36,11 @@ In the future, the following features will be also available:
 * Caller jump
 * Refactoring
 
+Downloads
+---------
+
+You can download from [RSense top page](index.txt).
+
 Installation
 ------------
 
@@ -141,6 +146,12 @@ A script located at `etc\config.rb` creates a preferred config file automaticall
 An Emacs extension for RSense is found at `etc/rsense.el`. Add the following code to `.emacs`:
 
     ;; Replace $RSENSE_HOME with the directory where RSense was installed in full path
+    ;; Example for UNIX-like systems
+    ;; (setq rsense-home "/home/tomo/opt/rsense-0.2")
+    ;; or
+    ;; (setq rsense-home (expand-file-name "~/opt/rsense-0.2"))
+    ;; Example for Windows
+    ;; (setq rsense-home "C:\\rsense-0.2")
     (setq rsense-home "$RSENSE_HOME")
     (add-to-list 'load-path (concat rsense-home "/etc"))
     (require 'rsense)
@@ -517,23 +528,34 @@ Check list:
 
   For UNIX-like systems:
   ~~~~
-  $ bin/ruby server
+  $ bin/rsense server
   ...
   ^C
-  $ bin/ruby version
+  $ bin/rsense version
   RSense 0.1
   ~~~~
   
   For Windows:
   ~~~~
-  > ruby bin\ruby version
-  > ruby bin\ruby server
+  > ruby bin\rsense version
+  > ruby bin\rsense server
   ...
   ^C
   RSense 0.1
   ~~~~
 
 * A configuration of Emacs or Vim is correct?
+
+  `rsense-home` variable in Emacs or `g:rsenseHome` variable in Vim should be full path. For example, the following code is not allowed at now.
+  ~~~~
+  (setq rsense-home "~/opt/rsense-0.2")
+  ~~~~
+  Use `expand-file-name` to expand to full path or write full path directly.
+  ~~~~
+  (setq rsense-home (expand-file-name "~/opt/rsense-0.2"))
+  ;; or
+  (setq rsense-home "/home/tomo/opt/rsense-0.2")
+  ~~~~
 
 If there is no problem in check list, kill `java` and `ruby` processes of RSense and delete pid file located. And then try again. Pid file is located at `$RSENSE_HOME/rsense-pid` or `/tmp/rsense-pid` for UNIX-like systems, and located at `%RSENSE_HOME%\rsense-pid` for Windows.
 

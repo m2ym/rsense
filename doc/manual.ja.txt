@@ -36,6 +36,11 @@ RSenseはJavaで書かれた[Ruby][]のための開発補助ツールです。[U
 * 呼び出し元ジャンプ
 * リファクタリング
 
+ダウンロード
+------------
+
+[RSenseのトップページ](index.ja.txt)からダウンロードできます。
+
 インストール
 ------------
 
@@ -142,6 +147,12 @@ Emacs拡張は`etc/rsense.el`にあります。次のコードを`.emacs`に追�
 
     ;; $RSENSE_HOMEはRSenseをインストールしたディレクトリのフルパスに置き換えてください
     (setq rsense-home "$RSENSE_HOME")
+    ;; UNIX系システムでの例
+    ;; (setq rsense-home "/home/tomo/opt/rsense-0.2")
+    ;; あるいは
+    ;; (setq rsense-home (expand-file-name "~/opt/rsense-0.2"))
+    ;; Windowsでの例
+    ;; (setq rsense-home "C:\\rsense-0.2")
     (add-to-list 'load-path (concat rsense-home "/etc"))
     (require 'rsense)
 
@@ -518,23 +529,34 @@ Rubyリファレンスマニュアル
 
   UNIX系システム:
   ~~~~
-  $ bin/ruby server
+  $ bin/rsense server
   ...
   ^C
-  $ bin/ruby version
+  $ bin/rsenes version
   RSense 0.1
   ~~~~
   
   Windows:
   ~~~~
-  > ruby bin\ruby version
-  > ruby bin\ruby server
+  > ruby bin\rsense version
+  > ruby bin\rsense server
   ...
   ^C
   RSense 0.1
   ~~~~
 
 * EmacsやVimの設定は正しいか
+
+  Emacsにおける`rsense-home`やVimにおける`g:rsenseHome`は**フルパス**である必要があります。例えば、
+  ~~~~
+  (setq rsense-home "~/opt/rsense-0.2")
+  ~~~~
+  という記述は認められていません。`expand-file-name`でフルパスに展開するか、フルパスをハードコードしてください。
+  ~~~~
+  (setq rsense-home (expand-file-name "~/opt/rsense-0.2"))
+  ;; あるいは
+  (setq rsense-home "/home/tomo/opt/rsense-0.2")
+  ~~~~
 
 チェックリストに問題がない場合は、RSenseの`java`と`ruby`のプロセスをキルし、pidファイルを削除したのち、最後試してください。pidファイルはUNIX系システムの場合は`$RSENSE_HOME/rsense-pid`あるいは`/tmp/rsense-pid`、Windowsの場合は`%RSENSE_HOME%\rsense-pid`にあります。
 
