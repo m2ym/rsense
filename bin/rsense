@@ -2,7 +2,7 @@
 
 require 'socket'
 
-$is_win = RUBY_PLATFORM.downcase =~ /mswin(?!ce)|mingw|cygwin|bccwin/
+$is_win = /mswin(?!ce)|mingw|cygwin|bccwin/ =~ RUBY_PLATFORM.downcase
 $rsense_home = ENV['RSENSE_HOME'] || File.dirname(File.dirname(File.expand_path($0)))
 $socket_path = ENV['RSENSE_SOCKET']
 $classpath = ENV['RSENSE_CLASSPATH']
@@ -51,7 +51,7 @@ def process_args
       $socket_path = '/tmp/rsense-socket'
     end
   end
-  if $socket_path =~ /^(\w+):(\d+)+$/
+  if /^(\w+):(\d+)+$/ =~ $socket_path
     $host = $1
     $port = $2.to_i
   end
@@ -117,7 +117,7 @@ def server_process
             sock = serv.accept
             cmd = sock.gets
             puts "recv: #{cmd}"
-            if cmd =~ /^(exit|quit)/
+            if /^(exit|quit)/ =~ cmd
               sock.puts('END')
               sock.close
               return
@@ -126,7 +126,7 @@ def server_process
             sock.close_read
             ret = ''
             while l = io.gets
-              break if l =~ /^#{$end_mark}/
+              break if /^#{$end_mark}/ =~ l
               ret << l
             end
             sock.puts(ret)
@@ -183,10 +183,10 @@ def exec_command
     sock.close_write
     ret = ''
     while l = sock.gets
-      break if l =~ /^#{$end_mark}/
+      break if /^#{$end_mark}/ =~ l
       ret << l
     end
-    puts ret if ret !~ /\A\s*\z/
+    puts ret if /\A\s*\z/ !~ ret
   }
 end
 
