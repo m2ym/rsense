@@ -4,12 +4,20 @@ endif
 let g:loaded_rsense = 1
 
 if !exists('g:rsenseHome')
-    let g:rsenseHome = "~/src/rsense"
+    let g:rsenseHome = expand("~/src/rsense")
 endif
 
 if !exists('g:rsenseUseOmniFunc')
     let g:rsenseUseOmniFunc = 0
 endif
+
+" Check vimproc.
+let s:is_vimproc = exists('*vimproc#system')
+
+function! s:system(str, ...)"{{{
+  return s:is_vimproc ? (a:0 == 0 ? vimproc#system(a:str) : vimproc#system(a:str, join(a:000)))
+        \: (a:0 == 0 ? system(a:str) : system(a:str, join(a:000)))
+endfunction"}}}
 
 function! RSenseComplete(findstart, base)
     if a:findstart
@@ -21,7 +29,7 @@ function! RSenseComplete(findstart, base)
         call writefile(buf, file)
 
         let command = printf('ruby %s/bin/rsense code-completion --file=%s --location=%s:%s --prefix=%s', g:rsenseHome, file, line('.'), col('.') - 1, a:base)
-        let result = split(system(command), "\n")
+        let result = split(s:system(command), "\n")
         let completions = []
         for item in result
             call add(completions, split(item, ' ')[1])
@@ -37,8 +45,9 @@ endfunction
 function! SetupRSense()
     if g:rsenseUseOmniFunc
         setlocal omnifunc=RSenseComplete
+      else
+        setlocal completefunc=RSenseComplete
     endif
-    setlocal completefunc=RSenseComplete
 endfunction
 
 autocmd FileType ruby call SetupRSense()
