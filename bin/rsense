@@ -96,7 +96,7 @@ def close_server
 end
 
 def wait_for_server
-  1.upto(100) do
+  100.times do
     return if File.exists? $pid_file
     sleep 0.1
   end
