@@ -2,7 +2,7 @@
 
 require 'socket'
 
-$is_win = /mswin(?!ce)|mingw|cygwin|bccwin/ =~ RUBY_PLATFORM.downcase
+IS_WIN = /mswin(?!ce)|mingw|cygwin|bccwin/ =~ RUBY_PLATFORM.downcase
 $rsense_home = ENV['RSENSE_HOME'] || File.dirname(File.dirname(File.expand_path($0)))
 $socket_path = ENV['RSENSE_SOCKET']
 $classpath = ENV['RSENSE_CLASSPATH']
@@ -10,7 +10,7 @@ $pid_file = ENV['RSENSE_PID_FILE']
 $log = ENV['RSENSE_LOG']
 $debug = ENV['RSENSE_DEBUG']
 $config = ENV['RSENSE_CONFIG']
-$end_mark = 'END'
+END_MARK = 'END'
 
 def process_args
   until ARGV.empty?
@@ -45,7 +45,7 @@ def process_args
   end
 
   unless $socket_path
-    if $is_win
+    if IS_WIN
       $socket_path = 'localhost:77367'
     else
       $socket_path = '/tmp/rsense-socket'
@@ -57,7 +57,7 @@ def process_args
   end
 
   unless $pid_file
-    if $is_win
+    if IS_WIN
       $pid_file = File.join($rsense_home, 'rsense-pid')
     else
       $pid_file = '/tmp/rsense-pid'
@@ -106,7 +106,7 @@ end
 
 def server_process
   begin
-    options = "--home=#{$rsense_home} --no-prompt --end-mark=#{$end_mark} #{'--debug' if $debug} #{'--log=' + $log if $log} --config=#{$config}"
+    options = "--home=#{$rsense_home} --no-prompt --end-mark=#{END_MARK} #{'--debug' if $debug} #{'--log=' + $log if $log} --config=#{$config}"
     io = IO.popen("java -cp #{$classpath} org.cx4a.rsense.Main script #{options}", 'r+')
     open_server do |serv|
       begin
@@ -126,7 +126,7 @@ def server_process
             sock.close_read
             ret = ''
             while l = io.gets
-              break if /^#{$end_mark}/ =~ l
+              break if /^#{END_MARK}/ =~ l
               ret << l
             end
             sock.puts(ret)
@@ -183,7 +183,7 @@ def exec_command
     sock.close_write
     ret = ''
     while l = sock.gets
-      break if /^#{$end_mark}/ =~ l
+      break if /^#{END_MARK}/ =~ l
       ret << l
     end
     puts ret if /\A\s*\z/ !~ ret
