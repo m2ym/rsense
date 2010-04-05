@@ -79,7 +79,7 @@ You need to install Java Runtime Environment 1.5 or later. [SunJDK](http://java.
 
 ### Install RSense ###
 
-Basically, You just copy a package directory to some directory.
+Basically, You just copy a package directory to some directory. **Note that currently there is a bug that RSense doesn't work in a space containing directory such as `C:\\Documents and Settings`.** This bug will be fixed in v0.3.
 
 #### UNIX-like Systems ####
 
@@ -520,7 +520,7 @@ Check list:
   
   For Windows:
   ~~~~
-  > java -cp lib\jruby.jar:lib\antlr-runtime-3.2.jar:lib\rsense.jar org.cx4a.rsense.Main version
+  > java -cp lib\jruby.jar;lib\antlr-runtime-3.2.jar;lib\rsense.jar org.cx4a.rsense.Main version
   RSense 0.1
   ~~~~
 
