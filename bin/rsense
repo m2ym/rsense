@@ -1,79 +1,54 @@
 #!/usr/bin/env ruby
 
+require 'optparse'
+require 'stringio'
 require 'socket'
 
-module RSense
+class Shellwords
+  def self.unshellwords(array)
+    array.map {|elt| elt.index(/\s/) ? "\"#{elt.gsub(/([\"$])/, '\\1')}\"" : elt}.join(' ')
+  end
+end
+
+class RSense
   IS_WIN = /mswin(?!ce)|mingw|cygwin|bccwin/ =~ RUBY_PLATFORM.downcase
-  @rsense_home = ENV['RSENSE_HOME'] || File.dirname(File.dirname(File.expand_path($0)))
-  @socket_path = ENV['RSENSE_SOCKET']
-  @classpath = ENV['RSENSE_CLASSPATH']
-  @pid_file = ENV['RSENSE_PID_FILE']
-  @log = ENV['RSENSE_LOG']
-  @debug = ENV['RSENSE_DEBUG']
-  @config = ENV['RSENSE_CONFIG']
   END_MARK = 'END'
 
-  module_function
+  def initialize(args)
+    @rsense_home  =  ENV['RSENSE_HOME'] || File.dirname(File.dirname(File.expand_path($0)))
+    @socket_path  =  ENV['RSENSE_SOCKET']
+    @classpath    =  ENV['RSENSE_CLASSPATH']
+    @pid_file     =  ENV['RSENSE_PID_FILE']
+    @log          =  ENV['RSENSE_LOG']
+    @debug        =  ENV['RSENSE_DEBUG']
+    @config       =  ENV['RSENSE_CONFIG']
+    @args         =  args.dup
+  end
 
   def process_args
-    until ARGV.empty?
-      arg = ARGV[0]
-      case arg
-      when '--'
-        ARGV.shift
-        break
-      when /^--([\w-]+)(?:=(.*))?$/
-        ARGV.shift
-        name = $1
-        value = $2
-        case name
-        when 'home'
-          @rsense_home = value
-        when 'socket'
-          @socket_path = value
-        when 'classpath'
-          @classpath = value
-        when 'pid-file'
-          @pid_file = value
-        when 'log'
-          @log = value
-        when 'debug'
-          @debug = true
-        when 'config'
-          @config = value
-        end
-      else
-        break
-      end
+    OptionParser.new do |opt|
+      help = false
+      opt.on('--home=HOME')             {|v| @rsense_home = v }
+      opt.on('--socket=PATH')           {|v| @socket_path = v }
+      opt.on('--classpath=CLASSPATH')   {|v| @classpath = v }
+      opt.on('--pid-file=PIDFILE')      {|v| @pid_file = v }
+      opt.on('--log=LOGFILE')           {|v| @log = v }
+      opt.on('--debug')                 { @debug = true }
+      opt.on('--config=CONFIG')         {|v| @config = v }
+      opt.on('-h', '--help')            { help = true }
+      opt.order! @args
+
+      @args.unshift 'help' if @args.empty? || help
     end
 
-    unless @socket_path
-      if IS_WIN
-        @socket_path = 'localhost:77367'
-      else
-        @socket_path = '/tmp/rsense-socket'
-      end
-    end
-    if /^(\w+):(\d+)+$/ =~ @socket_path
-      @host = $1
-      @port = $2.to_i
-    end
+    @socket_path ||= IS_WIN ? 'localhost:77367' : '/tmp/rsense-socket'
+    @host, @port = $1, $2.to_i if /^(\w+):(\d+)+$/ =~ @socket_path
 
-    unless @pid_file
-      if IS_WIN
-        @pid_file = File.join(@rsense_home, 'rsense-pid')
-      else
-        @pid_file = '/tmp/rsense-pid'
-      end
-    end
+    @pid_file ||= IS_WIN ? File.join(@rsense_home, 'rsense-pid') : '/tmp/rsense-pid'
 
-    sep = File::SEPARATOR
-    psep = File::PATH_SEPARATOR
-    @classpath = '.' + ['', 'rsense.jar', 'antlr-runtime-3.2.jar', 'jruby.jar'].join("#{psep}#{@rsense_home}#{sep}lib#{sep}") unless @classpath
+    @classpath ||= '.' + ['', 'rsense.jar', 'antlr-runtime-3.2.jar', 'jruby.jar'].join(File.join(File::PATH_SEPARATOR + @rsense_home, 'lib', ''))
 
-    @config = "#{ENV['HOME']}#{sep}.rsense" unless @config
-
-    ARGV << 'help' if ARGV.empty?
+    @config ||= File.join(ENV['HOME'], '.rsense')
   end
 
   def daemonize
@@ -103,46 +78,51 @@ module RSense
       return if File.exists? @pid_file
       sleep 0.1
     end
-    puts "No server response.\nTry to kill the process and delete pid file #{@pid_file}."
-    exit 1
+    die "No server response.\nTry to kill the process and delete pid file #@pid_file."
   end
 
   def server_process
     begin
-      options = "--home=#{@rsense_home} --no-prompt --end-mark=#{END_MARK} #{'--debug' if @debug} #{'--log=' + @log if @log} --config=#{@config}"
-      io = IO.popen("java -cp #{@classpath} org.cx4a.rsense.Main script #{options}", 'r+')
+      command = %W(java -cp #@classpath org.cx4a.rsense.Main script)
+      command += %W(--home=#@rsense_home --no-prompt --end-mark=#{END_MARK} --config=#@config)
+      command << '--debug' if @debug
+      command << "--log=#@log" if @log
+      if RUBY_VERSION < '1.9.0'
+        # IO.popen can't take an array for a first argument
+        command = Shellwords.unshellwords(command)
+      end
+
+      io = IO.popen(command, 'r+')
       open_server do |serv|
         begin
           open(@pid_file, 'w') {|f| f.write($$)}
-          puts "start: #{@host ? (@host + ':' + @port.to_s) : @socket_path} (#{$$})"
+          puts "start: #{@host ? (@host + ':' + @port.to_s) : @socket_path} (#$$)"
           loop do
             begin
               sock = serv.accept
               cmd = sock.gets
               puts "recv: #{cmd}"
               if /^(exit|quit)/ =~ cmd
-                sock.puts('END')
+                sock.puts END_MARK
                 sock.close
                 return
               end
-              io.puts(cmd)
+              io.puts cmd
               sock.close_read
-              ret = ''
-              while l = io.gets
-                break if /^#{END_MARK}/ =~ l
-                ret << l
-              end
-              sock.puts(ret)
-              sock.puts('END')
+              sock.write slurp_to_end_mark(io)
+              sock.puts END_MARK
               sock.close_write
             rescue Errno::EPIPE, Errno::ECONNRESET
             end
           end
         ensure
-          puts "stop"
+          puts 'stop'
           close_server
         end
       end
+    rescue
+      $stderr.puts "Exception: #{$!.message}"
+      $stderr.puts $!.backtrace
     ensure
       io.close
       exit
@@ -150,13 +130,14 @@ module RSense
   end
 
   def start_server
-    case ARGV[0]
+    case @args[0]
     when 'server'
       close_server
       server_process
     when 'zap'
-      # do nothing
+      # do nothing here
     else
+      # already started
       return if File.exists? @pid_file
 
       fork do
@@ -173,28 +154,40 @@ module RSense
     else
       UNIXSocket.open(@socket_path, &block)
     end
+  rescue die('server is not running')
   end
 
   def exec_command
-    argv = ARGV
-    if argv[0] == 'zap'
-     File.unlink @pid_file rescue nil
-      argv = ['exit']
+    args = @args
+    if args[0] == 'zap'
+      File.unlink @pid_file rescue nil
+      args = ['exit']
     end
-    open_client {|sock|
-      sock.puts(argv.join(' '))
+    open_client do |sock|
+      sock.puts Shellwords.unshellwords(args)
       sock.close_write
-      ret = ''
-      while l = sock.gets
-        break if /^#{END_MARK}/ =~ l
-        ret << l
-      end
-      puts ret if /\A\s*\z/ !~ ret
-    }
+      print slurp_to_end_mark(sock)
+    end
+  end
+
+  def process
+    process_args
+    start_server
+    exec_command
+  end
+
+  def slurp_to_end_mark(io)
+    sio = StringIO.new
+    while l = io.gets and /^#{END_MARK}/ !~ l
+      sio << l
+    end
+    sio.string
+  end
+
+  def die(msg)
+    $stderr.puts msg
+    exit 1
   end
 end
 
-include RSense
-process_args
-start_server
-exec_command
+RSense.new(ARGV).process if $0 == __FILE__
