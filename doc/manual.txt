@@ -561,6 +561,11 @@ If there is no problem in check list, kill `java` and `ruby` processes of RSense
 
 Please contant me you couldn't resolve the problem.
 
+Reporting Bugs
+--------------
+
+Visit [RSense Bug Tracking System](http://cx4a.org/redmine/projects/rsense) and create a new ticket.
+
 [Ruby]: http://www.ruby-lang.org/ "Ruby Programming Language"
 [UNIX philosophy]: http://en.wikipedia.org/wiki/Unix_philosophy
 [Java Supported Encodings]: http://java.sun.com/j2se/1.5.0/docs/guide/intl/encoding.doc.html

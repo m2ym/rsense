@@ -45,7 +45,7 @@ endfunction
 function! SetupRSense()
     if g:rsenseUseOmniFunc
         setlocal omnifunc=RSenseComplete
-      else
+    else
         setlocal completefunc=RSenseComplete
     endif
 endfunction

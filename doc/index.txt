@@ -72,6 +72,11 @@ Git repositories are available:
 * <http://cx4a.org/repo/rsense.git>
 * <http://github.com/m2ym/rsense> (GitHub mirror)
 
+Reporting Bugs
+--------------
+
+Visit [RSense Bug Tracking System](http://cx4a.org/redmine/projects/rsense) and create a new ticket.
+
 License
 -------
 

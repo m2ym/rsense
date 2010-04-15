@@ -72,6 +72,11 @@ RSenseはJavaで書かれた[Ruby][]のための開発補助ツールです。[U
 * <http://cx4a.org/repo/rsense.git>
 * <http://github.com/m2ym/rsense> (GitHubミラー)
 
+バグレポート
+------------
+
+[RSenseのバグトラッキングシステム](http://cx4a.org/redmine/projects/rsense)に新しいチケットを登録してください。
+
 ライセンス
 ----------
 
