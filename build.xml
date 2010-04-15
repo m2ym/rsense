@@ -50,7 +50,9 @@
   </target>
 
   <target name="zip" depends="dist">
-    <zip destfile="${dist.dir}.zip" basedir="${dist.dir}" />
+    <zip destfile="${dist.dir}.zip">
+      <zipfileset dir="${dist.dir}" prefix="${dist.dir}" />
+    </zip>
   </target>
 
   <target name="tar.bz2" depends="dist">
