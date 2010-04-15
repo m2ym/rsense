@@ -2,7 +2,7 @@
 
 ;; Copyright (C) 2010  Tomohiro Matsuyama
 
-;; Author: Tomohiro Matsuyama <m2ym.pub@gmail.com>
+;; Author: Tomohiro Matsuyama <tomo@cx4a.org>
 ;; Keywords: convenience
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -78,11 +78,11 @@ Nil means proper socket will be selected.")
 
 (defun rsense-command-1 (command no-output)
   (apply 'call-process
-               (rsense-interpreter)
-               nil (not no-output) nil
-               (cons (rsense-program)
-                     (apply 'rsense-args
-                            (append command '("--format=emacs"))))))
+         (rsense-interpreter)
+         nil (not no-output) nil
+         (cons (rsense-program)
+               (apply 'rsense-args
+                      (append command '("--format=emacs"))))))
 
 (defun rsense-command (&rest command)
   (car-safe

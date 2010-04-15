@@ -6,7 +6,7 @@ require 'socket'
 
 class Shellwords
   def self.unshellwords(array)
-    array.map {|elt| elt.index(/\s/) ? "\"#{elt.gsub(/([\"$])/, '\\1')}\"" : elt}.join(' ')
+    array.map {|elt| elt.index(/\s/) ? "\"#{elt.gsub(/([\"\\$])/, '\\1')}\"" : elt}.join(' ')
   end
 end
 

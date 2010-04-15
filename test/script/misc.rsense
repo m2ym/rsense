@@ -1,0 +1,2 @@
+type-inference --file=test/data/crlf.rb --location=3:9 --test=CRLF --should-be=String
+type-inference '--file=test/data/a file.rb' --location=1:2 --test=SpaceFile --should-be=Fixnum

@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
 import java.util.Collection;
+import java.util.Arrays;
 import java.util.Properties;
 
 import java.io.File;
@@ -24,6 +25,7 @@ import org.jruby.ast.Node;
 
 import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.util.Logger;
+import org.cx4a.rsense.util.StringUtil;
 import org.cx4a.rsense.util.HereDocReader;
 
 public class Main {
@@ -245,7 +247,7 @@ public class Main {
                     continue;
                 }
                 
-                String[] argv = line.split(" ");
+                String[] argv = StringUtil.shellwords(line);
                 if (argv.length > 0) {
                     String command = argv[0];
                     if (command.equals("exit") || command.equals("quit")) {
@@ -680,4 +682,6 @@ public class Main {
             out.println(")");
         }
     }
+
+    
 }
