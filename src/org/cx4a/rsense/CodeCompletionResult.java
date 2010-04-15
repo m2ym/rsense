@@ -1,6 +1,7 @@
 package org.cx4a.rsense;
 
 import java.util.List;
+import java.util.Collections;
 
 import org.jruby.ast.Node;
 
@@ -28,7 +29,7 @@ public class CodeCompletionResult extends CodeAssistResult {
         }
     }
 
-    private List<CompletionCandidate> candidates;
+    private List<CompletionCandidate> candidates = Collections.<CompletionCandidate>emptyList();
     
     public CodeCompletionResult() {
         super();

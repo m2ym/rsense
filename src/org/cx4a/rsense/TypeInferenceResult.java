@@ -6,7 +6,7 @@ import org.jruby.ast.Node;
 import org.cx4a.rsense.typing.TypeSet;
 
 public class TypeInferenceResult extends CodeAssistResult {
-    private TypeSet typeSet;
+    private TypeSet typeSet = TypeSet.EMPTY;
     
     public TypeInferenceResult() {
         super();
