@@ -31,6 +31,7 @@ public class Main {
         public int count = 0;
         public int success = 0;
         public int failure = 0;
+        public int error = 0;
     }
 
     private Properties properties;
@@ -355,6 +356,9 @@ public class Main {
                 }
             }
         } catch (Exception e) {
+            if (options.isTest()) {
+                testError(options);
+            }
             commandException(e, options);
         }
     }
@@ -406,6 +410,9 @@ public class Main {
                 }
             }
         } catch (Exception e) {
+            if (options.isTest()) {
+                testError(options);
+            }
             commandException(e, options);
         }
     }
@@ -617,9 +624,23 @@ public class Main {
         out.println();
     }
 
+    private void testError(Options options) {
+        if (testStats == null) {
+            testStats = new TestStats();
+        }
+        testStats.count++;
+        testStats.error++;
+        if (options.isTestColor()) {
+            out.printf("\33[34m%s\33[0m... [\33[1;31mERROR\33[0m]", options.getTest());
+        } else {
+            out.printf("%s... [BAD]", options.getTest());
+        }
+        out.println();
+    }
+
     private void testResult(Options options) {
         if (testStats != null) {
-            String ok, bad;
+            String ok, bad, error;
             if (options.isTestColor()) {
                 ok = String.format("\33[32;1m%s\33[0m", testStats.success);
                 if (testStats.failure > 0) {
@@ -627,11 +648,17 @@ public class Main {
                 } else {
                     bad = String.valueOf(testStats.failure);
                 }
+                if (testStats.error > 0) {
+                    error = String.format("\33[31;1m%s\33[0m", testStats.error);
+                } else {
+                    error = String.valueOf(testStats.error);
+                }
             } else {
                 ok = String.valueOf(testStats.success);
                 bad = String.valueOf(testStats.failure);
+                error = String.valueOf(testStats.error);
             }
-            out.printf("test: count=%d, success=%s, failure=%s\n", testStats.count, ok, bad);
+            out.printf("test: count=%d, success=%s, failure=%s, error=%s\n", testStats.count, ok, bad, error);
         }
     }
 

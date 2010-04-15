@@ -63,9 +63,33 @@
     </exec>
   </target>
 
-  <target name="test" depends="build">
+  <target name="test">
+    <antcall target="dotest">
+      <param name="name" value="all" />
+    </antcall>
+  </target>
+
+  <target name="test.builtin">
+    <antcall target="dotest">
+      <param name="name" value="builtin" />
+    </antcall>
+  </target>
+
+  <target name="test.stdlib">
+    <antcall target="dotest">
+      <param name="name" value="stdlib" />
+    </antcall>
+  </target>
+
+  <target name="test.misc">
+    <antcall target="dotest">
+      <param name="name" value="misc" />
+    </antcall>
+  </target>
+
+  <target name="dotest" depends="build">
     <java fork="true" classpathref="build.class.path" classname="org.cx4a.rsense.Main">
-      <arg value="script" /><arg file="test/script/all.rsense" />
+      <arg value="script" /><arg file="test/script/${name}.rsense" />
       <arg value="--log-level=error" />
       <arg value="--test-color" />
     </java>

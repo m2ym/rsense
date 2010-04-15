@@ -74,7 +74,7 @@ public class CodeAssist {
                 int count = 0;
                 for (int i = 0; i < length; i++) {
                     char c = buf[i];
-                    if (Character.isHighSurrogate(c)) {
+                    if (Character.isHighSurrogate(c) || c == '\r') {
                     } else if (c == '\n') {
                         line++;
                         col = 0;
