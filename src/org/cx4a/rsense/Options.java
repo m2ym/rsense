@@ -191,6 +191,10 @@ public class Options extends HashMap<String, List<String>> {
         return hasOption("keep-env");
     }
 
+    public boolean isTime() {
+        return hasOption("time");
+    }
+
     public boolean isTest() {
         return hasOption("test");
     }
@@ -250,6 +254,9 @@ public class Options extends HashMap<String, List<String>> {
         addOptions("gem-path", parent.getOptions("gem-path"));
         addOption("format", parent.getFormat());
         addOption("encoding", parent.getEncoding());
+        if (parent.isTime()) {
+            addOption("time");
+        }
         if (parent.isTestColor()) {
             addOption("test-color");
         }

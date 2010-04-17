@@ -201,7 +201,7 @@ public class RuntimeHelper {
     }
 
     public static Vertex classVarAssign(Graph graph, ClassVarAsgnNode node, Vertex src) {
-        RubyClass klass = (RubyClass) graph.getRuntime().getContext().getFrameModule();
+        RubyModule klass = graph.getRuntime().getContext().getFrameModule();
         if (src == null) {
             src = graph.createVertex(node.getValueNode());
         }
@@ -217,7 +217,7 @@ public class RuntimeHelper {
     }
 
     public static Vertex classVariable(Graph graph, ClassVarNode node) {
-        RubyClass klass = (RubyClass) graph.getRuntime().getContext().getFrameModule();
+        RubyModule klass = graph.getRuntime().getContext().getFrameModule();
         VertexHolder holder = (VertexHolder) klass.getClassVar(node.getName());
         if (holder == null) {
             holder = graph.createFreeVertexHolder();
@@ -377,7 +377,7 @@ public class RuntimeHelper {
         VertexHolder holder = graph.createFreeVertexHolder();
         scope.setValue(node.getName(), holder);
         if (src != null) {
-            graph.addEdgeAndCopyTypeSet(src, holder.getVertex());
+            graph.addEdgeAndUpdate(src, holder.getVertex());
         }
         return src;
     }
@@ -497,7 +497,9 @@ public class RuntimeHelper {
     }
     
     private static Vertex call(Graph graph, CallVertex vertex, boolean callSuper) {
-        if (vertex.isApplicable()) {
+        if (vertex.isApplicable() && vertex.isChanged()) {
+            vertex.markUnchanged();
+            
             String name = vertex.getName();
             TypeSet receivers = vertex.getReceiverVertex().getTypeSet();
             Block block = vertex.getBlock();
@@ -532,7 +534,6 @@ public class RuntimeHelper {
                     }
                 }
 
-                //Logger.debug("try to apply template: %s", name);
                 List<TemplateAttribute> attrs = generateTemplateAttributes(receivers, args, block);
                 for (TemplateAttribute attr : attrs) {
                     Vertex returnVertex = applyTemplateAttribute(graph, vertex, name, attr, callSuper);
@@ -550,7 +551,7 @@ public class RuntimeHelper {
                 }
             }
 
-            vertex.getTypeSet().addAll(accumulator);
+            vertex.addTypes(accumulator);
         }
         return vertex;
     }
@@ -677,7 +678,7 @@ public class RuntimeHelper {
 
         Vertex ret = method.call(graph, template, receiver, args, argVertices, block);
         if (ret != null && result != AnnotationResolver.Result.RESOLVED) {
-            graph.addEdgeAndCopyTypeSet(ret, returnVertex);
+            graph.addEdgeAndUpdate(ret, returnVertex);
         }
 
         context.popScope();
@@ -864,25 +865,36 @@ public class RuntimeHelper {
             return vertex;
         }
 
+        // return immediately if no need to apply
         Proc block = (Proc) vertex.getBlock();
         Vertex argsVertex = vertex.getArgsVertex();
+        if (block != null
+            && block.isApplied(vertex)
+            && (argsVertex == null
+                || !argsVertex.isChanged())) {
+            return vertex;
+        }
+        if (argsVertex != null) {
+            argsVertex.markUnchanged();
+        }
+
         Vertex returnVertex = yield(graph, block, (argsVertex != null ? argsVertex.getTypeSet() : TypeSet.EMPTY), vertex.getExpandArguments(), template.getReturnVertex());
         if (returnVertex != null) {
-            graph.addEdgeAndCopyTypeSet(returnVertex, vertex);
+            graph.addEdgeAndUpdate(returnVertex, vertex);
         }
-        
         if (block != null) {
             block.recordYield(vertex);
         }
+        
         return vertex;
     }
 
     public static void splatValue(Graph graph, SplatVertex vertex) {
-        vertex.getTypeSet().addAll(arrayValue(graph, vertex.getValueVertex()));
+        vertex.addTypes(arrayValue(graph, vertex.getValueVertex()));
     }
 
     public static void toAryValue(Graph graph, ToAryVertex vertex) {
-        vertex.getTypeSet().addAll(arrayValue(graph, vertex.getValueVertex()));
+        vertex.addTypes(arrayValue(graph, vertex.getValueVertex()));
     }
 
     public static TypeSet arrayValue(Graph graph, Vertex vertex) {
@@ -912,7 +924,7 @@ public class RuntimeHelper {
                     Array array = (Array) object;
                     if (!array.isModified()) {
                         if (array.length() == 1) {
-                            vertex.copyTypeSet(array.getElement(0));
+                            vertex.update(array.getElement(0));
                         } else {
                             vertex.addType(object);
                         }
@@ -922,7 +934,7 @@ public class RuntimeHelper {
                 TypeVariable var = TypeVariable.valueOf("t");
                 TypeVarMap tvmap = getTypeVarMap(object);
                 if (tvmap != null && tvmap.containsKey(var)) {
-                    vertex.copyTypeSet(tvmap.get(var));
+                    vertex.update(tvmap.get(var));
                 }
             }
         }

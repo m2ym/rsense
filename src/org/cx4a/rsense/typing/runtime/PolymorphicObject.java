@@ -9,6 +9,7 @@ import org.cx4a.rsense.typing.annotation.TypeVariable;
 public class PolymorphicObject extends RubyObject {
     // data polymorphic modified?
     private boolean modified = false;
+    private long modifiedTime;
 
     public PolymorphicObject(Ruby runtime) {
         this(runtime, runtime.getObject());
@@ -31,8 +32,13 @@ public class PolymorphicObject extends RubyObject {
         return modified;
     }
 
+    public long getModifiedTime() {
+        return modifiedTime;
+    }
+
     public void setModified(boolean modified) {
         this.modified = modified;
+        this.modifiedTime = System.currentTimeMillis();
     }
 
     public MonomorphicObject[] generateMonomorphicObjects() {

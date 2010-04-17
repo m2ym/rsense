@@ -26,13 +26,16 @@ public class Proc extends RubyObject implements Block {
     private Frame frame;
     private Scope scope;
     private Set<YieldVertex> yields;
-
+    private int varNodeHashCode, bodyNodeHashCode;
+    
     public Proc(Ruby runtime, Node varNode, Node bodyNode, Frame frame, Scope scope) {
         super(runtime, runtime.getProc());
         this.varNode = varNode;
         this.bodyNode = bodyNode;
         this.frame = frame;
         this.scope = scope;
+        this.varNodeHashCode = 0;
+        this.bodyNodeHashCode = 0;
     }
 
     public Node getVarNode() {
@@ -41,6 +44,20 @@ public class Proc extends RubyObject implements Block {
 
     public Node getBodyNode() {
         return bodyNode;
+    }
+
+    public int getVarNodeHashCode() {
+        if (varNodeHashCode == 0) {
+            varNodeHashCode = NodeUtil.nodeHashCode(varNode);
+        }
+        return varNodeHashCode;
+    }
+
+    public int getBodyNodeHashCode() {
+        if (bodyNodeHashCode == 0) {
+            bodyNodeHashCode = NodeUtil.nodeHashCode(bodyNode);
+        }
+        return bodyNodeHashCode;
     }
 
     public Frame getFrame() {
@@ -62,12 +79,13 @@ public class Proc extends RubyObject implements Block {
         return yields.add(vertex);
     }
 
+    public boolean isApplied(YieldVertex vertex) {
+        return yields != null && yields.contains(vertex);
+    }
+
     @Override
     public int hashCode() {
-        int code = 0;
-        code ^= NodeUtil.nodeHashCode(varNode);
-        code ^= NodeUtil.nodeHashCode(bodyNode);
-        return code;
+        return getVarNodeHashCode() ^ getBodyNodeHashCode();
     }
 
     @Override
@@ -81,8 +99,7 @@ public class Proc extends RubyObject implements Block {
         }
 
         Proc o = (Proc) other;
-        return NodeUtil.nodeEquals(varNode, o.varNode)
-            && NodeUtil.nodeEquals(bodyNode, o.bodyNode)
+        return hashCode() == o.hashCode()
             && frame.equals(o.frame)
             && scope.equals(o.scope);
     }

@@ -1,3 +1,4 @@
 script builtin.rsense
 script stdlib.rsense
 script misc.rsense
+script regression.rsense

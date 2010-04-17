@@ -1,5 +1,6 @@
 package org.cx4a.rsense.typing;
 
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
@@ -83,8 +84,8 @@ public class Template {
     private void reproduceYield(Graph graph, IRubyObject receiver, IRubyObject[] args, Block block) {
         Proc templateProc = (Proc) attr.getBlock();
         if (templateProc != null && block != null) {
-            Proc proc = (Proc) block;
-            for (YieldVertex vertex : templateProc.getYields()) {
+            // Yield records may change during loop
+            for (YieldVertex vertex : new ArrayList<YieldVertex>(templateProc.getYields())) {
                 RuntimeHelper.yield(graph, new YieldVertex(vertex.getNode(), this, block, vertex.getArgsVertex(), vertex.getExpandArguments()));
             }
         }

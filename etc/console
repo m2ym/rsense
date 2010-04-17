@@ -1,0 +1,4 @@
+#!/bin/sh
+
+which rlwrap > /dev/null && wrap=rlwrap
+$wrap java $JAVA_OPTS -cp lib/antlr-runtime-3.2.jar:lib/jruby.jar:lib/rsense.jar org.cx4a.rsense.Main script --config=$HOME/.rsense --prompt='> ' "$@"

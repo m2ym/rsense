@@ -4,7 +4,18 @@ import java.util.Map;
 import java.util.HashMap;
 
 public class Ruby {
+    public static interface ObjectAllocator {
+        public IRubyObject allocate(Ruby runtime, RubyClass klass);
+    }
+
+    public static class DefaultObjectAllocator implements ObjectAllocator {
+        public IRubyObject allocate(Ruby runtime, RubyClass klass) {
+            return new RubyObject(runtime, klass);
+        }
+    }
+
     private Context context;
+    private ObjectAllocator allocator;
     private RubyClass objectClass, moduleClass, classClass,
         numericClass, integerClass, fixnumClass, bignumClass,
         floatClass, stringClass, symbolClass,
@@ -18,6 +29,8 @@ public class Ruby {
     private Map<String, IRubyObject> globalVars;
 
     public Ruby() {
+        allocator = new DefaultObjectAllocator();
+
         objectClass = RubyClass.newBootClass(this, "Object", null);
         moduleClass = RubyClass.newBootClass(this, "Module", objectClass);
         classClass = RubyClass.newBootClass(this, "Class", moduleClass);
@@ -84,6 +97,14 @@ public class Ruby {
         context = new Context(this);
     }
 
+    public Context getContext() {
+        return context;
+    }
+
+    public void setObjectAllocator(ObjectAllocator allocator) {
+        this.allocator = allocator;
+    }
+
     public IRubyObject getGlobalVar(String name) {
         return globalVars.get(name);
     }
@@ -91,11 +112,11 @@ public class Ruby {
     public void setGlobalVar(String name, IRubyObject value) {
         globalVars.put(name, value);
     }
-
-    public Context getContext() {
-        return context;
+    
+    public IRubyObject newInstance(RubyClass klass) {
+        return allocator.allocate(this, klass);
     }
-
+    
     public boolean isInstanceOf(IRubyObject object, RubyModule klass) {
         return object.getMetaClass() == klass;
     }

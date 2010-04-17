@@ -9,29 +9,27 @@ import org.cx4a.rsense.ruby.RubyObject;
 import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.typing.annotation.ClassType;
 
-public class InstanceFactory {
-    private Ruby runtime;
+public class ObjectAllocator implements Ruby.ObjectAllocator {
     private Map<RubyClass, IRubyObject> instances;
 
-    public InstanceFactory(Ruby runtime) {
-        this.runtime = runtime;
+    public ObjectAllocator() {
         instances = new HashMap<RubyClass, IRubyObject>();
     }
 
-    public IRubyObject newInstance(RubyClass klass) {
+    public IRubyObject allocate(Ruby runtime, RubyClass klass) {
         ClassType classType = RuntimeHelper.getClassAnnotation(klass);
         if (classType != null && classType.isPolymorphic()) {
-            return newPolymorphicInstance(klass, classType);
+            return newPolymorphicInstance(runtime, klass, classType);
         } else {
-            return newMonomorphicInstance(klass);
+            return newMonomorphicInstance(runtime, klass);
         }
     }
 
-    public IRubyObject newPolymorphicInstance(RubyClass klass, ClassType type) {
+    public IRubyObject newPolymorphicInstance(Ruby runtime, RubyClass klass, ClassType type) {
         return new PolymorphicObject(runtime, klass);
     }
 
-    public IRubyObject newMonomorphicInstance(RubyClass klass) {
+    public IRubyObject newMonomorphicInstance(Ruby runtime, RubyClass klass) {
         IRubyObject instance = instances.get(klass);
         if (instance == null) {
             instance = new RubyObject(runtime, klass);

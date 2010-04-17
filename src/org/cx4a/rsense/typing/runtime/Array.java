@@ -32,7 +32,7 @@ public class Array extends PolymorphicObject {
         getTypeVarMap().put(TypeVariable.valueOf("t"), vertex);
         if (elements != null) {
             for (Vertex e : elements) {
-                vertex.copyTypeSet(e);
+                vertex.update(e);
             }
         }
     }

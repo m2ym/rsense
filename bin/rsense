@@ -15,14 +15,15 @@ class RSense
   END_MARK = 'END'
 
   def initialize(args)
-    @rsense_home  =  ENV['RSENSE_HOME'] || File.dirname(File.dirname(File.expand_path($0)))
-    @socket_path  =  ENV['RSENSE_SOCKET']
-    @classpath    =  ENV['RSENSE_CLASSPATH']
-    @pid_file     =  ENV['RSENSE_PID_FILE']
-    @log          =  ENV['RSENSE_LOG']
-    @debug        =  ENV['RSENSE_DEBUG']
-    @config       =  ENV['RSENSE_CONFIG']
-    @args         =  args.dup
+    @rsense_home  = ENV['RSENSE_HOME'] || File.dirname(File.dirname(File.expand_path($0)))
+    @socket_path  = ENV['RSENSE_SOCKET']
+    @classpath    = ENV['RSENSE_CLASSPATH']
+    @pid_file     = ENV['RSENSE_PID_FILE']
+    @log          = ENV['RSENSE_LOG']
+    @debug        = ENV['RSENSE_DEBUG']
+    @config       = ENV['RSENSE_CONFIG']
+    @oneshot      = false
+    @args         = args.dup
   end
 
   def process_args
@@ -35,6 +36,7 @@ class RSense
       opt.on('--log=LOGFILE')           {|v| @log = v }
       opt.on('--debug')                 { @debug = true }
       opt.on('--config=CONFIG')         {|v| @config = v }
+      opt.on('--oneshot')               { @oneshot = true }
       opt.on('-h', '--help')            { help = true }
       opt.order! @args
 
@@ -112,6 +114,7 @@ class RSense
               sock.write slurp_to_end_mark(io)
               sock.puts END_MARK
               sock.close_write
+              return if @oneshot
             rescue Errno::EPIPE, Errno::ECONNRESET
             end
           end
@@ -154,7 +157,8 @@ class RSense
     else
       UNIXSocket.open(@socket_path, &block)
     end
-  rescue die('server is not running')
+  rescue
+    die('server is not running')
   end
 
   def exec_command

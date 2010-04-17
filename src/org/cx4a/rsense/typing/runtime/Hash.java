@@ -73,7 +73,7 @@ public class Hash extends Array {
     public void setKeyTypeVarVertex(Vertex vertex) {
         getTypeVarMap().put(TypeVariable.valueOf("k"), vertex);
         for (Key key : keys) {
-            vertex.getTypeSet().addAll(key.getTypeSet());
+            vertex.addTypes(key.getTypeSet());
         }
     }
 
@@ -85,7 +85,7 @@ public class Hash extends Array {
         getTypeVarMap().put(TypeVariable.valueOf("v"), vertex);
         if (elements != null) {
             for (int i = 1; i < elements.length; i += 2) {
-                vertex.copyTypeSet(elements[i]);
+                vertex.update(elements[i]);
             }
         }
     }

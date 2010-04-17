@@ -270,6 +270,7 @@ public class Main {
     }
     
     private void command(String command, Options options) {
+        long start = System.currentTimeMillis();
         Logger.info("command: %s", command);
         if (options.isTest() && !options.isKeepEnv()) {
             codeAssist.clear();
@@ -299,6 +300,9 @@ public class Main {
         } else if (command.length() == 0) {
         } else {
             commandUnknown(command, options);
+        }
+        if (options.isTime()) {
+            Logger.message("%s: %dms", command, (System.currentTimeMillis() - start));
         }
     }
 

@@ -27,8 +27,8 @@ public class Project {
     public Project(String name, File path) {
         this.name = name;
         this.path = path;
-        this.runtime = new Ruby();
-        this.graph = new Graph(runtime);
+        this.graph = new Graph();
+        this.runtime = graph.getRuntime();
         this.loadPath = new ArrayList<File>();
         this.gemPath = new ArrayList<File>();
         this.loaded = new HashSet<String>();

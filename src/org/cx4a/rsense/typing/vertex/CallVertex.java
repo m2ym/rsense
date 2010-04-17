@@ -80,7 +80,40 @@ public class CallVertex extends Vertex {
                 }
             }
         }
+
         return applicable;
+    }
+
+    @Override
+    public boolean isChanged() {
+        if (super.isChanged()
+            || (receiverVertex != null
+                && receiverVertex.isChanged())) {
+            return true;
+        }
+
+        if (argVertices != null) {
+            for (Vertex v : argVertices) {
+                if (v.isChanged()) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    @Override
+    public void markUnchanged() {
+        super.markUnchanged();
+        if (receiverVertex != null) {
+            receiverVertex.markUnchanged();
+        }
+        if (argVertices != null) {
+            for (Vertex v : argVertices) {
+                v.markUnchanged();
+            }
+        }
     }
 
     @Override

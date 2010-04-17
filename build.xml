@@ -87,6 +87,12 @@
     </antcall>
   </target>
 
+  <target name="test.regression">
+    <antcall target="dotest">
+      <param name="name" value="regression" />
+    </antcall>
+  </target>
+
   <target name="dotest" depends="build">
     <java fork="true" classpathref="build.class.path" classname="org.cx4a.rsense.Main">
       <arg value="script" /><arg file="test/script/${name}.rsense" />

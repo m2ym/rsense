@@ -89,6 +89,13 @@ a << 1
 a[0]_|_
 EOF
 
+type-inference --test=Array.DynamicAccess4 --should-be=Fixnum
+a = []
+b = a[0]
+a << 1
+b_|_
+EOF
+
 type-inference --test=Array.Max --should-be=Fixnum,String
 a = ['']
 a << 1
@@ -177,6 +184,13 @@ type-inference --test=Hash.DynamicAccess3 --should-be=Fixnum,Float
 a = {:a => 1}
 a[:b] = 2.3
 a[:a]_|_
+EOF
+
+type-inference --test=Hash.DynamicAccess3 --should-be=Fixnum
+a = {}
+b = a[:a]
+a[:a] = 1
+b_|_
 EOF
 
 type-inference --test=Hash.Put1 --should-be=Fixnum

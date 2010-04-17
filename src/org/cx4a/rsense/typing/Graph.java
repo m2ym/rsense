@@ -137,7 +137,7 @@ import org.cx4a.rsense.ruby.DynamicMethod;
 import org.cx4a.rsense.util.Logger;
 import org.cx4a.rsense.util.NodeDiff;
 import org.cx4a.rsense.util.SourceLocation;
-import org.cx4a.rsense.typing.runtime.InstanceFactory;
+import org.cx4a.rsense.typing.runtime.ObjectAllocator;
 import org.cx4a.rsense.typing.runtime.VertexHolder;
 import org.cx4a.rsense.typing.runtime.Array;
 import org.cx4a.rsense.typing.runtime.Hash;
@@ -194,15 +194,14 @@ public class Graph implements NodeVisitor {
 
     protected Ruby runtime;
     protected Context context;
-    protected InstanceFactory instanceFactory;
     protected Map<String, SpecialMethod> specialMethods;
     protected NodeDiff nodeDiff;
     protected Queue<DummyCall> dummyCallQueue = new LinkedList<DummyCall>();
     
-    public Graph(Ruby runtime) {
-        this.runtime = runtime;
+    public Graph() {
+        this.runtime = new Ruby();
+        this.runtime.setObjectAllocator(new ObjectAllocator());
         this.context = runtime.getContext();
-        this.instanceFactory = new InstanceFactory(runtime);
         this.specialMethods = new HashMap<String, SpecialMethod>();
         init();
     }
@@ -584,7 +583,7 @@ public class Graph implements NodeVisitor {
     }
     
     public Vertex createSingleTypeVertex(Node node, IRubyObject type) {
-        Vertex vertex = new Vertex(node);
+        Vertex vertex = new Vertex(node, 2);
         vertex.addType(type);
         return vertex;
     }
@@ -594,9 +593,9 @@ public class Graph implements NodeVisitor {
         propagate(src, dest);
     }
 
-    public void addEdgeAndCopyTypeSet(Vertex src, Vertex dest) {
+    public void addEdgeAndUpdate(Vertex src, Vertex dest) {
         src.addEdge(dest);
-        dest.copyTypeSet(src);
+        dest.update(src);
     }
 
     private Propagation propagation;
@@ -616,10 +615,11 @@ public class Graph implements NodeVisitor {
     }
 
     public boolean propagateEdges(Propagation propagation, Vertex src) {
+        // Edges may change during propagation
         int size = src.getEdges().size();
         for (int i = 0; i < size; i++) {
             Vertex edge = src.getEdges().get(i);
-            if (!edge.accept(propagation, src)) {
+            if (!propagation.visit(edge, src)) {
                 return false;
             }
         }
@@ -652,7 +652,7 @@ public class Graph implements NodeVisitor {
     }
 
     public IRubyObject newInstanceOf(RubyClass klass) {
-        return instanceFactory.newInstance(klass);
+        return runtime.newInstance(klass);
     }
 
     public Object visitAliasNode(AliasNode node) {
@@ -668,7 +668,7 @@ public class Graph implements NodeVisitor {
         Vertex vertex = createEmptyVertex(node);
         Vertex firstVertex = createVertex(node.getFirstNode());
         Vertex secondVertex = createVertex(node.getSecondNode());
-        addEdgeAndCopyTypeSet(secondVertex, vertex);
+        addEdgeAndUpdate(secondVertex, vertex);
         return vertex;
     }
     
@@ -809,13 +809,13 @@ public class Graph implements NodeVisitor {
                 WhenNode when = (WhenNode) cases.get(i);
                 if (when.getBodyNode() != null) {
                     Vertex v = createVertex(when.getBodyNode());
-                    addEdgeAndCopyTypeSet(v, vertex);
+                    addEdgeAndUpdate(v, vertex);
                 }
             }
         }
         if (node.getElseNode() != null) {
             Vertex v = createVertex(node.getElseNode());
-            addEdgeAndCopyTypeSet(v, vertex);
+            addEdgeAndUpdate(v, vertex);
         }
         return vertex;
     }
@@ -991,8 +991,8 @@ public class Graph implements NodeVisitor {
         TypeVarMap typeVarMap = RuntimeHelper.getTypeVarMap(range);
         if (typeVarMap != null && beginVertex != null && endVertex != null) {
             Vertex t = createFreeVertex();
-            t.copyTypeSet(beginVertex);
-            t.copyTypeSet(endVertex);
+            t.update(beginVertex);
+            t.update(endVertex);
             typeVarMap.put(TypeVariable.valueOf("t"), t);
         }
         return createSingleTypeVertex(node, range);
@@ -1048,7 +1048,7 @@ public class Graph implements NodeVisitor {
         Block block = new Proc(runtime, node.getVarNode(), node.getBodyNode(), context.getCurrentFrame(), context.getCurrentScope());
         CallVertex callVertex = new CallVertex(node, "each", receiverVertex, null, block);
         RuntimeHelper.call(this, callVertex);
-        addEdgeAndCopyTypeSet(vertex, callVertex);
+        addEdgeAndUpdate(vertex, callVertex);
         return vertex;
     }
     
@@ -1078,12 +1078,12 @@ public class Graph implements NodeVisitor {
         Vertex thenBodyVertex = null;
         if (node.getThenBody() != null) {
             thenBodyVertex = createVertex(node.getThenBody());
-            addEdgeAndCopyTypeSet(thenBodyVertex, vertex);
+            addEdgeAndUpdate(thenBodyVertex, vertex);
         }
         Vertex elseBodyVertex = null;
         if (node.getElseBody() != null) {
             elseBodyVertex = createVertex(node.getElseBody());
-            addEdgeAndCopyTypeSet(elseBodyVertex, vertex);
+            addEdgeAndUpdate(elseBodyVertex, vertex);
 
         }
         return vertex;
@@ -1202,8 +1202,7 @@ public class Graph implements NodeVisitor {
         System.arraycopy(argVertices, 0, expandedArgs, 0, argVertices.length);
         expandedArgs[expandedArgs.length - 1] = value;
         CallVertex setter = new CallVertex(node, "[]=", receiverVertex, expandedArgs, null);
-        RuntimeHelper.call(this, setter);
-        return src;
+        return RuntimeHelper.call(this, setter);
     }
     
     public Object visitOpAsgnNode(OpAsgnNode node) {
@@ -1223,16 +1222,15 @@ public class Graph implements NodeVisitor {
         }
         
         CallVertex setter = new CallVertex(node.getValueNode(), varAsgn, receiverVertex, new Vertex[] {value}, null);
-        RuntimeHelper.call(this, setter);
-        return src;
+        return RuntimeHelper.call(this, setter);
     }
     
     public Object visitOpAsgnAndNode(OpAsgnAndNode node) {
         Vertex vertex = createEmptyVertex(node);
         Vertex firstVertex = createVertex(node.getFirstNode());
         Vertex secondVertex = createVertex(node.getSecondNode());
-        addEdgeAndCopyTypeSet(firstVertex, vertex);
-        addEdgeAndCopyTypeSet(secondVertex, vertex);
+        addEdgeAndUpdate(firstVertex, vertex);
+        addEdgeAndUpdate(secondVertex, vertex);
         return vertex;
     }
     
@@ -1240,8 +1238,8 @@ public class Graph implements NodeVisitor {
         Vertex vertex = createEmptyVertex(node);
         Vertex firstVertex = createVertex(node.getFirstNode());
         Vertex secondVertex = createVertex(node.getSecondNode());
-        addEdgeAndCopyTypeSet(firstVertex, vertex);
-        addEdgeAndCopyTypeSet(secondVertex, vertex);
+        addEdgeAndUpdate(firstVertex, vertex);
+        addEdgeAndUpdate(secondVertex, vertex);
         return vertex;
     }
     
@@ -1249,8 +1247,8 @@ public class Graph implements NodeVisitor {
         Vertex vertex = createEmptyVertex(node);
         Vertex firstVertex = createVertex(node.getFirstNode());
         Vertex secondVertex = createVertex(node.getSecondNode());
-        addEdgeAndCopyTypeSet(firstVertex, vertex);
-        addEdgeAndCopyTypeSet(secondVertex, vertex);
+        addEdgeAndUpdate(firstVertex, vertex);
+        addEdgeAndUpdate(secondVertex, vertex);
         return vertex;
     }
     
@@ -1324,16 +1322,19 @@ public class Graph implements NodeVisitor {
             for (IRubyObject object : receiverVertex.getTypeSet()) {
                 RubyClass klass = object.getMetaClass();
                 if (klass.isSingleton()) {
-                    context.pushFrame(klass, "sclass", klass, null, Visibility.PUBLIC);
-                    context.pushScope(new LocalScope((RubyModule) ((MetaClass) klass).getAttached()));
+                    MetaClass metaClass = (MetaClass) klass;
+                    if (metaClass.getAttached() instanceof RubyModule) {
+                        context.pushFrame(klass, "sclass", klass, null, Visibility.PUBLIC);
+                        context.pushScope(new LocalScope((RubyModule) metaClass.getAttached()));
 
-                    if (node.getBodyNode() != null) {
-                        createVertex(node.getBodyNode());
+                        if (node.getBodyNode() != null) {
+                            createVertex(node.getBodyNode());
+                        }
+
+                        context.popScope();
+                        context.popFrame();
                     }
-
-                    context.popScope();
-                    context.popFrame();
-        
+                    
                     return NULL_VERTEX;
                 } else {
                     Logger.warn(SourceLocation.of(node), "singleton class of objects is not supported.");
@@ -1478,11 +1479,9 @@ public class Graph implements NodeVisitor {
 
     public boolean propagateVertex(Propagation propagation, Vertex dest, Vertex src) {
         // copy first to make sure variable assign can be revisited
-        dest.copyTypeSet(src);
+        dest.update(src);
 
-        if (propagation.checkVisited(dest)
-            // FIXME polymorphic objects update
-            /*|| dest.getTypeSet().containsAll(src.getTypeSet())*/) {
+        if (propagation.checkVisited(dest)) {
             return true;
         }
 
@@ -1499,31 +1498,45 @@ public class Graph implements NodeVisitor {
     public boolean propagateMultipleAsgnVertex(Propagation propagation, MultipleAsgnVertex dest, Vertex src) {
         if (propagation.checkVisited(dest)) { return true; }
 
-        Vertex valueVertex = dest.getValueVertex();
-        for (IRubyObject object : RuntimeHelper.arrayValue(propagation.getGraph(), valueVertex)) {
-            RuntimeHelper.multipleAssign(this, (MultipleAsgnNode) dest.getNode(), object);
+        if (dest.isChanged()) {
+            dest.markUnchanged();
+
+            for (IRubyObject object : RuntimeHelper.arrayValue(propagation.getGraph(), dest.getValueVertex())) {
+                RuntimeHelper.multipleAssign(this, (MultipleAsgnNode) dest.getNode(), object);
+            }
         }
+
+        // FIXME no need to propagate?
         return true;
     }
 
     public boolean propagateSplatVertex(Propagation propagation, SplatVertex dest, Vertex src) {
         if (propagation.checkVisited(dest)) { return true; }
 
-        RuntimeHelper.splatValue(this, dest);
+        if (dest.isChanged()) {
+            dest.markUnchanged();
+            RuntimeHelper.splatValue(this, dest);
+        }
         return propagateEdges(propagation, dest);
     }
 
     public boolean propagateToAryVertex(Propagation propagation, ToAryVertex dest, Vertex src) {
         if (propagation.checkVisited(dest)) { return true; }
 
-        RuntimeHelper.toAryValue(this, dest);
+        if (dest.isChanged()) {
+            dest.markUnchanged();
+            RuntimeHelper.toAryValue(this, dest);
+        }
         return propagateEdges(propagation, dest);
     }
 
     public boolean propagateSValueVertex(Propagation propagation, SValueVertex dest, Vertex src) {
         if (propagation.checkVisited(dest)) { return true; }
 
-        RuntimeHelper.aValueSplat(this, dest);
+        if (dest.isChanged()) {
+            dest.markUnchanged();
+            RuntimeHelper.aValueSplat(this, dest);
+        }
         return propagateEdges(propagation, dest);
     }
 
@@ -1544,7 +1557,7 @@ public class Graph implements NodeVisitor {
         if (propagation.checkVisited(dest)) { return true; }
 
         dest.getObject().setModified(true);
-        dest.copyTypeSet(src);
+        dest.update(src);
         return propagateEdges(propagation, dest);
     }
 

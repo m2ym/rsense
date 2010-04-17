@@ -325,7 +325,7 @@ public class AnnotationResolver {
             Vertex[] elements = new Vertex[args.length];
             for (int i = 0; i < args.length; i++) {
                 elements[i] = graph.createFreeVertex();
-                elements[i].getTypeSet().addAll(args[i]);
+                elements[i].addTypes(args[i]);
             }
             YieldVertex vertex = new YieldVertex(null, template, block, graph.createFreeSingleTypeVertex(RuntimeHelper.createArray(graph, elements)), true);
             returnVertex = RuntimeHelper.yield(graph, vertex);
@@ -404,7 +404,7 @@ public class AnnotationResolver {
                             TypeExpression expr = types.get(i);
                             TypeSet ts = processMethodReturn(template, classType, expr, receiver);
                             Vertex vertex = graph.createFreeVertex();
-                            vertex.getTypeSet().addAll(ts);
+                            vertex.addTypes(ts);
                             typeVarMap.put(var, vertex);
                         }
                     }
@@ -442,7 +442,7 @@ public class AnnotationResolver {
                         return result;
                     }
                     elements[i] = graph.createFreeVertex();
-                    elements[i].getTypeSet().addAll(ts);
+                    elements[i].addTypes(ts);
                 }
                 result.add(RuntimeHelper.createArray(graph, elements));
             }
@@ -466,7 +466,7 @@ public class AnnotationResolver {
             return false;
         }
 
-        template.getReturnVertex().getTypeSet().addAll(ts);
+        template.getReturnVertex().addTypes(ts);
         return true;
     }
 
