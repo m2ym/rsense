@@ -171,9 +171,11 @@ public class Graph implements NodeVisitor {
         public static class Event {
             public final EventType type;
             public final String name; // TODO
-            public Event(EventType type, String name) {
+            public final Node node;   // TODO
+            public Event(EventType type, String name, Node node) {
                 this.type = type;
                 this.name = name;
+                this.node = node;
             }
         }
         
@@ -210,13 +212,14 @@ public class Graph implements NodeVisitor {
     protected Map<String, SpecialMethod> specialMethods;
     protected NodeDiff nodeDiff;
     protected Queue<DummyCall> dummyCallQueue = new LinkedList<DummyCall>();
-    protected EventListener eventListener;
+    protected List<EventListener> eventListeners;
 
     public Graph() {
         this.runtime = new Ruby();
         this.runtime.setObjectAllocator(new ObjectAllocator());
         this.context = runtime.getContext();
         this.specialMethods = new HashMap<String, SpecialMethod>();
+        this.eventListeners = new ArrayList<EventListener>();
         init();
     }
 
@@ -244,26 +247,33 @@ public class Graph implements NodeVisitor {
         this.nodeDiff = nodeDiff;
     }
 
-    public void setEventListener(EventListener eventListener) {
-        this.eventListener = eventListener;
+    public void addEventListener(EventListener eventListener) {
+        eventListeners.add(eventListener);
     }
 
-    public void notifyDefineEvent(Method method) {
-        if (eventListener != null)
+    public void removeEventListener(EventListener eventListener) {
+        eventListeners.remove(eventListener);
+    }
+
+    public void notifyDefineEvent(Node node, Method method) {
+        for (EventListener eventListener : eventListeners)
             eventListener.update(new EventListener.Event(EventListener.EventType.DEFINE,
-                                                         method.toString()));
+                                                         method.toString(),
+                                                         node));
     }
 
-    public void notifyClassEvent(RubyModule klass) {
-        if (eventListener != null)
+    public void notifyClassEvent(Node node, RubyModule klass) {
+        for (EventListener eventListener : eventListeners)
             eventListener.update(new EventListener.Event(EventListener.EventType.CLASS,
-                                                         klass.toString()));
+                                                         klass.toString(),
+                                                         node));
     }
 
-    public void notifyModuleEvent(RubyModule module) {
-        if (eventListener != null)
+    public void notifyModuleEvent(Node node, RubyModule module) {
+        for (EventListener eventListener : eventListeners)
             eventListener.update(new EventListener.Event(EventListener.EventType.MODULE,
-                                                         module.toString()));
+                                                         module.toString(),
+                                                         node));
     }
 
     private void init() {
@@ -892,7 +902,7 @@ public class Graph implements NodeVisitor {
 
             RuntimeHelper.setClassTag(klass, node.getBodyNode(), AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
 
-            notifyClassEvent(klass);
+            notifyClassEvent(node, klass);
         }
         
         return Vertex.EMPTY;
@@ -998,7 +1008,7 @@ public class Graph implements NodeVisitor {
 
         dummyCallQueue.offer(new DummyCall(node, newMethod, oldMethod, receiver));
 
-        notifyDefineEvent(newMethod);
+        notifyDefineEvent(node, newMethod);
 
         return Vertex.EMPTY;
     }
@@ -1027,7 +1037,7 @@ public class Graph implements NodeVisitor {
 
                 dummyCallQueue.offer(new DummyCall(node, newMethod, oldMethod, receiver));
 
-                notifyDefineEvent(newMethod);
+                notifyDefineEvent(node, newMethod);
             } else
                 Logger.warn(SourceLocation.of(node), "cannot define singleton method for individual object: %s", name);
         }
@@ -1201,7 +1211,7 @@ public class Graph implements NodeVisitor {
         
             RuntimeHelper.setClassTag(module, node.getBodyNode(), AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
         
-            notifyModuleEvent(module);
+            notifyModuleEvent(node, module);
         }
         
         return Vertex.EMPTY;

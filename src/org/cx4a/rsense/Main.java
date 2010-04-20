@@ -61,7 +61,7 @@ public class Main {
         public void attach(Project project) {
             event = null;
             if (interval >= 0) {
-                project.setEventListener(this);
+                project.addEventListener(this);
                 if (!isAlive())
                     start();
             }
@@ -70,7 +70,7 @@ public class Main {
         public void detach(Project project) {
             event = null;
             if (interval >= 0)
-                project.setEventListener(null);
+                project.removeEventListener(this);
         }
 
         public void update(Project.EventListener.Event event) {
@@ -168,7 +168,11 @@ public class Main {
                   + "\n"
                   + "  type-inference         - Infer type at specified position.\n"
                   + "      --file=            - File to analyze\n"
-                  + "      --location=        - Location where you want to complete (pos, line:col, str)\n"
+                  + "      --location=        - Location where you want to infer (pos, line:col, str)\n"
+                  + "\n"
+                  + "  where                  - Print which class/module/method cursor at.\n"
+                  + "      --file=            - File to analyze\n"
+                  + "      --line=            - Line number to find\n"
                   + "\n"
                   + "  load                   - Load file without any outputs.\n"
                   + "      --file=            - File to analyze\n"
@@ -347,6 +351,8 @@ public class Main {
             commandCodeCompletion(options);
         } else if (command.equals("type-inference")) {
             commandTypeInference(options);
+        } else if (command.equals("where")) {
+            commandWhere(options);
         } else if (command.equals("load")) {
             commandLoad(options);
         } else if (command.equals("script")) {
@@ -499,6 +505,47 @@ public class Main {
         }
     }
 
+    private void commandWhere(Options options) {
+        WhereResult result;
+        Project project = codeAssist.getProject(options);
+        try {
+            progressMonitor.attach(project);
+            if (options.isFileStdin()) {
+                result = codeAssist.where(project,
+                                          new File("(stdin)"),
+                                          options.getHereDocReader(inReader),
+                                          options.getLine());
+            } else {
+                result = codeAssist.where(project,
+                                          options.getFile(),
+                                          options.getEncoding(),
+                                          options.getLine());
+            }
+
+            if (options.isPrintAST()) {
+                Logger.debug("AST:\n%s", result.getAST());
+            }
+
+            if (options.isEmacsFormat()) {
+                out.print("(");
+                if (result.getName() != null)
+                    out.printf("(name . \"%s\")", result.getName());
+                codeAssistError(result, options);
+                out.println(")");
+            } else {
+                if (result.getName() != null) {
+                    out.print("name: ");
+                    out.println(result.getName());
+                }
+                codeAssistError(result, options);
+            }
+        } catch (Exception e) {
+            commandException(e, options);
+        } finally {
+            progressMonitor.detach(project);
+        }
+    }
+
     private void commandLoad(Options options) {
         LoadResult result;
         Project project = codeAssist.getProject(options);
@@ -635,6 +682,8 @@ public class Main {
     private void commandException(Exception e, Options options) {
         if (options.isEmacsFormat()) {
             out.println("((error . \"unexpected error\"))");
+        } else if (e instanceof Options.InvalidOptionException) {
+            out.println(e.getMessage());
         } else {
             out.println("unexpected error:");
             e.printStackTrace(out);

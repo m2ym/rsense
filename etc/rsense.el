@@ -94,7 +94,12 @@ Nil means proper socket will be selected.")
 (defun rsense-command-no-output (&rest command)
   (rsense-command-1 command t))
 
-(defun rsense-buffer-command (buffer offset command &optional remove-until)
+(defun* rsense-buffer-command (buffer
+                               command
+                               &key
+                               remove-until
+                               offset
+                               line)
   (unless rsense-temp-file
     (setq rsense-temp-file (make-temp-file temporary-file-directory)))
   (with-temp-buffer
@@ -105,19 +110,28 @@ Nil means proper socket will be selected.")
     (rsense-command command
                     (format "--file=%s" rsense-temp-file)
                     (format "--encoding=UTF-8")
-                    (format "--location=%s" (1- offset))
+                    (cond
+                     (offset
+                      (format "--location=%s" (1- offset)))
+                     (line
+                      (format "--line=%s" line)))
                     (format "--detect-project=%s" (buffer-file-name buffer)))))
 
 (defun rsense-code-completion (&optional buffer offset remove-until)
   (rsense-buffer-command (or buffer (current-buffer))
-                         (or offset (point))
                          "code-completion"
-                         remove-until))
+                         :offset (or offset (point))
+                         :remove-until remove-until))
 
 (defun rsense-type-inference (&optional buffer offset)
   (rsense-buffer-command (or buffer (current-buffer))
-                         (or offset (point))
-                         "type-inference"))
+                         "type-inference"
+                         :offset (or offset (point))))
+
+(defun rsense-where (&optional buffer offset)
+  (rsense-buffer-command (or buffer (current-buffer))
+                         "where"
+                         :line (line-number-at-pos offset)))
 
 (defun rsense-lookup-document (pattern)
   (when (file-directory-p rsense-rurema-home)
@@ -164,6 +178,14 @@ Nil means proper socket will be selected.")
     (if (featurep 'popup)
         (popup-tip msg :margin t)
       (message "Type: %s" msg))))
+
+(defun rsense-where-is ()
+  (interactive)
+  (let ((name (or (assoc-default 'name (rsense-where (current-buffer) (point)))
+                  "Unknown")))
+    (if (featurep 'popup)
+        (popup-tip name :margin t)
+      (message "Name: %s" name))))
 
 (defun rsense-open-project (dir)
   (interactive "DDirectory: ")

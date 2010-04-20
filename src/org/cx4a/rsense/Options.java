@@ -24,6 +24,14 @@ import org.cx4a.rsense.util.Logger;
 public class Options extends HashMap<String, List<String>> {
     private static final long serialVersionUID = 0L;
 
+    public static class InvalidOptionException extends RuntimeException {
+        private static final long serialVersionUID = 0L;
+
+        public InvalidOptionException(String msg) {
+            super(msg);
+        }
+    }
+
     private List<String> rest = new ArrayList<String>();
 
     public Options() {}
@@ -132,6 +140,14 @@ public class Options extends HashMap<String, List<String>> {
             } catch (NumberFormatException e) {
                 return CodeAssist.Location.markLocation(lr[0]);
             }
+        }
+    }
+
+    public int getLine() {
+        try {
+            return Integer.parseInt(getOption("line"));
+        } catch (NumberFormatException e) {
+            throw new InvalidOptionException("line number is not given with --line");
         }
     }
 

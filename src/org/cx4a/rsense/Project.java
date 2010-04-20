@@ -77,8 +77,12 @@ public class Project {
         loaded.add(name);
     }
 
-    public void setEventListener(EventListener eventListener) {
-        graph.setEventListener(eventListener);
+    public void addEventListener(EventListener eventListener) {
+        graph.addEventListener(eventListener);
+    }
+
+    public void removeEventListener(EventListener eventListener) {
+        graph.removeEventListener(eventListener);
     }
 
     private List<File> getAbsoluteLoadPath(List<String> loadPath) {

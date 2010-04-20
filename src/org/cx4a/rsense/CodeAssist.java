@@ -31,6 +31,7 @@ import org.cx4a.rsense.typing.vertex.Vertex;
 import org.cx4a.rsense.typing.runtime.SpecialMethod;
 import org.cx4a.rsense.util.Logger;
 import org.cx4a.rsense.util.NodeDiff;
+import org.cx4a.rsense.util.SourceLocation;
 
 public class CodeAssist {
     public static final String TYPE_INFERENCE_METHOD_NAME = "__rsense_type_inference__";
@@ -126,12 +127,14 @@ public class CodeAssist {
     private static class Context {
         public Project project;
         public TypeSet typeSet;
+        public boolean main;
         public String feature;
         public int loadPathLevel;
 
         public void clear() {
             this.project = null;
             this.typeSet = null;
+            this.main = false;
             this.feature = null;
             this.loadPathLevel = 0;
         }
@@ -164,6 +167,34 @@ public class CodeAssist {
                 }
             }
             return null;
+        }
+    }
+
+    private class WhereEventListener implements Project.EventListener {
+        private int line;
+        private int closest;
+        private String name;
+
+        public WhereEventListener(int line) {
+            this.line = line;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void update(Event event) {
+            if (context.main
+                && event.name != null
+                && event.node != null) {
+                SourceLocation loc = SourceLocation.of(event.node);
+                if (loc != null
+                    && line >= loc.getLine()
+                    && line - closest > line - loc.getLine()) {
+                    closest = loc.getLine();
+                    name = event.name;
+                }
+            }
         }
     }
 
@@ -327,10 +358,12 @@ public class CodeAssist {
     }
     
     private LoadResult load(Project project, File file, Reader reader, boolean prepare) {
+        boolean oldMain = context.main;
         try {
-            if (prepare) {
+            if (prepare)
                 prepare(project);
-            }
+            else
+                context.main = false;
             Node ast = parseFileContents(file, readAll(reader));
             project.getGraph().load(ast);
 
@@ -339,6 +372,8 @@ public class CodeAssist {
             return result;
         } catch (IOException e) {
             return LoadResult.failWithException("Cannot load file", e);
+        } finally {
+            context.main = oldMain;
         }
     }
 
@@ -483,6 +518,43 @@ public class CodeAssist {
         }
     }
 
+    public WhereResult where(Project project, File file, String encoding, int line) {
+        try {
+            InputStream in = new FileInputStream(file);
+            try {
+                return where(project, file, new InputStreamReader(in, encoding), line);
+            } finally {
+                in.close();
+            }
+        } catch (IOException e) {
+            return WhereResult.failWithException("Cannot open file", e);
+        } 
+    }
+
+    public WhereResult where(Project project, File file, Reader reader, int line) {
+        try {
+            prepare(project);
+
+            Node ast = parseFileContents(file, readAll(reader));
+
+            WhereEventListener eventListener = new WhereEventListener(line);
+            project.addEventListener(eventListener);
+            try {
+                project.getGraph().load(ast);
+            } finally {
+                project.removeEventListener(eventListener);
+            }
+
+            WhereResult result = new WhereResult();
+            result.setAST(ast);
+            result.setName(eventListener.getName());
+            
+            return result;
+        } catch (IOException e) {
+            return WhereResult.failWithException("Cannot read file", e);
+        }
+    }
+
     public void clear() {
         this.rubyRuntime = org.jruby.Ruby.newInstance(); // for parse
         this.context.clear();
@@ -496,6 +568,7 @@ public class CodeAssist {
     private void prepare(Project project) {
         context.project = project;
         context.typeSet = new TypeSet();
+        context.main = true;
 
         Graph graph = project.getGraph();
         graph.addSpecialMethod(TYPE_INFERENCE_METHOD_NAME, typeInferenceMethod);
