@@ -165,8 +165,6 @@ import org.cx4a.rsense.typing.annotation.ClassType;
 import org.cx4a.rsense.typing.annotation.MethodType;
 
 public class Graph implements NodeVisitor {
-    public static final Vertex NULL_VERTEX = new Vertex();
-
     protected static class DummyCall {
         private MethodDefNode node;
         private Method newMethod;
@@ -182,9 +180,9 @@ public class Graph implements NodeVisitor {
 
         public void force(Graph graph) {
             if (!newMethod.isTemplatesShared()) {
-                Map<TemplateAttribute, Template> templates = oldMethod != null ? oldMethod.getTemplates() : null;
-                if (templates != null && !templates.isEmpty()) {
-                    RuntimeHelper.dummyCallForTemplates(graph, node, newMethod, templates);
+                Collection<TemplateAttribute> templateAttributes = oldMethod != null ? oldMethod.getTemplateAttributes() : null;
+                if (templateAttributes != null && !templateAttributes.isEmpty()) {
+                    RuntimeHelper.dummyCallForTemplates(graph, node, newMethod, templateAttributes);
                 } else {
                     RuntimeHelper.dummyCall(graph, node, newMethod, receiver);
                 }
@@ -661,7 +659,7 @@ public class Graph implements NodeVisitor {
         if (method != null) {
             module.addMethod(node.getNewName(), method);
         }
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitAndNode(AndNode node) {
@@ -674,7 +672,7 @@ public class Graph implements NodeVisitor {
     
     public Object visitArgsNode(ArgsNode node) {
         unsupportedNode(node);
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitArgsCatNode(ArgsCatNode node) {
@@ -709,7 +707,7 @@ public class Graph implements NodeVisitor {
     
     public Object visitArgsPushNode(ArgsPushNode node) {
         unsupportedNode(node);
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitArrayNode(ArrayNode node) {
@@ -745,7 +743,7 @@ public class Graph implements NodeVisitor {
     
     public Object visitBlockArgNode(BlockArgNode node) {
         unsupportedNode(node);
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitBlockNode(BlockNode node) {
@@ -759,7 +757,7 @@ public class Graph implements NodeVisitor {
     public Object visitBlockPassNode(BlockPassNode node) {
         // Never reach here
         unsupportedNode(node);
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitBreakNode(BreakNode node) {
@@ -770,7 +768,7 @@ public class Graph implements NodeVisitor {
             addEdgeAndPropagate(vertex, loopTag.getReturnVertex());
             return vertex;
         }
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitConstDeclNode(ConstDeclNode node) {
@@ -826,7 +824,7 @@ public class Graph implements NodeVisitor {
         RubyModule module = RuntimeHelper.getNamespace(this, cpath);
         if (module == null) {
             Logger.error(SourceLocation.of(node), "namespace unresolved: %s", cpath);
-            return NULL_VERTEX;
+            return Vertex.EMPTY;
         }
 
         RubyClass superClass = null;
@@ -857,7 +855,7 @@ public class Graph implements NodeVisitor {
             RuntimeHelper.setClassTag(klass, node.getBodyNode(), AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
         }
         
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitColon2Node(Colon2Node node) {
@@ -869,10 +867,10 @@ public class Graph implements NodeVisitor {
             } else if (value != null) {
                 return createSingleTypeVertex(node, value);
             } else {
-                return NULL_VERTEX;
+                return Vertex.EMPTY;
             }
         } else {
-            return NULL_VERTEX;
+            return Vertex.EMPTY;
         }
     }
     
@@ -883,7 +881,7 @@ public class Graph implements NodeVisitor {
         } else if (value != null) {
             return createSingleTypeVertex(node, value);
         } else {
-            return NULL_VERTEX;
+            return Vertex.EMPTY;
         }
     }
     
@@ -894,7 +892,7 @@ public class Graph implements NodeVisitor {
         } else if (value != null) {
             return createSingleTypeVertex(node, value);
         } else {
-            return NULL_VERTEX;
+            return Vertex.EMPTY;
         }
     }
     
@@ -919,7 +917,7 @@ public class Graph implements NodeVisitor {
     
     public Object visitDVarNode(DVarNode node) {
         VertexHolder holder = (VertexHolder) runtime.getContext().getCurrentScope().getValue(node.getName());
-        return holder != null ? holder.getVertex() : NULL_VERTEX;
+        return holder != null ? holder.getVertex() : Vertex.EMPTY;
     }
     
     public Object visitDXStrNode(DXStrNode node) {
@@ -960,14 +958,14 @@ public class Graph implements NodeVisitor {
 
         dummyCallQueue.offer(new DummyCall(node, newMethod, oldMethod, receiver));
 
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitDefsNode(DefsNode node) {
         Vertex receiverVertex = createVertex(node.getReceiverNode());
         if (receiverVertex.isEmpty()) {
             Logger.error(SourceLocation.of(node), "null receiver for defs: %s", node.getName());
-            return NULL_VERTEX;
+            return Vertex.EMPTY;
         }
 
         RubyModule cbase = context.getCurrentScope().getModule();
@@ -990,7 +988,7 @@ public class Graph implements NodeVisitor {
                 Logger.warn(SourceLocation.of(node), "cannot define singleton method for individual object: %s", name);
         }
 
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitDotNode(DotNode node) {
@@ -1010,7 +1008,7 @@ public class Graph implements NodeVisitor {
     
     public Object visitEncodingNode(EncodingNode node) {
         unsupportedNode(node);
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitEnsureNode(EnsureNode node) {
@@ -1024,7 +1022,7 @@ public class Graph implements NodeVisitor {
     public Object visitEvStrNode(EvStrNode node) {
         // never reach here
         unsupportedNode(node);
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitFCallNode(FCallNode node) {
@@ -1101,7 +1099,7 @@ public class Graph implements NodeVisitor {
     
     public Object visitIterNode(IterNode node) {
         unsupportedNode(node);
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitLocalAsgnNode(LocalAsgnNode node) {
@@ -1110,7 +1108,7 @@ public class Graph implements NodeVisitor {
     
     public Object visitLocalVarNode(LocalVarNode node) {
         VertexHolder holder = (VertexHolder) runtime.getContext().getCurrentScope().getValue(node.getName());
-        return holder != null ? holder.getVertex() : NULL_VERTEX;
+        return holder != null ? holder.getVertex() : Vertex.EMPTY;
     }
     
     public Object visitMultipleAsgnNode(MultipleAsgnNode node) {
@@ -1119,7 +1117,7 @@ public class Graph implements NodeVisitor {
     
     public Object visitMultipleAsgnNode(MultipleAsgn19Node node) {
         unsupportedNode(node);
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitMatch2Node(Match2Node node) {
@@ -1143,7 +1141,7 @@ public class Graph implements NodeVisitor {
         RubyModule enclosingModule = RuntimeHelper.getNamespace(this, cpath);
         if (enclosingModule == null) {
             Logger.error(SourceLocation.of(node), "namespace unresolved: %s", name);
-            return NULL_VERTEX;
+            return Vertex.EMPTY;
         }
 
         RubyModule module = enclosingModule.defineOrGetModuleUnder(name);
@@ -1158,7 +1156,7 @@ public class Graph implements NodeVisitor {
         
         RuntimeHelper.setClassTag(module, node.getBodyNode(), AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
         
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitNewlineNode(NewlineNode node) {
@@ -1173,7 +1171,7 @@ public class Graph implements NodeVisitor {
             addEdgeAndPropagate(vertex, loopTag.getYieldVertex());
             return vertex;
         }
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitNilNode(NilNode node) {
@@ -1269,16 +1267,16 @@ public class Graph implements NodeVisitor {
     
     public Object visitPreExeNode(PreExeNode node) {
         unsupportedNode(node);
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitPostExeNode(PostExeNode node) {
         unsupportedNode(node);
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitRedoNode(RedoNode node) {
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitRegexpNode(RegexpNode node) {
@@ -1289,11 +1287,11 @@ public class Graph implements NodeVisitor {
         if (node.getBodyNode() != null) {
             return createVertex(node.getBodyNode());
         }
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitRescueNode(RescueNode node) {
-        Vertex result = NULL_VERTEX;
+        Vertex result = Vertex.EMPTY;
         if (node.getBodyNode() != null) {
             result = createVertex(node.getBodyNode());
         }
@@ -1308,11 +1306,11 @@ public class Graph implements NodeVisitor {
     
     public Object visitRestArgNode(RestArgNode node) {
         unsupportedNode(node);
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitRetryNode(RetryNode node) {
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitReturnNode(ReturnNode node) {
@@ -1323,7 +1321,7 @@ public class Graph implements NodeVisitor {
             addEdgeAndPropagate(vertex, template.getReturnVertex());
             return vertex;
         }
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitRootNode(RootNode node) {
@@ -1350,21 +1348,21 @@ public class Graph implements NodeVisitor {
                         context.popFrame();
                     }
                     
-                    return NULL_VERTEX;
+                    return Vertex.EMPTY;
                 } else {
                     Logger.warn(SourceLocation.of(node), "singleton class of objects is not supported.");
                 }
             }
         }
 
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitSelfNode(SelfNode node) {
         IRubyObject self = context.getFrameSelf();
         if (self == null) {
             Logger.error(SourceLocation.of(node), "self unresolved");
-            return NULL_VERTEX;
+            return Vertex.EMPTY;
         } else
             return createSingleTypeVertex(node, self);
     }
@@ -1420,7 +1418,7 @@ public class Graph implements NodeVisitor {
     
     public Object visitUndefNode(UndefNode node) {
         Logger.warn("undef is not supported yet.");
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitUntilNode(UntilNode node) {
@@ -1434,7 +1432,7 @@ public class Graph implements NodeVisitor {
     
     public Object visitVAliasNode(VAliasNode node) {
         RuntimeHelper.aliasGlobalVaraibles(this, node.getNewName(), node.getOldName());
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitVCallNode(VCallNode node) {
@@ -1446,7 +1444,7 @@ public class Graph implements NodeVisitor {
     public Object visitWhenNode(WhenNode node) {
         // never reach here
         unsupportedNode(node);
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public Object visitWhileNode(WhileNode node) {
@@ -1494,7 +1492,7 @@ public class Graph implements NodeVisitor {
             vertex.setPrivateVisibility(true);
             return RuntimeHelper.callSuper(this, vertex);
         }
-        return NULL_VERTEX;
+        return Vertex.EMPTY;
     }
 
     public boolean propagateVertex(Propagation propagation, Vertex dest, Vertex src) {

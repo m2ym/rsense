@@ -620,7 +620,7 @@ end
 C.new.foo_|_
 EOF
 
-type-inference --test=Class.Method.Alias.Grammer1 --should-be=Fixnum
+type-inference --test=Class.Method.Alias.Grammar1 --should-be=Fixnum
 class C
   def f() 1 end
   alias :g :f
@@ -628,7 +628,7 @@ end
 C.new.g_|_
 EOF
 
-type-inference --test=Class.Method.Alias.Grammer2 --should-be=Fixnum
+type-inference --test=Class.Method.Alias.Grammar2 --should-be=Fixnum
 class C
   class << self
     def f() 1 end

@@ -17,4 +17,5 @@ public interface IRubyObject {
     public boolean isKindOf(RubyModule klass);
     public Object getTag();
     public void setTag(Object tag);
+    public int hashCode(int depth);
 }

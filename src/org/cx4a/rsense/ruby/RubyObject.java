@@ -83,6 +83,10 @@ public class RubyObject implements IRubyObject {
         this.tag = tag;
     }
 
+    public int hashCode(int depth) {
+        return hashCode();
+    }
+        
     @Override
     public String toString() {
         return "<obj:" + metaClass.toString() + ">";

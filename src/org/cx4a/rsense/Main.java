@@ -456,6 +456,7 @@ public class Main {
 
     private void commandClear(Options options) {
         codeAssist.clear();
+        System.gc();
     }
 
     private void commandListProject(Options options) {

@@ -21,7 +21,16 @@ import org.cx4a.rsense.util.Logger;
 
 public class Vertex {
     public static final int MEGAMORPHIC_THRESHOLD = 5;
-    public static TypeSet MEGAMORPHIC_TYPE_SET; // TODO thread safe
+    public static final Vertex EMPTY = new Vertex(null, TypeSet.EMPTY) {
+            @Override
+            public void addEdge(Vertex dest) {}
+            @Override
+            public void removeEdge(Vertex dest) {}
+        };
+
+    static {
+        EMPTY.edges = Collections.<Vertex>emptyList();
+    }
 
     protected Node node;
     protected int capacity = MEGAMORPHIC_THRESHOLD + 1;
@@ -49,7 +58,7 @@ public class Vertex {
 
     public Vertex(Node node, TypeSet typeSet) {
         this.node = node;
-        this.typeSet = new TypeSet(typeSet);
+        this.typeSet = typeSet;
     }
 
     public Node getNode() {
@@ -81,11 +90,8 @@ public class Vertex {
 
             // FIXME generalize
             singleType = type.getRuntime().newInstance(type.getRuntime().getObject());
-            if (MEGAMORPHIC_TYPE_SET == null) {
-                MEGAMORPHIC_TYPE_SET = new TypeSet(1);
-                MEGAMORPHIC_TYPE_SET.add(singleType);
-            }
-            typeSet = MEGAMORPHIC_TYPE_SET;
+            typeSet = new TypeSet(1);
+            typeSet.add(singleType);
 
             return false;
         } else {

@@ -60,7 +60,16 @@ public class PolymorphicObject extends RubyObject {
 
     @Override
     public int hashCode() {
-        return getMetaClass().hashCode() ^ getTypeVarMap().hashCode();
+        return hashCode(1);
+    }
+
+    @Override
+    public int hashCode(int depth) {
+        if (depth > 2)
+            // Approximate hash code for nested polymorphic object
+            return getMetaClass().hashCode();
+        else
+            return getMetaClass().hashCode() ^ getTypeVarMap().hashCode(depth + 1);
     }
 
     @Override

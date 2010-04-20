@@ -1,5 +1,8 @@
 package org.cx4a.rsense.typing.runtime;
 
+import java.lang.ref.SoftReference;
+
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
@@ -21,35 +24,36 @@ import org.cx4a.rsense.typing.annotation.MethodType;
 
 public abstract class Method extends DynamicMethod {
     private String name;
-    private Map<TemplateAttribute, Template> templates;
+    private Map<TemplateAttribute, SoftReference<Template>> templates;
     private boolean templatesShared;
     private List<MethodType> annotations;
 
     public Method(RubyModule cbase, String name, Visibility visibility, ISourcePosition position) {
         super(cbase, visibility, position);
         this.name = name;
-        templates = new HashMap<TemplateAttribute, Template>();
+        templates = new HashMap<TemplateAttribute, SoftReference<Template>>();
     }
 
     public String getName() {
         return name;
     }
 
-    public Map<TemplateAttribute, Template> getTemplates() {
-        return templates;
+    public void shareTemplates(Method with) {
+        this.templates = with.templates;
+        this.templatesShared = true;
     }
 
-    public void shareTemplates(Map<TemplateAttribute, Template> templates) {
-        this.templates = templates;
-        this.templatesShared = true;
+    public Collection<TemplateAttribute> getTemplateAttributes() {
+        return templates.keySet();
     }
     
     public Template getTemplate(TemplateAttribute key) {
-        return templates.get(key);
+        SoftReference<Template> ref = templates.get(key);
+        return ref != null ? ref.get() : null;
     }
 
     public void addTemplate(TemplateAttribute key, Template template) {
-        templates.put(key, template);
+        templates.put(key, new SoftReference<Template>(template));
     }
 
     public boolean isTemplatesShared() {

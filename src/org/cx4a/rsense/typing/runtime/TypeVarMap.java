@@ -74,12 +74,14 @@ public class TypeVarMap extends HashMap<TypeVariable, Vertex> {
 
     @Override
     public int hashCode() {
+        return hashCode(1);
+    }
+
+    public int hashCode(int depth) {
         int code = 0;
         for (Map.Entry<TypeVariable, Vertex> entry : entrySet()) {
-            code ^= entry.getKey().hashCode();
-            code *= 13;
-            code ^= entry.getValue().getTypeSet().hashCode();
-            code *= 13;
+            code = (code ^ entry.getKey().hashCode()) * 13;
+            code = (code ^ entry.getValue().getTypeSet().hashCode(depth)) * 13;
         }
         return code;
     }

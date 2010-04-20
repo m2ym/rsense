@@ -107,7 +107,7 @@ public class RuntimeHelper {
             return argumentAssign(graph, (ArgumentNode) node, src);
         }
         Logger.error("unknown assignable node: %s", node);
-        return Graph.NULL_VERTEX;
+        return Vertex.EMPTY;
     }
     
     public static Vertex localAssign(Graph graph, LocalAsgnNode node) {
@@ -326,7 +326,7 @@ public class RuntimeHelper {
             int size = pre.size();
             for (int i = 0; i < size; i++) {
                 Node next = pre.get(i);
-                Vertex arg = i < args.length ? args[i] : Graph.NULL_VERTEX;
+                Vertex arg = i < args.length ? args[i] : Vertex.EMPTY;
                 assign(graph, next, arg);
             }
         }
@@ -337,7 +337,7 @@ public class RuntimeHelper {
                 Node next = post.get(i);
                 Vertex arg = argsLength - postCount + i < args.length
                     ? args[argsLength - postCount + i]
-                    : Graph.NULL_VERTEX;
+                    : Vertex.EMPTY;
                 if (next instanceof AssignableNode) {
                     assign(graph, next, arg);
                 } else {
@@ -401,7 +401,7 @@ public class RuntimeHelper {
     public static void multipleAssign(Graph graph, MultipleAsgnNode node, IRubyObject object) {
         boolean isArray = object instanceof Array;
         Array array = null;
-        Vertex element = Graph.NULL_VERTEX;
+        Vertex element = Vertex.EMPTY;
 
         if (isArray) {
             array = (Array) object;
@@ -569,7 +569,7 @@ public class RuntimeHelper {
                 && nodeDiff.noDiff(node.getArgsNode(), oldmeth.getArgsNode())
                 && nodeDiff.noDiff(node.getBodyNode(), oldmeth.getBodyNode())) { // XXX nested class, defn
                 // FIXME annotation diff
-                newmeth.shareTemplates(oldmeth.getTemplates());
+                newmeth.shareTemplates(oldmeth);
             } else {
                 Logger.debug(SourceLocation.of(node), "templates not shared: %s", newmeth);
             }
@@ -609,9 +609,9 @@ public class RuntimeHelper {
         Logger.debug(SourceLocation.of(node), "dummy call: %s", method);
     }
 
-    public static void dummyCallForTemplates(Graph graph, MethodDefNode node, Method method, Map<TemplateAttribute, Template> templates) {
+    public static void dummyCallForTemplates(Graph graph, MethodDefNode node, Method method, Collection<TemplateAttribute> templateAttributes) {
         String name = node.getName();
-        for (TemplateAttribute attr : templates.keySet()) {
+        for (TemplateAttribute attr : templateAttributes) {
             createTemplate(graph, null, name, method, attr);
         }
         Logger.debug(SourceLocation.of(node), "template dummy call: %s", method);
@@ -787,7 +787,7 @@ public class RuntimeHelper {
     
     public static Vertex yield(Graph graph, Block block, Collection<IRubyObject> args, boolean expanded, Vertex returnVertex) {
         if (block == null) {
-            return Graph.NULL_VERTEX;
+            return Vertex.EMPTY;
         }
         Ruby runtime = graph.getRuntime();
         Context context = runtime.getContext();

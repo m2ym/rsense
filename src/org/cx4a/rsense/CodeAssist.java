@@ -127,7 +127,14 @@ public class CodeAssist {
         public Project project;
         public TypeSet typeSet;
         public String feature;
-        public int loadPathLevel = 0;
+        public int loadPathLevel;
+
+        public void clear() {
+            this.project = null;
+            this.typeSet = null;
+            this.feature = null;
+            this.loadPathLevel = 0;
+        }
     }
 
     private static class NodeDiffForTypeInference extends NodeDiff {
@@ -196,7 +203,6 @@ public class CodeAssist {
         };
 
     public CodeAssist(Options options) {
-        rubyRuntime = org.jruby.Ruby.newInstance(); // for parse
         this.context = new Context();
         this.options = options;
         clear();
@@ -478,6 +484,8 @@ public class CodeAssist {
     }
 
     public void clear() {
+        this.rubyRuntime = org.jruby.Ruby.newInstance(); // for parse
+        this.context.clear();
         this.projects = new HashMap<String, Project>();
         this.sandbox = new Project("(sandbox)", new File("."));
         this.sandbox.setLoadPath(options.getLoadPath());
