@@ -14,7 +14,8 @@ public class MonomorphicObject extends PolymorphicObject {
     
     // keep initial state of monomorphic
     private TypeVarMap fixedTypeVarMap;
-    
+    private int hashCode = 0;
+
     public MonomorphicObject(PolymorphicObject entity, TypeVarMap tvmap) {
         super(entity.getRuntime(), entity.getMetaClass(), tvmap);
         this.entity = entity;
@@ -40,11 +41,12 @@ public class MonomorphicObject extends PolymorphicObject {
 
     @Override
     public int hashCode() {
-        int code = 0;
-        for (Vertex v : fixedTypeVarMap.values()) {
-            code ^= v.singleType().getMetaClass().hashCode();
-        }
-        return code;
+        if (hashCode != 0)
+            return hashCode;
+
+        for (Vertex v : fixedTypeVarMap.values())
+            hashCode = (hashCode ^ v.singleType().getMetaClass().hashCode()) * 13;
+        return hashCode;
     }
 
     @Override

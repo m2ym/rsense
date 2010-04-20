@@ -43,4 +43,9 @@ public class DynamicScope extends LocalScope {
         DynamicScope o = (DynamicScope) other;
         return snapshot == o.snapshot;
     }
+
+    @Override
+    public String toString() {
+        return "<DynScope: " + scope.toString() + ">";
+    }
 }

@@ -19,4 +19,14 @@ public class TypeSet extends HashSet<IRubyObject> {
     public TypeSet(int capacity) {
         super(capacity);
     }
+
+    @Override
+    public int hashCode() {
+        int code = 0;
+        for (IRubyObject type : this) {
+            code ^= type.hashCode();
+            code *= 13;
+        }
+        return code;
+    }
 }

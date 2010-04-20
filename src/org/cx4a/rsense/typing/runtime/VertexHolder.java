@@ -1,6 +1,7 @@
 package org.cx4a.rsense.typing.runtime;
 
 import org.cx4a.rsense.ruby.Ruby;
+import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.ruby.RubyObject;
 import org.cx4a.rsense.typing.vertex.Vertex;
 
@@ -23,7 +24,12 @@ public class VertexHolder extends RubyObject {
 
     @Override
     public int hashCode() {
-        return vertex.hashCode();
+        int code = 0;
+        for (IRubyObject type : vertex.getTypeSet()) {
+            code ^= type.hashCode();
+            code *= 13;
+        }
+        return code;
     }
 
     @Override
@@ -37,6 +43,6 @@ public class VertexHolder extends RubyObject {
         }
 
         VertexHolder o = (VertexHolder) object;
-        return vertex.equals(o.vertex);
+        return vertex.getTypeSet().equals(o.vertex.getTypeSet());
     }
 }

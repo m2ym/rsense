@@ -304,6 +304,9 @@ public class RuntimeHelper {
     }
 
     public static void blockAssign(Graph graph, BlockArgNode node, Block block) {
+        if (block == null)
+            return;
+        
         Scope scope = graph.getRuntime().getContext().getCurrentScope();
         VertexHolder holder = (VertexHolder) scope.getValue(node.getName());
         if (holder == null) {
@@ -499,7 +502,7 @@ public class RuntimeHelper {
     private static Vertex call(Graph graph, CallVertex vertex, boolean callSuper) {
         if (vertex.isApplicable() && vertex.isChanged()) {
             vertex.markUnchanged();
-            
+
             String name = vertex.getName();
             TypeSet receivers = vertex.getReceiverVertex().getTypeSet();
             Block block = vertex.getBlock();
@@ -944,7 +947,8 @@ public class RuntimeHelper {
         if (node instanceof Colon2ImplicitNode) {
             return graph.getRuntime().getContext().getFrameModule();
         } else if (node instanceof Colon2Node) {
-            IRubyObject object = graph.createVertex(((Colon2Node) node).getLeftNode()).singleType();
+            Vertex left = graph.createVertex(((Colon2Node) node).getLeftNode());
+            IRubyObject object = left.singleType();
             if (object instanceof RubyModule) {
                 return (RubyModule) object;
             } else {
@@ -1002,7 +1006,7 @@ public class RuntimeHelper {
                 klass = (RubyModule) metaClass.getAttached();
             }
         }
-        if (klass.getTag() instanceof ClassTag) {
+        if (klass != null && klass.getTag() instanceof ClassTag) {
             return (ClassTag) klass.getTag();
         } else {
             return null;

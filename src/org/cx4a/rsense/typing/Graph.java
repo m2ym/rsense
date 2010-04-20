@@ -263,7 +263,7 @@ public class Graph implements NodeVisitor {
                         .setNextMethodChange(true)
                         .setNextMethodName("initialize")
                         .setNextMethodReceivers(accumulator)
-                        .setNextMethodBlock(null)
+                        .setNextMethodBlock(block)
                         .setNextMethodNoReturn(true)
                         .setPrivateVisibility(true);
                 }
@@ -824,6 +824,11 @@ public class Graph implements NodeVisitor {
         Colon3Node cpath = node.getCPath();
         String name = cpath.getName();
         RubyModule module = RuntimeHelper.getNamespace(this, cpath);
+        if (module == null) {
+            Logger.error(SourceLocation.of(node), "namespace unresolved: %s", cpath);
+            return NULL_VERTEX;
+        }
+
         RubyClass superClass = null;
         if (node.getSuperNode() != null) {
             Vertex v = createVertex(node.getSuperNode());
@@ -840,15 +845,17 @@ public class Graph implements NodeVisitor {
 
         RubyClass klass = module.defineOrGetClassUnder(name, superClass);
 
-        context.pushFrame(klass, name, klass, null, Visibility.PUBLIC);
-        context.pushScope(new LocalScope(klass));
+        if (klass != null) {
+            context.pushFrame(klass, name, klass, null, Visibility.PUBLIC);
+            context.pushScope(new LocalScope(klass));
 
-        RuntimeHelper.classPartialUpdate(this, klass, node.getBodyNode());
+            RuntimeHelper.classPartialUpdate(this, klass, node.getBodyNode());
 
-        context.popScope();
-        context.popFrame();
+            context.popScope();
+            context.popFrame();
 
-        RuntimeHelper.setClassTag(klass, node.getBodyNode(), AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
+            RuntimeHelper.setClassTag(klass, node.getBodyNode(), AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
+        }
         
         return NULL_VERTEX;
     }
@@ -959,25 +966,28 @@ public class Graph implements NodeVisitor {
     public Object visitDefsNode(DefsNode node) {
         Vertex receiverVertex = createVertex(node.getReceiverNode());
         if (receiverVertex.isEmpty()) {
-            Logger.error("Null receiver for defs");
+            Logger.error(SourceLocation.of(node), "null receiver for defs: %s", node.getName());
             return NULL_VERTEX;
         }
 
         RubyModule cbase = context.getCurrentScope().getModule();
         String name = node.getName();
         for (IRubyObject receiver : receiverVertex.getTypeSet()) {
-            RubyClass rubyClass = receiver.getSingletonClass();
-            Node bodyNode = node.getBodyNode();
-            Node argsNode = node.getArgsNode();
+            if (receiver instanceof RubyModule) {
+                RubyClass rubyClass = receiver.getSingletonClass();
+                Node bodyNode = node.getBodyNode();
+                Node argsNode = node.getArgsNode();
 
-            Method oldMethod = (Method) rubyClass.getMethod(name);
-            Method newMethod = new DefaultMethod(cbase, name, bodyNode, argsNode, Visibility.PUBLIC, node.getPosition());
-            rubyClass.addMethod(name, newMethod);
+                Method oldMethod = (Method) rubyClass.getMethod(name);
+                Method newMethod = new DefaultMethod(cbase, name, bodyNode, argsNode, Visibility.PUBLIC, node.getPosition());
+                rubyClass.addMethod(name, newMethod);
 
-            RuntimeHelper.methodPartialUpdate(this, node, newMethod, oldMethod, receiver);
-            RuntimeHelper.setMethodTag(newMethod, node, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
+                RuntimeHelper.methodPartialUpdate(this, node, newMethod, oldMethod, receiver);
+                RuntimeHelper.setMethodTag(newMethod, node, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
 
-            dummyCallQueue.offer(new DummyCall(node, newMethod, oldMethod, receiver));
+                dummyCallQueue.offer(new DummyCall(node, newMethod, oldMethod, receiver));
+            } else
+                Logger.warn(SourceLocation.of(node), "cannot define singleton method for individual object: %s", name);
         }
 
         return NULL_VERTEX;
@@ -1131,6 +1141,11 @@ public class Graph implements NodeVisitor {
         Colon3Node cpath = node.getCPath();
         String name = cpath.getName();
         RubyModule enclosingModule = RuntimeHelper.getNamespace(this, cpath);
+        if (enclosingModule == null) {
+            Logger.error(SourceLocation.of(node), "namespace unresolved: %s", name);
+            return NULL_VERTEX;
+        }
+
         RubyModule module = enclosingModule.defineOrGetModuleUnder(name);
 
         context.pushFrame(module, name, module, null, Visibility.PUBLIC);
@@ -1142,7 +1157,7 @@ public class Graph implements NodeVisitor {
         context.popFrame();
         
         RuntimeHelper.setClassTag(module, node.getBodyNode(), AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
-
+        
         return NULL_VERTEX;
     }
     
@@ -1346,7 +1361,12 @@ public class Graph implements NodeVisitor {
     }
     
     public Object visitSelfNode(SelfNode node) {
-        return createSingleTypeVertex(node, context.getFrameSelf());
+        IRubyObject self = context.getFrameSelf();
+        if (self == null) {
+            Logger.error(SourceLocation.of(node), "self unresolved");
+            return NULL_VERTEX;
+        } else
+            return createSingleTypeVertex(node, self);
     }
     
     public Object visitSplatNode(SplatNode node) {

@@ -95,6 +95,19 @@ class RSense
       end
 
       io = IO.popen(command, 'r+')
+
+      (Signal.list.keys & %w(INT TERM CHLD)).each do |sig|
+        trap(sig) do
+          begin
+            puts "singal: #{sig}"
+            close_server
+            io.close if io && !io.closed?
+          ensure
+            exit 127
+          end
+        end
+      end
+
       open_server do |serv|
         begin
           open(@pid_file, 'w') {|f| f.write($$)}
@@ -116,6 +129,8 @@ class RSense
               sock.close_write
               return if @oneshot
             rescue Errno::EPIPE, Errno::ECONNRESET
+            ensure
+              sock.close if sock && !sock.closed?
             end
           end
         ensure
@@ -127,7 +142,7 @@ class RSense
       $stderr.puts "Exception: #{$!.message}"
       $stderr.puts $!.backtrace
     ensure
-      io.close
+      io.close if io && !io.closed?
       exit
     end
   end

@@ -138,6 +138,7 @@ public class Main {
                   + "  --log-level=           - Log level (fixme, error, warn, message, info, debug)\n"
                   + "  --format=              - Output format (plain, emacs)\n"
                   + "  --verbose              - Verbose output\n"
+                  + "  --time                 - Print timing of each command\n"
                   + "  --encoding=            - Input encoding\n"
                   + "  --load-path=           - Load path string (: or ; separated)\n"
                   + "  --gem-path=            - Gem path string (: or ; separated)\n"

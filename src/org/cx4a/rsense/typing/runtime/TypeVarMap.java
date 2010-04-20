@@ -71,4 +71,41 @@ public class TypeVarMap extends HashMap<TypeVariable, Vertex> {
         }
         return clone;
     }
+
+    @Override
+    public int hashCode() {
+        int code = 0;
+        for (Map.Entry<TypeVariable, Vertex> entry : entrySet()) {
+            code ^= entry.getKey().hashCode();
+            code *= 13;
+            code ^= entry.getValue().getTypeSet().hashCode();
+            code *= 13;
+        }
+        return code;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other)
+            return true;
+
+        if (!(other instanceof TypeVarMap))
+            return false;
+
+        TypeVarMap o = (TypeVarMap) other;
+        if (size() != o.size())
+            return false;
+
+        Iterator<Map.Entry<TypeVariable, Vertex>> i = entrySet().iterator();
+        Iterator<Map.Entry<TypeVariable, Vertex>> j = o.entrySet().iterator();
+        while (i.hasNext() && j.hasNext()) {
+            Map.Entry<TypeVariable, Vertex> x = i.next();
+            Map.Entry<TypeVariable, Vertex> y = j.next();
+            if (!x.getKey().equals(y.getKey())
+                || !x.getValue().getTypeSet().equals(y.getValue().getTypeSet()))
+                return false;
+        }
+
+        return true;
+    }
 }

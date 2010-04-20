@@ -69,6 +69,9 @@ public class Vertex {
     }
 
     public boolean addType(IRubyObject type) {
+        if (type == null)
+            throw new NullPointerException("type is null");
+
         if (megamorphic)
             return false;
 
@@ -133,9 +136,12 @@ public class Vertex {
     }
 
     public IRubyObject singleType() {
-        if (typeSet == null || typeSet.size() > 1)
+        if (typeSet == null || typeSet.size() != 1)
             return null;
-        return singleType;
+        else if (singleType != null)
+            return singleType;
+        else
+            return singleType = typeSet.iterator().next();
     }
 
     public void addEdge(Vertex dest) {

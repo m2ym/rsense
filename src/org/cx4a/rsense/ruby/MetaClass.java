@@ -39,6 +39,9 @@ public class MetaClass extends RubyClass {
 
     @Override
     public String toString() {
-        return "<" + attached.toString() + ">";
+        if (attached instanceof RubyModule)
+            return "<" + attached.toString() + ">";
+        else
+            return super.toString();
     }
 }

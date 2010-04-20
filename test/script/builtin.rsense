@@ -127,6 +127,10 @@ a.push(1, 2.3, '')
 a[0]_|_
 EOF
 
+type-inference --test=Array.Concat --should-be=Fixnum,String
+([''] + [1])[0]_|_
+EOF
+
 type-inference --test=Array.DataPolymorphism1 --should-be=String
 a = []
 a << 1
@@ -709,12 +713,27 @@ end
 C.new.get_|_
 EOF
 
-type-inference --test=Class.Constructor2 --should-be=Float
+type-inference --test=Class.Constructor.NoArg --should-be=Float
 class C
   def initialize(x) @x = x end
   def get() @x end
 end
 C.new(2.3).get_|_
+EOF
+
+type-inference --test=Class.Constructor.OneArg --should-be=Float
+class C
+  def initialize(x) @x = x end
+  def get() @x end
+end
+C.new(2.3).get_|_
+EOF
+
+type-inference --test=Class.Constructor.Block --should-be=Fixnum
+class C
+  def initialize() yield 1 end
+end
+C.new {|x| x_|_}
 EOF
 
 type-inference --test=SingletonClass.Method1 --should-be=Fixnum

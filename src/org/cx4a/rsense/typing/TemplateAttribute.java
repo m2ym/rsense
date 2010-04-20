@@ -14,6 +14,7 @@ public class TemplateAttribute {
     private IRubyObject receiver;
     private IRubyObject[] args;
     private Block block;
+    private int hashCode = 0;
 
     // For to keep original state of receiver and args
     // See AnnotationResolver
@@ -106,19 +107,18 @@ public class TemplateAttribute {
 
     @Override
     public int hashCode() {
-        int code = 0;
-        if (receiver != null) {
-            code ^= receiver.hashCode();
-        }
+        if (hashCode != 0)
+            return hashCode;
+        
+        if (receiver != null)
+            hashCode = (hashCode ^ receiver.hashCode()) * 13;
         for (IRubyObject arg : args) {
-            if (arg != null) {
-                code ^= arg.hashCode();
-            }
+            if (arg != null)
+                hashCode = (hashCode ^ arg.hashCode()) * 13;
         }
-        if (block != null) {
-            code ^= block.hashCode();
-        }
-        return code;
+        if (block != null)
+            hashCode ^= (hashCode ^ block.hashCode()) * 13;
+        return hashCode;
     }
 
     @Override
@@ -133,7 +133,8 @@ public class TemplateAttribute {
 
         TemplateAttribute o = (TemplateAttribute) other;
 
-        if (((receiver == null) ^ (o.receiver == null))
+        if (hashCode() != other.hashCode()
+            || ((receiver == null) ^ (o.receiver == null))
             || (receiver != null && !receiver.equals(o.receiver))
             || args.length != o.args.length
             || (block != null
@@ -156,6 +157,6 @@ public class TemplateAttribute {
 
     @Override
     public String toString() {
-        return "<TemplAttr " + receiver.toString() + " " + Arrays.asList(args).toString() + ">";
+        return "<TemplAttr " + receiver.toString() + " " + Arrays.asList(args).toString() + (block != null ? (" " + block.toString() + ">") : ">");
     }
 }

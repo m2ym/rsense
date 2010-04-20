@@ -59,6 +59,24 @@ public class PolymorphicObject extends RubyObject {
     }
 
     @Override
+    public int hashCode() {
+        return getMetaClass().hashCode() ^ getTypeVarMap().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other)
+            return true;
+
+        if (!(other instanceof PolymorphicObject))
+            return false;
+
+        PolymorphicObject o = (PolymorphicObject) other;
+        return getMetaClass() == o.getMetaClass()
+            && getTypeVarMap().equals(o.getTypeVarMap());
+    }
+
+    @Override
     public String toString() {
         return "<pobj:" + getMetaClass().toString() + getTypeVarMap() + ">";
     }

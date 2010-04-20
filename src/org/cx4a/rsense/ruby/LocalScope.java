@@ -36,4 +36,9 @@ public class LocalScope implements Scope {
         }
         return code;
     }
+
+    @Override
+    public String toString() {
+        return "<LocalScope: " + cref.toString() + " " + localVars.toString() + ">";
+    }
 }
