@@ -115,6 +115,8 @@ public class Main {
                   + "\n"
                   + "  clear                  - Clear current environment.\n"
                   + "\n"
+                  + "  gc                     - Execute garbage collection.\n"
+                  + "\n"
                   + "  list-project           - List loaded projects.\n"
                   + "\n"
                   + "  open-project <dir>     - Open project in <dir>.\n"
@@ -286,6 +288,8 @@ public class Main {
             script(options);
         } else if (command.equals("clear")) {
             commandClear(options);
+        } else if (command.equals("gc")) {
+            commandGC(options);
         } else if (command.equals("list-project")) {
             commandListProject(options);
         } else if (command.equals("open-project")) {
@@ -456,6 +460,9 @@ public class Main {
 
     private void commandClear(Options options) {
         codeAssist.clear();
+    }
+
+    private void commandGC(Options options) {
         System.gc();
     }
 
@@ -688,6 +695,4 @@ public class Main {
             out.println(")");
         }
     }
-
-    
 }

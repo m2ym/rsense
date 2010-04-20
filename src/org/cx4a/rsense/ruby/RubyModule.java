@@ -126,11 +126,11 @@ public class RubyModule extends RubyObject {
         classVars.put(name, value);
     }
 
-    public RubyClass defineOrGetClassUnder(String name, RubyClass superClass) {
+    public RubyModule defineOrGetClassUnder(String name, RubyClass superClass) {
         if (isConstantDefined(name)) {
             IRubyObject object = getConstant(name);
-            if (object instanceof RubyClass) {
-                return (RubyClass) object;
+            if (object instanceof RubyModule) {
+                return (RubyModule) object;
             } else {
                 Logger.error("%s is not class", name);
                 return null;

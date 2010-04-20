@@ -3,11 +3,10 @@
 require 'optparse'
 require 'stringio'
 require 'socket'
+require 'shellwords'
 
-class Shellwords
-  def self.unshellwords(array)
-    array.map {|elt| elt.index(/\s/) ? "\"#{elt.gsub(/([\"\\$])/, '\\1')}\"" : elt}.join(' ')
-  end
+def Shellwords.unshellwords(array)
+  array.map {|elt| elt.index(/\s/) ? "\"#{elt.gsub(/([\"\\$])/, '\\1')}\"" : elt}.join(' ')
 end
 
 class RSense

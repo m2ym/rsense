@@ -86,3 +86,10 @@ class C
   end
 end
 EOF
+
+type-inference --test=ClassForModule --should-be=Fixnum
+class C
+  def self.foo() 1 end
+end
+C.foo_|_
+EOF

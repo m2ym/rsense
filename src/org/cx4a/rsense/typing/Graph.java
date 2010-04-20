@@ -841,7 +841,7 @@ public class Graph implements NodeVisitor {
             }
         }
 
-        RubyClass klass = module.defineOrGetClassUnder(name, superClass);
+        RubyModule klass = module.defineOrGetClassUnder(name, superClass);
 
         if (klass != null) {
             context.pushFrame(klass, name, klass, null, Visibility.PUBLIC);
