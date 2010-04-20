@@ -165,6 +165,21 @@ import org.cx4a.rsense.typing.annotation.ClassType;
 import org.cx4a.rsense.typing.annotation.MethodType;
 
 public class Graph implements NodeVisitor {
+    public interface EventListener {
+        public enum EventType { DEFINE, CLASS, MODULE }
+        
+        public static class Event {
+            public final EventType type;
+            public final String name; // TODO
+            public Event(EventType type, String name) {
+                this.type = type;
+                this.name = name;
+            }
+        }
+        
+        public void update(Event event);
+    }
+
     protected static class DummyCall {
         private MethodDefNode node;
         private Method newMethod;
@@ -195,7 +210,8 @@ public class Graph implements NodeVisitor {
     protected Map<String, SpecialMethod> specialMethods;
     protected NodeDiff nodeDiff;
     protected Queue<DummyCall> dummyCallQueue = new LinkedList<DummyCall>();
-    
+    protected EventListener eventListener;
+
     public Graph() {
         this.runtime = new Ruby();
         this.runtime.setObjectAllocator(new ObjectAllocator());
@@ -226,6 +242,28 @@ public class Graph implements NodeVisitor {
 
     public void setNodeDiff(NodeDiff nodeDiff) {
         this.nodeDiff = nodeDiff;
+    }
+
+    public void setEventListener(EventListener eventListener) {
+        this.eventListener = eventListener;
+    }
+
+    public void notifyDefineEvent(Method method) {
+        if (eventListener != null)
+            eventListener.update(new EventListener.Event(EventListener.EventType.DEFINE,
+                                                         method.toString()));
+    }
+
+    public void notifyClassEvent(RubyModule klass) {
+        if (eventListener != null)
+            eventListener.update(new EventListener.Event(EventListener.EventType.CLASS,
+                                                         klass.toString()));
+    }
+
+    public void notifyModuleEvent(RubyModule module) {
+        if (eventListener != null)
+            eventListener.update(new EventListener.Event(EventListener.EventType.MODULE,
+                                                         module.toString()));
     }
 
     private void init() {
@@ -853,6 +891,8 @@ public class Graph implements NodeVisitor {
             context.popFrame();
 
             RuntimeHelper.setClassTag(klass, node.getBodyNode(), AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
+
+            notifyClassEvent(klass);
         }
         
         return Vertex.EMPTY;
@@ -958,6 +998,8 @@ public class Graph implements NodeVisitor {
 
         dummyCallQueue.offer(new DummyCall(node, newMethod, oldMethod, receiver));
 
+        notifyDefineEvent(newMethod);
+
         return Vertex.EMPTY;
     }
     
@@ -984,6 +1026,8 @@ public class Graph implements NodeVisitor {
                 RuntimeHelper.setMethodTag(newMethod, node, AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
 
                 dummyCallQueue.offer(new DummyCall(node, newMethod, oldMethod, receiver));
+
+                notifyDefineEvent(newMethod);
             } else
                 Logger.warn(SourceLocation.of(node), "cannot define singleton method for individual object: %s", name);
         }
@@ -1146,15 +1190,19 @@ public class Graph implements NodeVisitor {
 
         RubyModule module = enclosingModule.defineOrGetModuleUnder(name);
 
-        context.pushFrame(module, name, module, null, Visibility.PUBLIC);
-        context.pushScope(new LocalScope(module));
+        if (module != null) {
+            context.pushFrame(module, name, module, null, Visibility.PUBLIC);
+            context.pushScope(new LocalScope(module));
 
-        RuntimeHelper.classPartialUpdate(this, module, node.getBodyNode());
+            RuntimeHelper.classPartialUpdate(this, module, node.getBodyNode());
 
-        context.popScope();
-        context.popFrame();
+            context.popScope();
+            context.popFrame();
         
-        RuntimeHelper.setClassTag(module, node.getBodyNode(), AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
+            RuntimeHelper.setClassTag(module, node.getBodyNode(), AnnotationHelper.parseAnnotations(node.getCommentList(), node.getPosition().getStartLine()));
+        
+            notifyModuleEvent(module);
+        }
         
         return Vertex.EMPTY;
     }

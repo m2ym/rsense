@@ -12,6 +12,7 @@ end
 class RSense
   IS_WIN = /mswin(?!ce)|mingw|cygwin|bccwin/ =~ RUBY_PLATFORM.downcase
   END_MARK = 'END'
+  USE_HEART_BEAT = true
 
   def initialize(args)
     @rsense_home  = ENV['RSENSE_HOME'] || File.dirname(File.dirname(File.expand_path($0)))
@@ -88,6 +89,7 @@ class RSense
       command += %W(--home=#@rsense_home --no-prompt --end-mark=#{END_MARK} --config=#@config)
       command << '--debug' if @debug
       command << "--log=#@log" if @log
+      command << '--progress=1' if USE_HEART_BEAT
       if RUBY_VERSION < '1.9.0'
         # IO.popen can't take an array for a first argument
         command = Shellwords.unshellwords(command)
@@ -123,7 +125,9 @@ class RSense
               end
               io.puts cmd
               sock.close_read
-              sock.write slurp_to_end_mark(io)
+              while l = io.gets and /^#{END_MARK}/ !~ l
+                sock.write l
+              end
               sock.puts END_MARK
               sock.close_write
               return if @oneshot
@@ -184,7 +188,27 @@ class RSense
     open_client do |sock|
       sock.puts Shellwords.unshellwords(args)
       sock.close_write
-      print slurp_to_end_mark(sock)
+
+      t = timeout = USE_HEART_BEAT ? 5 : 15;
+      continue = true
+      thread = Thread.new do
+        while continue && t > 0
+          t -= 1
+          sleep 1
+        end
+        continue = false
+      end
+      while continue and l = sock.gets and /^#{END_MARK}/ !~ l
+        if /^progress:/ =~ l
+          # update timeout with heat beating
+          t = timeout
+        else
+          print l
+        end
+      end
+      continue = false
+      thread.exit
+      thread.join
     end
   end
 
@@ -192,14 +216,6 @@ class RSense
     process_args
     start_server
     exec_command
-  end
-
-  def slurp_to_end_mark(io)
-    sio = StringIO.new
-    while l = io.gets and /^#{END_MARK}/ !~ l
-      sio << l
-    end
-    sio.string
   end
 
   def die(msg)

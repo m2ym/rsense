@@ -155,6 +155,17 @@ public class Options extends HashMap<String, List<String>> {
         return level != null ? Logger.Level.valueOf(level.toUpperCase()) : Logger.Level.MESSAGE;
     }
 
+    public Integer getProgress() {
+        if (hasOption("progress")) {
+            try {
+                return Integer.parseInt(getOption("progress"));
+            } catch (NumberFormatException e) {
+                return 0;
+            }
+        }
+        return null;
+    }
+
     public String getRsenseHome() {
         String rsenseHome = getOption("home");
         return rsenseHome != null ? rsenseHome : ".";

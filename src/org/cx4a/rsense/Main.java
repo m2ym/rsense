@@ -29,11 +29,71 @@ import org.cx4a.rsense.util.StringUtil;
 import org.cx4a.rsense.util.HereDocReader;
 
 public class Main {
-    private class TestStats {
+    private static class TestStats {
         public int count = 0;
         public int success = 0;
         public int failure = 0;
         public int error = 0;
+    }
+
+    private static class ProgressMonitor extends Thread implements Project.EventListener {
+        private boolean stop;
+        private PrintStream out;
+        private int interval;
+        private Project.EventListener.Event event;
+
+        public ProgressMonitor(PrintStream out, int interval) {
+            this.out = out;
+            this.interval = interval;
+        }
+
+        public void run() {
+            if (interval > 0) {
+                while (isAlive()) {
+                    print();
+                    try {
+                        Thread.sleep(interval);
+                    } catch (InterruptedException e) {}
+                }
+            }
+        }
+
+        public void attach(Project project) {
+            event = null;
+            if (interval >= 0) {
+                project.setEventListener(this);
+                if (!isAlive())
+                    start();
+            }
+        }
+
+        public void detach(Project project) {
+            event = null;
+            if (interval >= 0)
+                project.setEventListener(null);
+        }
+
+        public void update(Project.EventListener.Event event) {
+            this.event = event;
+            if (interval == 0)
+                print();
+        }
+
+        private void print() {
+            if (event != null) {
+                switch (event.type) {
+                case DEFINE:
+                    out.printf("progress: defining method %s...\n", event.name);
+                    break;
+                case CLASS:
+                    out.printf("progress: defining class %s...\n", event.name);
+                    break;
+                case MODULE:
+                    out.printf("progress: defining module %s...\n", event.name);
+                    break;
+                }
+            }
+        }
     }
 
     private Properties properties;
@@ -43,6 +103,7 @@ public class Main {
     private Reader inReader;
     private CodeAssist codeAssist;
     private TestStats testStats;
+    private ProgressMonitor progressMonitor;
     
     public static void main(String[] args) throws Exception {
         new Main().run(args);
@@ -85,6 +146,9 @@ public class Main {
 
     private void init(Options options) {
         codeAssist = new CodeAssist(options);
+
+        Integer interval = options.getProgress();
+        progressMonitor = new ProgressMonitor(out, interval != null ? interval * 1000 : -1);
     }
 
     private void start(String command, Options options) {
@@ -138,6 +202,7 @@ public class Main {
                   + "  --debug                - Print debug messages (shorthand of --log-evel=debug)\n"
                   + "  --log=                 - Log file to output (default stderr)\n"
                   + "  --log-level=           - Log level (fixme, error, warn, message, info, debug)\n"
+                  + "  --progress=            - Report progress per seconds\n"
                   + "  --format=              - Output format (plain, emacs)\n"
                   + "  --verbose              - Verbose output\n"
                   + "  --time                 - Print timing of each command\n"
@@ -312,9 +377,10 @@ public class Main {
     }
 
     private void commandCodeCompletion(Options options) {
+        CodeCompletionResult result;
+        Project project = codeAssist.getProject(options);
         try {
-            CodeCompletionResult result;
-            Project project = codeAssist.getProject(options);
+            progressMonitor.attach(project);
             if (options.isFileStdin()) {
                 result = codeAssist.codeCompletion(project,
                                                    new File("(stdin)"),
@@ -371,13 +437,16 @@ public class Main {
                 testError(options);
             }
             commandException(e, options);
+        } finally {
+            progressMonitor.detach(project);
         }
     }
 
     private void commandTypeInference(Options options) {
+        TypeInferenceResult result;
+        Project project = codeAssist.getProject(options);
         try {
-            TypeInferenceResult result;
-            Project project = codeAssist.getProject(options);
+            progressMonitor.attach(project);
             if (options.isFileStdin()) {
                 result = codeAssist.typeInference(project,
                                                   new File("(stdin)"),
@@ -425,13 +494,16 @@ public class Main {
                 testError(options);
             }
             commandException(e, options);
+        } finally {
+            progressMonitor.detach(project);
         }
     }
 
     private void commandLoad(Options options) {
+        LoadResult result;
+        Project project = codeAssist.getProject(options);
         try {
-            LoadResult result;
-            Project project = codeAssist.getProject(options);
+            progressMonitor.attach(project);
             if (options.isFileStdin()) {
                 result = codeAssist.load(project,
                                          new File("(stdin)"),
@@ -455,6 +527,8 @@ public class Main {
             }
         } catch (Exception e) {
             commandException(e, options);
+        } finally {
+            progressMonitor.detach(project);
         }
     }
 
