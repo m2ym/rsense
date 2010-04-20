@@ -166,16 +166,28 @@ import org.cx4a.rsense.typing.annotation.MethodType;
 
 public class Graph implements NodeVisitor {
     public interface EventListener {
-        public enum EventType { DEFINE, CLASS, MODULE }
+        public enum EventType { DEFINE, CLASS, MODULE, METHOD_MISSING }
         
         public static class Event {
             public final EventType type;
-            public final String name; // TODO
-            public final Node node;   // TODO
+
+            // TODO divide into classes
+            public final String name;
+            public final Node node;
+            public final Vertex vertex;
+            
             public Event(EventType type, String name, Node node) {
                 this.type = type;
                 this.name = name;
                 this.node = node;
+                this.vertex = null;
+            }
+
+            public Event(EventType type, Vertex vertex) {
+                this.type = type;
+                this.name = null;
+                this.node = null;
+                this.vertex = vertex;
             }
         }
         
@@ -274,6 +286,12 @@ public class Graph implements NodeVisitor {
             eventListener.update(new EventListener.Event(EventListener.EventType.MODULE,
                                                          module.toString(),
                                                          node));
+    }
+
+    public void notifyMethodMissingEvent(CallVertex vertex) {
+        for (EventListener eventListener : eventListeners)
+            eventListener.update(new EventListener.Event(EventListener.EventType.METHOD_MISSING,
+                                                         vertex));
     }
 
     private void init() {
@@ -992,11 +1010,11 @@ public class Graph implements NodeVisitor {
         }
 
         Method oldMethod = (Method) klass.getMethod(name);
-        Method newMethod = new DefaultMethod(cbase, name, bodyNode, argsNode, visibility, node.getPosition());
+        Method newMethod = new DefaultMethod(cbase, name, bodyNode, argsNode, visibility, SourceLocation.of(node));
         klass.addMethod(name, newMethod);
         
         if (moduleFunction) {
-            Method singletonMethod = new DefaultMethod(cbase, name, bodyNode, argsNode, visibility, node.getPosition());
+            Method singletonMethod = new DefaultMethod(cbase, name, bodyNode, argsNode, visibility, SourceLocation.of(node));
             singletonMethod.setVisibility(Visibility.PUBLIC);
             klass.getSingletonClass().addMethod(name, singletonMethod);
         }
@@ -1029,7 +1047,7 @@ public class Graph implements NodeVisitor {
                 Node argsNode = node.getArgsNode();
 
                 Method oldMethod = (Method) rubyClass.getMethod(name);
-                Method newMethod = new DefaultMethod(cbase, name, bodyNode, argsNode, Visibility.PUBLIC, node.getPosition());
+                Method newMethod = new DefaultMethod(cbase, name, bodyNode, argsNode, Visibility.PUBLIC, SourceLocation.of(node));
                 rubyClass.addMethod(name, newMethod);
 
                 RuntimeHelper.methodPartialUpdate(this, node, newMethod, oldMethod, receiver);

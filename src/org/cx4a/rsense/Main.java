@@ -27,6 +27,7 @@ import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.util.Logger;
 import org.cx4a.rsense.util.StringUtil;
 import org.cx4a.rsense.util.HereDocReader;
+import org.cx4a.rsense.util.SourceLocation;
 
 public class Main {
     private static class TestStats {
@@ -169,6 +170,10 @@ public class Main {
                   + "  type-inference         - Infer type at specified position.\n"
                   + "      --file=            - File to analyze\n"
                   + "      --location=        - Location where you want to infer (pos, line:col, str)\n"
+                  + "\n"
+                  + "  find-definition        - Infer type at specified position.\n"
+                  + "      --file=            - File to analyze\n"
+                  + "      --location=        - Location where you want to find (pos, line:col, str)\n"
                   + "\n"
                   + "  where                  - Print which class/module/method cursor at.\n"
                   + "      --file=            - File to analyze\n"
@@ -351,6 +356,8 @@ public class Main {
             commandCodeCompletion(options);
         } else if (command.equals("type-inference")) {
             commandTypeInference(options);
+        } else if (command.equals("find-definition")) {
+            commandFindDefinition(options);
         } else if (command.equals("where")) {
             commandWhere(options);
         } else if (command.equals("load")) {
@@ -499,6 +506,49 @@ public class Main {
             if (options.isTest()) {
                 testError(options);
             }
+            commandException(e, options);
+        } finally {
+            progressMonitor.detach(project);
+        }
+    }
+
+    private void commandFindDefinition(Options options) {
+        FindDefinitionResult result;
+        Project project = codeAssist.getProject(options);
+        try {
+            progressMonitor.attach(project);
+            if (options.isFileStdin()) {
+                result = codeAssist.findDefinition(project,
+                                                   new File("(stdin)"),
+                                                   options.getHereDocReader(inReader),
+                                                   options.getLocation());
+            } else {
+                result = codeAssist.findDefinition(project,
+                                                   options.getFile(),
+                                                   options.getEncoding(),
+                                                   options.getLocation());
+            }
+
+            if (options.isPrintAST()) {
+                Logger.debug("AST:\n%s", result.getAST());
+            }
+            
+            if (options.isEmacsFormat()) {
+                out.print("(");
+                out.print("(location");
+                for (SourceLocation location : result.getLocations()) {
+                    out.printf(" (\"%s\" . %d)", location.getFile(), location.getLine());
+                }
+                out.println(")");
+                codeAssistError(result, options);
+                out.println(")");
+            } else {
+                for (SourceLocation location : result.getLocations()) {
+                    out.printf("location: %d %s\n", location.getLine(), location.getFile());
+                }
+                codeAssistError(result, options);
+            }
+        } catch (Exception e) {
             commandException(e, options);
         } finally {
             progressMonitor.detach(project);

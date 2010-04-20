@@ -128,6 +128,11 @@ Nil means proper socket will be selected.")
                          "type-inference"
                          :offset (or offset (point))))
 
+(defun rsense-find-definition (&optional buffer offset)
+  (rsense-buffer-command (or buffer (current-buffer))
+                         "find-definition"
+                         :offset (or offset (point))))
+
 (defun rsense-where (&optional buffer offset)
   (rsense-buffer-command (or buffer (current-buffer))
                          "where"
@@ -178,6 +183,30 @@ Nil means proper socket will be selected.")
     (if (featurep 'popup)
         (popup-tip msg :margin t)
       (message "Type: %s" msg))))
+
+(defun rsense-jump-to-definition ()
+  (interactive)
+  (let ((locations (assoc-default 'location (rsense-find-definition (current-buffer) (point)))))
+    ;; Unmap for tempfile
+    (setq locations (mapcar (lambda (loc)
+                              (cons (if (equal (car loc) rsense-temp-file) (buffer-file-name) (car loc))
+                                    (cdr loc)))
+                            locations))
+    
+    (let (loc)
+      (if (and (> (length locations) 1)
+               (featurep 'popup))
+          (setq loc (popup-menu* (mapcar (lambda (loc)
+                                           (popup-make-item (format "%s:%s" (car loc) (cdr loc))
+                                                            :value loc))
+                                         locations)))
+        (setq loc (car locations)))
+      (if (null loc)
+          (funcall (if (featurep 'popup) 'popup-tip 'message)
+                   "No definition found"
+                   :margin t)
+        (find-file (car loc))
+        (goto-line (cdr loc))))))
 
 (defun rsense-where-is ()
   (interactive)

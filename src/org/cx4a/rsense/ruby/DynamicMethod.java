@@ -1,17 +1,18 @@
 package org.cx4a.rsense.ruby;
 
 import org.jruby.ast.Node;
-import org.jruby.lexer.yacc.ISourcePosition;
+
+import org.cx4a.rsense.util.SourceLocation;
 
 public class DynamicMethod {
     protected RubyModule cbase;
     protected Visibility visibility;
-    protected ISourcePosition position;
+    protected SourceLocation location;
 
-    public DynamicMethod(RubyModule cbase, Visibility visibility, ISourcePosition position) {
+    public DynamicMethod(RubyModule cbase, Visibility visibility, SourceLocation location) {
         this.cbase = cbase;
         this.visibility = visibility;
-        this.position = position;
+        this.location = location;
     }
 
     public RubyModule getModule() {
@@ -26,7 +27,7 @@ public class DynamicMethod {
         this.visibility = visibility;
     }
 
-    public ISourcePosition getPosition() {
-        return position;
+    public SourceLocation getLocation() {
+        return location;
     }
 }

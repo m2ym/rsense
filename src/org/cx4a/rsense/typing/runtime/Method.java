@@ -8,7 +8,6 @@ import java.util.Map;
 import java.util.HashMap;
 
 import org.jruby.ast.Node;
-import org.jruby.lexer.yacc.ISourcePosition;
 
 import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.ruby.RubyModule;
@@ -21,15 +20,17 @@ import org.cx4a.rsense.typing.Template;
 import org.cx4a.rsense.typing.TemplateAttribute;
 import org.cx4a.rsense.typing.vertex.Vertex;
 import org.cx4a.rsense.typing.annotation.MethodType;
+import org.cx4a.rsense.util.SourceLocation;
 
 public abstract class Method extends DynamicMethod {
     private String name;
     private Map<TemplateAttribute, SoftReference<Template>> templates;
     private boolean templatesShared;
+    
     private List<MethodType> annotations;
 
-    public Method(RubyModule cbase, String name, Visibility visibility, ISourcePosition position) {
-        super(cbase, visibility, position);
+    public Method(RubyModule cbase, String name, Visibility visibility, SourceLocation location) {
+        super(cbase, visibility, location);
         this.name = name;
         templates = new HashMap<TemplateAttribute, SoftReference<Template>>();
     }

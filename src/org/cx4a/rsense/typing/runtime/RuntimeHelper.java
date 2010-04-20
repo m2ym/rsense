@@ -538,12 +538,17 @@ public class RuntimeHelper {
                 }
 
                 List<TemplateAttribute> attrs = generateTemplateAttributes(receivers, args, block);
+                boolean applied = false;
                 for (TemplateAttribute attr : attrs) {
                     Vertex returnVertex = applyTemplateAttribute(graph, vertex, name, attr, callSuper);
-                    if (returnVertex != null && !noReturn) {
-                        accumulator.addAll(returnVertex.getTypeSet());
+                    if (returnVertex != null) {
+                        applied = true;
+                        if (!noReturn)
+                            accumulator.addAll(returnVertex.getTypeSet());
                     }
                 }
+                if (!applied)
+                    graph.notifyMethodMissingEvent(vertex);
                 if (result.isNextMethodChange()) {
                     name = result.getNextMethodName();
                     receivers = result.getNextMethodReceivers();
