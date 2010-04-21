@@ -186,6 +186,8 @@ Vimプラグインは`etc/rsense.vim`にあります。`etc/rsense.vim`をプラ
 
 まず最初に、`M-x rsense-version`で正しく動作していることを確認してください。何も出力がない場合は、おそらく正しく動作していません。[トラブルシューティング](#)を参照してください。
 
+#### コード補完 #### {#Code_Completion_in_Emacs}
+
 `.`あるいは`::`の直後に`M-x rsense-complete`でメソッド名や定数名を補完できます。
 
 ![](rsense-emacs-1.png)
@@ -215,11 +217,23 @@ Vimプラグインは`etc/rsense.vim`にあります。`etc/rsense.vim`をプラ
                 (add-to-list 'ac-sources 'ac-source-rsense-method)
                 (add-to-list 'ac-sources 'ac-source-rsense-constant)))
 
-さらに`M-x rsense-type-help`でポイントしている式の型を見ることができます。
+#### 型ヘルプ #### {#Type_Help_in_Emacs}
+
+`M-x rsense-type-help`でポイントしている式の型を見ることができます。
 
 ![](rsense-emacs-3.png)
 
 `popup.el`がない場合はミニバッファに表示されます。
+
+#### 定義元ジャンプ #### {#Definition_Jump_in_Emacs}
+
+`M-x rsense-jump-to-definition`でポイントしているメソッドの定義元にジャンプすることができます。
+
+#### Where Is #### {#Where_Is_in_Emacs}
+
+`M-x rsense-where-is`で編集しているクラスやメソッドの名前を確認することができます。自分が今どこを編集しているか確認するのに便利でしょう。
+
+#### その他のコマンド #### {#Other_Commands_in_Emacs}
 
 他にもプロジェクトやRSenseを操作するコマンドがあります。
 
@@ -313,6 +327,38 @@ RSenseはCLI(command line interface)としてターミナルから使うこと�
     $ java -cp ... org.cx4a.rsense.Main type-inference --file=test1.rb --location=_|_
     type: Fixnum
 
+##### `find-definition`コマンド #####
+
+このコマンドは`--file=`オプションと`--location=`オプションで指示されたメソッド呼び出しの定義元を検索して出力します。出力結果は`location: <line> <filename>`という形式になります。
+
+**例:**
+
+    $ cat test.rb
+    class C
+      def f() end
+    end
+    class D
+      def f() end
+    end
+    D.new.f_|_
+    $ java -cp ... org.cx4a.rsense.Main find-definition --file=test.rb
+    location: 5 test.rb
+
+##### `where`コマンド #####
+
+このコマンドは`--file=`オプションと`--line`オプションで指定された場所の直近のクラス名やメソッド名を出力します。出力結果は`Array`や`String#split`のように修飾された名前になります。
+
+**例:**
+
+    $ cat test.rb
+    class C
+      def f
+        1
+      end
+    end
+    $ java -cp ... org.cx4a.rsense.Main where --file=test.rb --line=3
+    name: C#f
+
 ##### `load`コマンド #####
 
 指定されたファイルを読み込みます。
@@ -393,9 +439,21 @@ RSenseのホームディレクトリを指定します。`~/.rsense`がある場
 
 ログを出力するファイルを指定します。
 
+##### `--progress=`オプション #####
+
+コマンドの進捗状況を出力します。値が省略された場合は、進捗イベントを受けとるたびに即座に出力します。整数を指定すると、その秒数だけ遅延したのちに出力します。
+
 ##### `--format=`オプション #####
 
 出力の形式を指定します。`emacs`と`plain`が利用できます。デフォルトは`plain`です。
+
+##### `--verbose`オプション #####
+
+詳細な出力を行います。
+
+##### `--time`オプション #####
+
+コマンドの実行にかかった時間を出力します。
 
 ##### `--encoding=`オプション #####
 

@@ -1,0 +1,40 @@
+find-definition --test=FindDefinitionCommand1 --should-be=(stdin):1
+def f
+end
+f_|_
+EOF
+
+find-definition --test=FindDefinitionCommand2 --should-be=(stdin):3
+def f
+end
+def g
+end
+g_|_
+EOF
+
+find-definition --test=FindDefinitionCommand3 --should-be=(stdin):2
+class C
+  def f() end
+end
+C.new.f_|_
+EOF
+
+find-definition --test=FindDefinitionCommand4 --should-be=(stdin):2
+class C
+  def f() end
+end
+class D
+  def f() end
+end
+C.new.f_|_
+EOF
+
+find-definition --test=FindDefinitionCommand5 --should-be=(stdin):5
+class C
+  def f() end
+end
+class D
+  def f() end
+end
+D.new.f_|_
+EOF

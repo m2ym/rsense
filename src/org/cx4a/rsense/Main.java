@@ -211,7 +211,8 @@ public class Main {
                   + "  --debug                - Print debug messages (shorthand of --log-evel=debug)\n"
                   + "  --log=                 - Log file to output (default stderr)\n"
                   + "  --log-level=           - Log level (fixme, error, warn, message, info, debug)\n"
-                  + "  --progress=            - Report progress per seconds\n"
+                  + "  --progress             - Report progress immediately\n"
+                  + "  --progress=            - Report progress per seconds\n\n"
                   + "  --format=              - Output format (plain, emacs)\n"
                   + "  --verbose              - Verbose output\n"
                   + "  --time                 - Print timing of each command\n"
@@ -533,22 +534,32 @@ public class Main {
                 Logger.debug("AST:\n%s", result.getAST());
             }
             
-            if (options.isEmacsFormat()) {
-                out.print("(");
-                out.print("(location");
+            if (options.isTest()) {
+                Set<String> data = new HashSet<String>();
                 for (SourceLocation location : result.getLocations()) {
-                    out.printf(" (\"%s\" . %d)", location.getFile(), location.getLine());
+                    data.add(location.toString());
                 }
-                out.println(")");
-                codeAssistError(result, options);
-                out.println(")");
+                test(options, data);
             } else {
-                for (SourceLocation location : result.getLocations()) {
-                    out.printf("location: %d %s\n", location.getLine(), location.getFile());
+                if (options.isEmacsFormat()) {
+                    out.print("(");
+                    out.print("(location");
+                    for (SourceLocation location : result.getLocations()) {
+                        out.printf(" (\"%s\" . %d)", location.getFile(), location.getLine());
+                    }
+                    out.println(")");
+                    codeAssistError(result, options);
+                    out.println(")");
+                } else {
+                    for (SourceLocation location : result.getLocations()) {
+                        out.printf("location: %d %s\n", location.getLine(), location.getFile());
+                    }
+                    codeAssistError(result, options);
                 }
-                codeAssistError(result, options);
             }
         } catch (Exception e) {
+            if (options.isTest())
+                testError(options);
             commandException(e, options);
         } finally {
             progressMonitor.detach(project);
@@ -576,20 +587,29 @@ public class Main {
                 Logger.debug("AST:\n%s", result.getAST());
             }
 
-            if (options.isEmacsFormat()) {
-                out.print("(");
+            if (options.isTest()) {
+                Set<String> data = new HashSet<String>();
                 if (result.getName() != null)
-                    out.printf("(name . \"%s\")", result.getName());
-                codeAssistError(result, options);
-                out.println(")");
+                    data.add(result.getName());
+                test(options, data);
             } else {
-                if (result.getName() != null) {
-                    out.print("name: ");
-                    out.println(result.getName());
+                if (options.isEmacsFormat()) {
+                    out.print("(");
+                    if (result.getName() != null)
+                        out.printf("(name . \"%s\")", result.getName());
+                    codeAssistError(result, options);
+                    out.println(")");
+                } else {
+                    if (result.getName() != null) {
+                        out.print("name: ");
+                        out.println(result.getName());
+                    }
+                    codeAssistError(result, options);
                 }
-                codeAssistError(result, options);
             }
         } catch (Exception e) {
+            if (options.isTest())
+                testError(options);
             commandException(e, options);
         } finally {
             progressMonitor.detach(project);
@@ -740,7 +760,7 @@ public class Main {
         }
     }
 
-    private void test(Options options, Set<String> data) {
+    private void test(Options options, Collection<String> data) {
         if (options.isShouldBeGiven()) {
             Set<String> shouldBe = options.getShouldBe();
             if (shouldBe.equals(data)) {

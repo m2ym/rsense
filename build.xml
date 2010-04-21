@@ -93,6 +93,18 @@
     </antcall>
   </target>
 
+  <target name="test.where">
+    <antcall target="dotest">
+      <param name="name" value="where" />
+    </antcall>
+  </target>
+
+  <target name="test.find-definition">
+    <antcall target="dotest">
+      <param name="name" value="find-definition" />
+    </antcall>
+  </target>
+
   <target name="dotest" depends="build">
     <java fork="true" classpathref="build.class.path" classname="org.cx4a.rsense.Main">
       <arg value="script" /><arg file="test/script/${name}.rsense" />

@@ -185,6 +185,8 @@ Usage
 
 First of all, you should make sure that you can use RSense from Emacs by `M-x rsense-version`. If you see nothing, there is a problem probably. See [trouble shooting](#Trouble_Shooting).
 
+#### Code Completion #### {#Code_Completion_in_Emacs}
+
 You can complete method name and constant name by `M-x rsense-complete` after `.` and `::`.
 
 ![](rsense-emacs-1.png)
@@ -214,11 +216,23 @@ If you want to start completion automatically after inserting `.` and `::`, add 
                 (add-to-list 'ac-sources 'ac-source-rsense-method)
                 (add-to-list 'ac-sources 'ac-source-rsense-constant)))
 
-You can also infer types of an expression at point by `M-x rsense-type-help`
+#### Type Help #### {#Type_Help_in_Emacs}
+
+You can infer types of an expression at point by `M-x rsense-type-help`
 
 ![](rsense-emacs-3.png)
 
 If you don't have `popup.el`, it shows types in minibuffer.
+
+#### Definition Jump #### {#Definition_Jump_in_Emacs}
+
+You can jump to definition of a method you are pointing at by `M-x rsense-jump-to-definition`.
+
+#### Where Is #### {#Where_Is_in_Emacs}
+
+You can find which class/method you are editing by `M-x rsense-where-is`.
+
+#### Other Commands #### {#Other_Commands_in_Emacs}
 
 There are other commands operating a project and RSense itself.
 
@@ -312,6 +326,38 @@ Same to [`code-completion` command](#) except this command collects types of exp
     $ java -cp ... org.cx4a.rsense.Main type-inference --file=test1.rb --location=_|_
     type: Fixnum
 
+##### `find-definition` command #####
+
+This command will tell you where a definition of the method is by pointing a method call with `--file=` option and `--location=` option. The output will be take a form of `location: <line> <filename>`.
+
+**Example:**
+
+    $ cat test.rb
+    class C
+      def f() end
+    end
+    class D
+      def f() end
+    end
+    D.new.f_|_
+    $ java -cp ... org.cx4a.rsense.Main find-definition --file=test.rb
+    location: 5 test.rb
+
+##### `where` command #####
+
+This commad will tell you where you are editing at by specifying file name with `--file=` option and line number with `--line=`. The output will be a qualified class name or method name like `Array` and `String#split`.
+
+**Example:**
+
+    $ cat test.rb
+    class C
+      def f
+        1
+      end
+    end
+    $ java -cp ... org.cx4a.rsense.Main where --file=test.rb --line=3
+    name: C#f
+
 ##### `load` command #####
 
 Load a specified file without any outputs.
@@ -392,9 +438,21 @@ You can see debug messages by specifying this option.
 
 You can keep log messages into a file by specifying this option.
 
+##### `--progress=` option #####
+
+Specifying this option with/without interval in second, RSense will print progress of the specified command.
+
 ##### `--format=` option #####
 
 Specifying this option, a command output will be formatted in the specified rule. Available format are `plain` and `emacs`. Default is `plain`.
+
+##### `--verbose` option #####
+
+Specifying this option, command output will be verbose.
+
+##### `--time` option #####
+
+Report an elapsed time of the specified command.
 
 ##### `--encoding=` option #####
 
