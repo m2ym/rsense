@@ -9,6 +9,7 @@ import java.io.InputStreamReader;
 import java.io.LineNumberReader;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.util.Collection;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
@@ -26,6 +27,7 @@ import org.jruby.ast.types.INameNode;
 import org.cx4a.rsense.ruby.Ruby;
 import org.cx4a.rsense.ruby.RubyClass;
 import org.cx4a.rsense.ruby.RubyModule;
+import org.cx4a.rsense.ruby.MetaClass;
 import org.cx4a.rsense.ruby.IRubyObject;
 import org.cx4a.rsense.ruby.Block;
 import org.cx4a.rsense.ruby.DynamicMethod;
@@ -33,6 +35,7 @@ import org.cx4a.rsense.typing.Graph;
 import org.cx4a.rsense.typing.TypeSet;
 import org.cx4a.rsense.typing.vertex.Vertex;
 import org.cx4a.rsense.typing.vertex.CallVertex;
+import org.cx4a.rsense.typing.runtime.VertexHolder;
 import org.cx4a.rsense.typing.runtime.SpecialMethod;
 import org.cx4a.rsense.typing.runtime.Method;
 import org.cx4a.rsense.util.Logger;
@@ -212,14 +215,14 @@ public class CodeAssist {
     }
 
     private class FindDefinitionEventListener implements Project.EventListener {
-        private Set<Method> methods;
+        private Set<SourceLocation> locations;
 
         public FindDefinitionEventListener() {
-            methods = new HashSet<Method>();
+            locations = new HashSet<SourceLocation>();
         }
 
-        public Set<Method> getMethods() {
-            return methods;
+        public Collection<SourceLocation> getLocations() {
+            return locations;
         }
 
         public void update(Event event) {
@@ -231,12 +234,36 @@ public class CodeAssist {
                 && vertex.getReceiverVertex() != null) {
                 String realName = vertex.getName().substring(FIND_DEFINITION_METHOD_NAME_PREFIX.length());
                 for (IRubyObject receiver : vertex.getReceiverVertex().getTypeSet()) {
-                    // TODO callSuper
                     RubyClass receiverType = receiver.getMetaClass();
                     if (receiverType != null) {
+                        SourceLocation location = null;
+
+                        // Try to find method
+                        // TODO callSuper
                         Method method = (Method) receiverType.searchMethod(realName);
-                        if (method != null)
-                            methods.add(method);
+                        if (method != null) {
+                            if (method.getLocation() != null)
+                                locations.add(method.getLocation());
+                        } else {
+                            // Try to find constant
+                            RubyModule klass = null;
+                            if (receiverType instanceof MetaClass) {
+                                MetaClass metaClass = (MetaClass) receiverType;
+                                if (metaClass.getAttached() instanceof RubyModule)
+                                    klass = (RubyModule) metaClass.getAttached();
+                            } else
+                                klass = context.project.getGraph().getRuntime().getContext().getCurrentScope().getModule();
+                            if (klass != null) {
+                                IRubyObject constant = klass.getConstant(realName);
+                                if (constant instanceof VertexHolder)
+                                    location = SourceLocation.of(((VertexHolder) constant).getVertex().getNode());
+                                else if (constant instanceof RubyModule)
+                                    location = ((RubyModule) constant).getLocation();
+                            }
+                        }
+
+                        if (location != null)
+                            locations.add(location);
                     }
                 }
                 vertex.cutout();
@@ -629,12 +656,7 @@ public class CodeAssist {
             FindDefinitionResult result = new FindDefinitionResult();
             result.setAST(ast);
 
-            List<SourceLocation> locations = new ArrayList<SourceLocation>();
-            for (Method method : eventListener.getMethods()) {
-                if (method.getLocation() != null)
-                    locations.add(method.getLocation());
-            }
-            result.setLocations(locations);
+            result.setLocations(eventListener.getLocations());
 
             return result;
         } catch (IOException e) {

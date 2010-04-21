@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.HashMap;
 
 import org.cx4a.rsense.util.Logger;
+import org.cx4a.rsense.util.SourceLocation;
 
 public class RubyModule extends RubyObject {
     private String baseName;
@@ -16,8 +17,13 @@ public class RubyModule extends RubyObject {
     private Map<String, IRubyObject> constants;
     private Map<String, IRubyObject> classVars;
     private List<RubyModule> includes;
+    private SourceLocation location;
 
     public static RubyModule newModule(Ruby runtime, String baseName, RubyModule parent) {
+        return newModuleWithLocation(runtime, baseName, parent, null);
+    }
+    
+    public static RubyModule newModuleWithLocation(Ruby runtime, String baseName, RubyModule parent, SourceLocation location) {
         RubyModule module = new RubyModule(runtime, parent);
         module.setBaseName(baseName);
         module.makeMetaClass(runtime.getModule());
@@ -33,12 +39,17 @@ public class RubyModule extends RubyObject {
     }
     
     protected RubyModule(Ruby runtime, RubyClass metaClass, RubyModule parent) {
+        this(runtime, runtime.getModule(), parent, null);
+    }
+
+    protected RubyModule(Ruby runtime, RubyClass metaClass, RubyModule parent, SourceLocation location) {
         super(runtime, metaClass);
         this.parent = parent;
         this.methods = new HashMap<String, DynamicMethod>();
         this.constants = new HashMap<String, IRubyObject>();
         this.classVars = new HashMap<String, IRubyObject>();
         this.includes = new ArrayList<RubyModule>();
+        this.location = location;
     }
 
     public String getBaseName() {
@@ -126,7 +137,7 @@ public class RubyModule extends RubyObject {
         classVars.put(name, value);
     }
 
-    public RubyModule defineOrGetClassUnder(String name, RubyClass superClass) {
+    public RubyModule defineOrGetClassUnder(String name, RubyClass superClass, SourceLocation location) {
         if (isConstantDefined(name)) {
             IRubyObject object = getConstant(name);
             if (object instanceof RubyModule) {
@@ -136,13 +147,13 @@ public class RubyModule extends RubyObject {
                 return null;
             }
         } else {
-            RubyClass klass = RubyClass.newClass(getRuntime(), name, superClass, this);
+            RubyClass klass = RubyClass.newClassWithLocation(getRuntime(), name, superClass, this, location);
             setConstant(name, klass);
             return klass;
         }
     }
 
-    public RubyModule defineOrGetModuleUnder(String name) {
+    public RubyModule defineOrGetModuleUnder(String name, SourceLocation location) {
         if (isConstantDefined(name)) {
             IRubyObject object = getConstant(name);
             if (object.getClass() == RubyModule.class) {
@@ -152,7 +163,7 @@ public class RubyModule extends RubyObject {
                 return null;
             }
         } else {
-            RubyModule module = RubyModule.newModule(getRuntime(), name, this);
+            RubyModule module = RubyModule.newModuleWithLocation(getRuntime(), name, this, location);
             setConstant(name, module);
             return module;
         }
@@ -214,6 +225,14 @@ public class RubyModule extends RubyObject {
 
     public List<RubyModule> getIncludes(boolean inheritedToo) {
         return includes;
+    }
+
+    public void setLocation(SourceLocation location) {
+        this.location = location;
+    }
+
+    public SourceLocation getLocation() {
+        return location;
     }
 
     public String toMethodPathString() {

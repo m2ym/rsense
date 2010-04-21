@@ -23,6 +23,24 @@ public class SourceLocation {
     }
 
     @Override
+    public int hashCode() {
+        return line ^ (file != null ? file.hashCode() : 0);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other)
+            return true;
+        else if (!(other instanceof SourceLocation))
+            return false;
+
+        SourceLocation o = (SourceLocation) other;
+        return line == o.line
+            && ((file == null && o.file == null)
+                || (file != null && file.equals(o.file)));
+    }
+
+    @Override
     public String toString() {
         return file + ":" + line;
     }

@@ -907,7 +907,7 @@ public class Graph implements NodeVisitor {
             }
         }
 
-        RubyModule klass = module.defineOrGetClassUnder(name, superClass);
+        RubyModule klass = module.defineOrGetClassUnder(name, superClass, SourceLocation.of(node));
 
         if (klass != null) {
             context.pushFrame(klass, name, klass, null, Visibility.PUBLIC);
@@ -1216,7 +1216,7 @@ public class Graph implements NodeVisitor {
             return Vertex.EMPTY;
         }
 
-        RubyModule module = enclosingModule.defineOrGetModuleUnder(name);
+        RubyModule module = enclosingModule.defineOrGetModuleUnder(name, SourceLocation.of(node));
 
         if (module != null) {
             context.pushFrame(module, name, module, null, Visibility.PUBLIC);

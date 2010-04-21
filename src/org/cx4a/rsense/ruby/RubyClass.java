@@ -6,6 +6,8 @@ import java.util.Set;
 import java.util.Map;
 import java.util.HashMap;
 
+import org.cx4a.rsense.util.SourceLocation;
+
 public class RubyClass extends RubyModule {
     protected RubyClass superClass;
 
@@ -13,13 +15,22 @@ public class RubyClass extends RubyModule {
         return newClass(runtime, baseName, superClass, null);
     }
 
+    public static RubyClass newClassWithLocation(Ruby runtime, String baseName, RubyClass superClass, SourceLocation location) {
+        return newClassWithLocation(runtime, baseName, superClass, null, location);
+    }
+    
     public static RubyClass newClass(Ruby runtime, String baseName, RubyClass superClass, RubyModule parent) {
+        return newClassWithLocation(runtime, baseName, superClass, parent, null);
+    }
+    
+    public static RubyClass newClassWithLocation(Ruby runtime, String baseName, RubyClass superClass, RubyModule parent, SourceLocation location) {
         if (superClass == null) {
             superClass = runtime.getObject();
         }
-        RubyClass klass = new RubyClass(runtime, superClass, parent);
+        RubyClass klass = new RubyClass(runtime, superClass, parent, location);
         klass.setBaseName(baseName);
         klass.makeMetaClass(superClass.getMetaClass());
+        klass.setLocation(location);
         return klass;
     }
 
@@ -34,11 +45,15 @@ public class RubyClass extends RubyModule {
     }
     
     protected RubyClass(Ruby runtime, RubyClass superClass, RubyModule parent) {
-        this(runtime, runtime.getClassClass(), superClass, parent);
+        this(runtime, runtime.getClassClass(), superClass, parent, null);
     }
 
-    protected RubyClass(Ruby runtime, RubyClass metaClass, RubyClass superClass, RubyModule parent) {
-        super(runtime, metaClass, parent);
+    protected RubyClass(Ruby runtime, RubyClass superClass, RubyModule parent, SourceLocation location) {
+        this(runtime, runtime.getClassClass(), superClass, parent, location);
+    }
+
+    protected RubyClass(Ruby runtime, RubyClass metaClass, RubyClass superClass, RubyModule parent, SourceLocation location) {
+        super(runtime, metaClass, parent, location);
         this.superClass = superClass;
     }
 

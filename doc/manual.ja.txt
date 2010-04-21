@@ -227,7 +227,7 @@ Vimプラグインは`etc/rsense.vim`にあります。`etc/rsense.vim`をプラ
 
 #### 定義元ジャンプ #### {#Definition_Jump_in_Emacs}
 
-`M-x rsense-jump-to-definition`でポイントしているメソッドの定義元にジャンプすることができます。
+`M-x rsense-jump-to-definition`でポイントしているメソッドや定数の定義元にジャンプすることができます。
 
 #### Where Is #### {#Where_Is_in_Emacs}
 
@@ -329,7 +329,7 @@ RSenseはCLI(command line interface)としてターミナルから使うこと�
 
 ##### `find-definition`コマンド #####
 
-このコマンドは`--file=`オプションと`--location=`オプションで指示されたメソッド呼び出しの定義元を検索して出力します。出力結果は`location: <line> <filename>`という形式になります。
+このコマンドは`--file=`オプションと`--location=`オプションで指示されたメソッド呼び出しや定数参照の定義元を検索して出力します。出力結果は`location: <line> <filename>`という形式になります。
 
 **例:**
 
