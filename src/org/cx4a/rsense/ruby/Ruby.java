@@ -16,6 +16,7 @@ public class Ruby {
 
     private Context context;
     private ObjectAllocator allocator;
+    private RubyModule kernelModule;
     private RubyClass objectClass, moduleClass, classClass,
         numericClass, integerClass, fixnumClass, bignumClass,
         floatClass, stringClass, symbolClass,
@@ -44,6 +45,8 @@ public class Ruby {
         metaClass = moduleClass.makeMetaClass(metaClass);
         metaClass = classClass.makeMetaClass(metaClass);
 
+        kernelModule = RubyModule.newModule(this, "Kernel", null);
+        objectClass.includeModule(kernelModule);
         numericClass = RubyClass.newClass(this, "Numeric", objectClass);
         integerClass = RubyClass.newClass(this, "Integer", numericClass);
         fixnumClass = RubyClass.newClass(this, "Fixnum", integerClass);
@@ -64,6 +67,7 @@ public class Ruby {
         procClass = RubyClass.newClass(this, "Proc", objectClass);
         fatalClass = RubyClass.newClass(this, "fatal", exceptionClass);
 
+        objectClass.setConstant("Kernel", kernelModule);
         objectClass.setConstant("Object", objectClass);
         objectClass.setConstant("Module", moduleClass);
         objectClass.setConstant("Class", classClass);
@@ -134,6 +138,10 @@ public class Ruby {
             return true;
         }
         return false;
+    }
+
+    public RubyModule getKernel() {
+        return kernelModule;
     }
 
     public RubyClass getObject() {

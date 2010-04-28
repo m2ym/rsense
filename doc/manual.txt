@@ -553,7 +553,7 @@ Limitations
 Currently the following features are not supported:
 
 * `eval`
-* `proc` and `lambda`
+* `proc` and `lambda` without block
 * `callcc`
 * `raise` and `rescue` flow analysis
 * `Struct`

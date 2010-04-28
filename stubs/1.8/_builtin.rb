@@ -1530,10 +1530,8 @@ module Kernel
   ##% gsub!(String or Regexp) {String -> ?} -> self
   ##% gsub!(String or Regexp) -> Enumerator<String, self>
   def gsub!(pattern, replace = nil) self end
-  # FIXME
-  ##% proc() {() -> ?} -> Proc
-  ##% proc() -> Proc
-  def proc() yield; Proc.new end
+  # skelton
+  def proc() Proc.new end
   alias :lambda :proc
   ##% load(String, ?Boolean) -> TrueClass
   def load(file, priv = false) true end
@@ -1923,8 +1921,6 @@ class Numeric
 end
 
 class Object
-  include Kernel
-  
   ##% ==(a) -> Boolean
   def ==(other) BOOLEAN end
   ##% ===(a) -> Boolean

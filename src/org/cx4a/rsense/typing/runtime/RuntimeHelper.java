@@ -868,10 +868,9 @@ public class RuntimeHelper {
     }
 
     public static Vertex yield(Graph graph, YieldVertex vertex) {
-        Template template = vertex.getTemplate();
-        if (template == null) {
-            return vertex;
-        }
+        Vertex returnVertex = null;
+        if (vertex.getTemplate() != null)
+            returnVertex = vertex.getTemplate().getReturnVertex();
 
         // return immediately if no need to apply
         Proc block = (Proc) vertex.getBlock();
@@ -882,17 +881,14 @@ public class RuntimeHelper {
                 || !argsVertex.isChanged())) {
             return vertex;
         }
-        if (argsVertex != null) {
+        if (argsVertex != null)
             argsVertex.markUnchanged();
-        }
 
-        Vertex returnVertex = yield(graph, block, (argsVertex != null ? argsVertex.getTypeSet() : TypeSet.EMPTY), vertex.getExpandArguments(), template.getReturnVertex());
-        if (returnVertex != null) {
-            graph.addEdgeAndUpdate(returnVertex, vertex);
-        }
-        if (block != null) {
+        if (block != null)
             block.recordYield(vertex);
-        }
+        returnVertex = yield(graph, block, (argsVertex != null ? argsVertex.getTypeSet() : TypeSet.EMPTY), vertex.getExpandArguments(), returnVertex);
+        if (returnVertex != null)
+            graph.addEdgeAndUpdate(returnVertex, vertex);
         
         return vertex;
     }

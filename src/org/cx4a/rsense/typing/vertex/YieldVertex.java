@@ -46,7 +46,7 @@ public class YieldVertex extends Vertex {
 
     @Override
     public int hashCode() {
-        return template.getAttribute().hashCode();
+        return template == null ? block.hashCode() : template.getAttribute().hashCode();
     }
 
     @Override
@@ -60,8 +60,11 @@ public class YieldVertex extends Vertex {
         }
 
         YieldVertex o = (YieldVertex) other;
-        return template != null
-            && o.template != null
-            && template.getAttribute().equals(o.template.getAttribute());
+        return (template == null
+                && o.template == null
+                && block.equals(o.block))
+            || (template != null
+                && o.template != null
+                && template.getAttribute().equals(o.template.getAttribute()));
     }
 }

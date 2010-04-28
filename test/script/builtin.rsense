@@ -813,6 +813,60 @@ end
 f {|x| x_|_}
 EOF
 
+type-inference --test=Proc.Generate --should-be=Proc
+proc {}_|_
+EOF
+
+type-inference --test=Proc.Call --should-be=Fixnum
+proc {
+  1_|_
+}.call
+EOF
+
+type-inference --test=Proc.InifinityLoop --should-be=Object
+b = proc {|p|
+  p.call(p)_|_
+}
+b.call(b)
+EOF
+
+type-inference --test=Proc.HigherOrder1 --should-be=Fixnum,Bignum
+def set(&block)
+  $block = block  
+end
+set {|a| a + 1}
+$block.call(1)_|_
+EOF
+
+type-inference --test=Proc.HigherOrder2 --should-be=Fixnum,Bignum
+def adder(a)
+  proc {|b| a + b }
+end
+adder(1).call(2)_|_
+EOF
+
+# TODO fix
+type-inference --keep-env --test=Proc.HigherOrder.Bug --should-be=Object
+def adder(a)
+  proc {|b| a + b }
+end
+adder(1).call(2)_|_
+EOF
+
+type-inference --test=Lambda.HigherOrder --should-be=Fixnum,Bignum
+def adder(a)
+  lambda {|b| a + b }
+end
+adder(1).call(2)_|_
+EOF
+
+type-inference --test=Proc.new.HigherOrder --should-be=Fixnum,Bignum
+def adder(a)
+  Proc.new {|b| a + b }
+end
+adder(1).call(2)_|_
+EOF
+
 type-inference --test=Range.Begin --should-be=Fixnum
 (0..100).begin_|_
 EOF

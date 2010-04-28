@@ -304,8 +304,16 @@ public class Graph implements NodeVisitor {
                         TypeSet newReceivers = new TypeSet();
                         for (IRubyObject receiver : receivers) {
                             if (receiver instanceof RubyClass) {
-                                if (((RubyClass) receiver).getMetaClass().searchMethod("new") == null) {
-                                    resultTypeSet.add(newInstanceOf((RubyClass) receiver));
+                                RubyClass klass = (RubyClass) receiver;
+                                if (klass.getMetaClass().searchMethod("new") == null) {
+                                    if (klass == runtime.getProc()) {
+                                        // Proc.new {}
+                                        if (block instanceof Proc)
+                                            resultTypeSet.add((Proc) block);
+                                        else
+                                            Logger.debug("Proc.new for no block is not supported yet");
+                                    } else
+                                        resultTypeSet.add(newInstanceOf((RubyClass) receiver));
                                 } else {
                                     newReceivers.add(receiver);
                                 }
@@ -414,31 +422,31 @@ public class Graph implements NodeVisitor {
             });
 
         addSpecialMethod("private", new SpecialMethod() {
-                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
                     RuntimeHelper.setMethodsVisibility(Graph.this, receivers, args, Visibility.PRIVATE);
                 }
             });
 
         addSpecialMethod("protected", new SpecialMethod() {
-                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
                     RuntimeHelper.setMethodsVisibility(Graph.this, receivers, args, Visibility.PROTECTED);
                 }
             });
 
         addSpecialMethod("public", new SpecialMethod() {
-                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
                     RuntimeHelper.setMethodsVisibility(Graph.this, receivers, args, Visibility.PUBLIC);
                 }
             });
 
         addSpecialMethod("module_function", new SpecialMethod() {
-                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
                     RuntimeHelper.setMethodsVisibility(Graph.this, receivers, args, Visibility.MODULE_FUNCTION);
                 }
             });
 
         addSpecialMethod("attr", new SpecialMethod() {
-                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
                     if (args != null && args.length > 0) {
                         RuntimeHelper.defineAttrs(Graph.this, receivers, new Vertex[] { args[0] }, true, args.length > 1);
                     }
@@ -446,25 +454,25 @@ public class Graph implements NodeVisitor {
             });
 
         addSpecialMethod("attr_reader", new SpecialMethod() {
-                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
                     RuntimeHelper.defineAttrs(Graph.this, receivers, args, true, false);
                 }
             });
 
         addSpecialMethod("attr_writer", new SpecialMethod() {
-                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
                     RuntimeHelper.defineAttrs(Graph.this, receivers, args, false, true);
                 }
             });
 
         addSpecialMethod("attr_accessor", new SpecialMethod() {
-                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
                     RuntimeHelper.defineAttrs(Graph.this, receivers, args, true, true);
                 }
             });
 
         addSpecialMethod("alias_method", new SpecialMethod() {
-                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
                     boolean callNextMethod = true;
                     if (args != null && args.length == 2) {
                         for (IRubyObject receiver : receivers) {
@@ -486,7 +494,7 @@ public class Graph implements NodeVisitor {
             });
         
         addSpecialMethod("unpack", new SpecialMethod() {
-                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
                     if (args != null && args.length > 0) {
                         String template = Vertex.getString(args[0]);
                         if (template != null) {
@@ -532,27 +540,68 @@ public class Graph implements NodeVisitor {
                 }
             });
 
-        addSpecialMethod("call", new SpecialMethod() {
-                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
+        addSpecialMethod("proc", new SpecialMethod() {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
                     TypeSet ts = new TypeSet();
-                    TypeSet arg = null;
+                    for (IRubyObject receiver : receivers) {
+                        DynamicMethod method = receiver.getMetaClass().searchMethod("proc");
+                        if (method != null && method.getModule() == runtime.getKernel()) {
+                            if (block instanceof Proc)
+                                ts.add((Proc) block);
+                            else
+                                Logger.debug("proc for no block is not supported yet");
+                        }
+                    }
+                    if (ts.isEmpty())
+                        result.setCallNextMethod(true);
+                    else
+                        result.setResultTypeSet(ts);
+                }
+            });
+
+        addSpecialMethod("lambda", new SpecialMethod() {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
+                    TypeSet ts = new TypeSet();
+                    for (IRubyObject receiver : receivers) {
+                        DynamicMethod method = receiver.getMetaClass().searchMethod("lambda");
+                        if (method != null && method.getModule() == runtime.getKernel()) {
+                            if (block instanceof Proc)
+                                ts.add((Proc) block);
+                            else
+                                Logger.debug("lambda for no block is not supported yet");
+                        }
+                    }
+                    if (ts.isEmpty())
+                        result.setCallNextMethod(true);
+                    else
+                        result.setResultTypeSet(ts);
+                }
+            });
+
+        addSpecialMethod("call", new SpecialMethod() {
+                public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block block, Result result) {
+                    TypeSet ts = new TypeSet();
+                    Vertex argVertex = null;
                     for (IRubyObject receiver : receivers) {
                         if (receiver instanceof Proc) {
-                            if (arg == null) {
+                            if (argVertex == null) {
+                                TypeSet argts;
                                 if (args == null) {
-                                    arg = new TypeSet();
-                                    arg.add(RuntimeHelper.createArray(Graph.this, new Vertex[0]));
+                                    argts = new TypeSet();
+                                    argts.add(RuntimeHelper.createArray(Graph.this, new Vertex[0]));
                                 } else if (args.length == 1) {
-                                    arg = args[0].getTypeSet();
+                                    argts = args[0].getTypeSet();
                                 } else {
-                                    arg = new TypeSet();
-                                    arg.add(RuntimeHelper.createArray(Graph.this, args));
+                                    argts = new TypeSet();
+                                    argts.add(RuntimeHelper.createArray(Graph.this, args));
                                 }
+                                argVertex = createFreeVertex(argts);
+                                argVertex.markUnchanged();
                             }
                             YieldVertex vertex = new YieldVertex(null,
                                                                  RuntimeHelper.getFrameTemplate(runtime.getContext().getCurrentFrame()),
                                                                  (Proc) receiver,
-                                                                 createFreeVertex(arg),
+                                                                 argVertex,
                                                                  true);
                             RuntimeHelper.yield(Graph.this, vertex);
                             ts.addAll(vertex.getTypeSet());
@@ -830,7 +879,10 @@ public class Graph implements NodeVisitor {
         LoopTag loopTag = RuntimeHelper.getFrameLoopTag(frame);
         if (loopTag != null) {
             Vertex vertex = createVertex(node.getValueNode());
-            addEdgeAndPropagate(vertex, loopTag.getReturnVertex());
+            if (loopTag.getYieldVertex() != null)
+                addEdgeAndPropagate(vertex, loopTag.getYieldVertex());
+            else
+                Logger.debug("no yield vertex");
             return vertex;
         }
         return Vertex.EMPTY;
@@ -1243,7 +1295,10 @@ public class Graph implements NodeVisitor {
         LoopTag loopTag = RuntimeHelper.getFrameLoopTag(frame);
         if (loopTag != null && loopTag.getYieldVertex() != null) {
             Vertex vertex = createVertex(node.getValueNode());
-            addEdgeAndPropagate(vertex, loopTag.getYieldVertex());
+            if (loopTag.getYieldVertex() != null)
+                addEdgeAndPropagate(vertex, loopTag.getYieldVertex());
+            else
+                Logger.debug("no yield vertex");
             return vertex;
         }
         return Vertex.EMPTY;

@@ -554,7 +554,7 @@ Rubyリファレンスマニュアル
 現在のところ以下が未対応となっています。
 
 * `eval`
-* `proc`と`lambda`
+* ブロックなしでの`proc`と`lambda`
 * `callcc`
 * `raise`と`rescue`のフロー解析
 * `Struct`
