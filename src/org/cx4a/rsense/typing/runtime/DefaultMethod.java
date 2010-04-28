@@ -113,6 +113,6 @@ public class DefaultMethod implements Method {
 
     @Override
     public String toString() {
-        return getModule().toMethodPathString() + getName();
+        return getModule().getMethodPath(getName());
     }
 }

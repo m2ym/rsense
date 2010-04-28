@@ -7,12 +7,20 @@ import org.jruby.ast.Node;
 
 public class CodeCompletionResult extends CodeAssistResult {
     public static class CompletionCandidate {
+        public enum Kind {
+            CLASS, MODULE, CONSTANT, METHOD,
+        };
+
         private String completion;
         private String qualifiedName;
+        private String baseName;
+        private Kind kind;
 
-        public CompletionCandidate(String completion, String qualifiedName) {
+        public CompletionCandidate(String completion, String qualifiedName, String baseName, Kind kind) {
             this.completion = completion;
             this.qualifiedName = qualifiedName;
+            this.baseName = baseName;
+            this.kind = kind;
         }
 
         public String getCompletion() {
@@ -21,6 +29,14 @@ public class CodeCompletionResult extends CodeAssistResult {
 
         public String getQualifiedName() {
             return qualifiedName;
+        }
+
+        public String getBaseName() {
+            return baseName;
+        }
+
+        public Kind getKind() {
+            return kind;
         }
 
         @Override

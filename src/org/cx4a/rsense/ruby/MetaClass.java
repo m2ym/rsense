@@ -33,8 +33,11 @@ public class MetaClass extends RubyClass {
     }
 
     @Override
-    public String toMethodPathString() {
-        return attached.toString() + ".";
+    public String getMethodPath(String name) {
+        String path = attached.toString();
+        if (name != null)
+            path += "." + name;
+        return path;
     }
 
     @Override

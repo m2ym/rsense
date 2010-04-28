@@ -424,10 +424,11 @@ public class Main {
                     out.print("(completion");
                     for (CodeCompletionResult.CompletionCandidate completion : result.getCandidates()) {
                         if (prefix == null || completion.getCompletion().startsWith(prefix)) {
-                            out.print(" (");
-                            out.print("\"" + completion.getCompletion() + "\"");
-                            out.print(" \"" + completion.getQualifiedName() + "\"");
-                            out.print(")");
+                            out.printf(" (\"%s\" \"%s\" \"%s\" \"%s\")",
+                                       completion.getCompletion(),
+                                       completion.getQualifiedName(),
+                                       completion.getBaseName(),
+                                       completion.getKind());
                         }
                     }
                     out.println(")");
@@ -436,11 +437,11 @@ public class Main {
                 } else {
                     for (CodeCompletionResult.CompletionCandidate completion : result.getCandidates()) {
                         if (prefix == null || completion.getCompletion().startsWith(prefix)) {
-                            out.print("completion: ");
-                            out.print(completion.getCompletion());
-                            out.print(" ");
-                            out.print(completion.getQualifiedName());
-                            out.println();
+                            out.printf("completion: %s %s %s %s\n",
+                                       completion.getCompletion(),
+                                       completion.getQualifiedName(),
+                                       completion.getBaseName(),
+                                       completion.getKind());
                         }
                     }
                     codeAssistError(result, options);

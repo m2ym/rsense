@@ -291,6 +291,8 @@ For example, `--location=123` means completions will be collected at an offset 1
 
 An unit of offset number and column number is not byte based but character based. If a source code contains non-ascii characters, you may have to specify an encoding by `--encoding=` option. An encoding string must follow [Java Supported Encodings][].
 
+The each line of the result takes a form of `comletion: <name> <qualified-name> <base-name> <kind>`. `<kind>` can be one of `CLASS`, `MODULE`, `CONSTANT`, and `METHOD`.
+
 **Example:**
 
 Classpath option is omitted.
@@ -298,15 +300,15 @@ Classpath option is omitted.
     $ cat test1.rb
     1
     $ java -cp ... org.cx4a.rsense.Main code-completion --file=test1.rb --location=1
-    completion: succ
+    completion: succ Integer#succ Integer METHOD
     ...
     $ java -cp ... org.cx4a.rsense.Main code-completion --file=test1.rb --location=1:1
-    completion: succ
+    completion: succ Integer#succ Integer METHOD
     ...
     $ cat test2.rb
     1_|_
     $ java -cp ... org.cx4a.rsense.Main code-completion --file=test1.rb --location=_|_
-    completion: succ
+    completion: succ Integer#succ Integer METHOD
     ...
 
 ##### `type-inference` command #####
@@ -382,7 +384,7 @@ Some extra commands are allowed in script mode. `exit` or `quit` commands exit R
     > code-completion
     1_|_
     EOF
-    completion: succ
+    completion: succ Integer#succ Integer METHOD
     ...
     ^D
     $ cat test.rsense

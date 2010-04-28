@@ -241,40 +241,39 @@ Nil means proper socket will be selected.")
   (ignore-errors
     (rsense-lookup-document (cadr item))))
 
-(defun ac-rsense-cbase-of-qname (qname)
-  (and (stringp qname)
-       (string-match "^\\(.*\\)[#.][^#.]+$" qname)
-       (match-string 1 qname)))
-
 (defun ac-rsense-candidates ()
   (mapcar (lambda (entry)
-            (propertize (car entry)
-                        'value entry
-                        'summary (ac-rsense-cbase-of-qname (cadr entry))))
+            (let ((name (nth 0 entry))
+                  (qname (nth 1 entry))
+                  (base (nth 2 entry))
+                  (kind (nth 3 entry)))
+              (propertize name
+                          'value entry
+                          'symbol (assoc-default kind '(("CLASS" . "C")
+                                                        ("MODULE" . "M")
+                                                        ("CONSTANT" . "c")
+                                                        ("METHOD" . "m")))
+                          'summary base)))
           (assoc-default 'completion
                          (rsense-code-completion (current-buffer)
                                                  ac-point
                                                  (point)))))
 
-(defvar ac-source-rsense-method
+(defvar ac-source-rsense
   '((candidates . ac-rsense-candidates)
-    (prefix . "\\.\\(.*\\)")
+    (prefix . "\\(?:\\.\\|::\\)\\(.*\\)")
     (requires . 0)
-    (symbol . "f")
     (document . ac-rsense-documentation)
     (cache)))
+(defvaralias 'ac-source-rsense-method 'ac-source-rsense)
 
+;; deprecated
 (defvar ac-source-rsense-constant
-  '((candidates . ac-rsense-candidates)
-    (prefix . "::\\(.*\\)")
-    (requires . 0)
-    (symbol . "c")
-    (document . ac-rsense-documentation)
-    (cache)))
+  '((candidates . nil)))
 
 (defun ac-complete-rsense ()
   (interactive)
-  (auto-complete '(ac-source-rsense-method ac-source-rsense-constant)))
+  (auto-complete '(ac-source-rsense)))
 
 (provide 'rsense)
 ;;; rsense.el ends here

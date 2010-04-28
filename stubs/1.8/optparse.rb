@@ -111,4 +111,3 @@ class OptionParser
   # TODO optparse/time
   # TODO optparse/uri
 end
-

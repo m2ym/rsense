@@ -19,6 +19,8 @@ function! s:system(str, ...)"{{{
         \: (a:0 == 0 ? system(a:str) : system(a:str, join(a:000)))
 endfunction"}}}
 
+let s:rsenseCompletionKindDictionary = {'CLASS': 'C', 'MODULE': 'M', 'CONSTANT': 'c', 'METHOD': 'm'}
+
 function! RSenseComplete(findstart, base)
     if a:findstart
         let cur_text = strpart(getline('.'), 0, col('.') - 1)
@@ -41,7 +43,13 @@ function! RSenseComplete(findstart, base)
         let completions = []
         for item in result
             if item =~ '^completion: '
-                call add(completions, split(item, ' ')[1])
+                let ary = split(item, ' ')
+                let dict = { 'word': ary[1] }
+                if len(ary) > 4
+                    let dict['menu'] = ary[3]
+                    let dict['kind'] = s:rsenseCompletionKindDictionary[ary[4]]
+                endif
+                call add(completions, dict)
             endif
         endfor
         return completions

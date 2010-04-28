@@ -292,6 +292,8 @@ RSenseはCLI(command line interface)としてターミナルから使うこと�
 
 オフセットやカラム番号の単位はバイトではなく文字です。ソースコードが非ASCII文字を含む場合は、`--encoding=`オプションで正しいエンコーディンを与える必要があるでしょう。利用可能なエンコーディングについては[Java Supported Encodings][]を参照してください。
 
+処理結果の各行は`completion: <name> <qualified-name> <base-name> <kind>`という形式をとります。`<kind>`は`CLASS`, `MODULE`, `CONSTANT`, `METHOD`のいずれかです。
+
 **例:**
 
 クラスパスオプションは省略されています。
@@ -299,15 +301,15 @@ RSenseはCLI(command line interface)としてターミナルから使うこと�
     $ cat test1.rb
     1
     $ java -cp ... org.cx4a.rsense.Main code-completion --file=test1.rb --location=1
-    completion: succ
+    completion: succ Integer#succ Integer METHOD
     ...
     $ java -cp ... org.cx4a.rsense.Main code-completion --file=test1.rb --location=1:1
-    completion: succ
+    completion: succ Integer#succ Integer METHOD
     ...
     $ cat test2.rb
     1_|_
     $ java -cp ... org.cx4a.rsense.Main code-completion --file=test1.rb --location=_|_
-    completion: succ
+    completion: succ Integer#succ Integer METHOD
     ...
 
 ##### `type-inference`コマンド #####
@@ -383,7 +385,7 @@ RSenseはCLI(command line interface)としてターミナルから使うこと�
     > code-completion
     1_|_
     EOF
-    completion: succ
+    completion: succ Integer#succ Integer METHOD
     ...
     ^D
     $ cat test.rsense

@@ -235,8 +235,11 @@ public class RubyModule extends RubyObject {
         return location;
     }
 
-    public String toMethodPathString() {
-        return toString() + "#";
+    public String getMethodPath(String name) {
+        String path = toString();
+        if (name != null)
+            path += "#" + name;
+        return path;
     }
 
     @Override

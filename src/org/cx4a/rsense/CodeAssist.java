@@ -38,6 +38,7 @@ import org.cx4a.rsense.typing.vertex.CallVertex;
 import org.cx4a.rsense.typing.runtime.VertexHolder;
 import org.cx4a.rsense.typing.runtime.SpecialMethod;
 import org.cx4a.rsense.typing.runtime.Method;
+import org.cx4a.rsense.CodeCompletionResult.CompletionCandidate;
 import org.cx4a.rsense.util.Logger;
 import org.cx4a.rsense.util.NodeDiff;
 import org.cx4a.rsense.util.SourceLocation;
@@ -575,18 +576,30 @@ public class CodeAssist {
             CodeCompletionResult result = new CodeCompletionResult();
             result.setAST(ast);
 
-            List<CodeCompletionResult.CompletionCandidate> candidates = new ArrayList<CodeCompletionResult.CompletionCandidate>();
+            List<CompletionCandidate> candidates = new ArrayList<CompletionCandidate>();
             for (IRubyObject receiver : context.typeSet) {
                 RubyClass rubyClass = receiver.getMetaClass();
                 for (String name : rubyClass.getMethods(true)) {
                     DynamicMethod method = rubyClass.searchMethod(name);
-                    candidates.add(new CodeCompletionResult.CompletionCandidate(name, method.toString()));
+                    candidates.add(new CompletionCandidate(name,
+                                                           method.toString(),
+                                                           method.getModule().getMethodPath(null),
+                                                           CompletionCandidate.Kind.METHOD));
                 }
                 if (receiver instanceof RubyModule) {
                     RubyModule module = ((RubyModule) receiver);
                     for (String name : module.getConstants(true)) {
-                        String qname = module.getConstantModule(name).toString() + "::" + name;
-                        candidates.add(new CodeCompletionResult.CompletionCandidate(name, qname));
+                        RubyModule directModule = module.getConstantModule(name);
+                        IRubyObject constant = directModule.getConstant(name);
+                        String baseName = directModule.toString();
+                        String qname = baseName + "::" + name;
+                        CompletionCandidate.Kind kind
+                            = (constant instanceof RubyClass)
+                            ? CompletionCandidate.Kind.CLASS
+                            : (constant instanceof RubyModule)
+                            ? CompletionCandidate.Kind.MODULE
+                            : CompletionCandidate.Kind.CONSTANT;
+                        candidates.add(new CompletionCandidate(name, qname, baseName, kind));
                     }
                 }
             }
