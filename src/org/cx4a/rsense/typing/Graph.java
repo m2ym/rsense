@@ -143,6 +143,7 @@ import org.cx4a.rsense.typing.runtime.Array;
 import org.cx4a.rsense.typing.runtime.Hash;
 import org.cx4a.rsense.typing.runtime.Method;
 import org.cx4a.rsense.typing.runtime.DefaultMethod;
+import org.cx4a.rsense.typing.runtime.AliasMethod;
 import org.cx4a.rsense.typing.runtime.SpecialMethod;
 import org.cx4a.rsense.typing.runtime.Proc;
 import org.cx4a.rsense.typing.runtime.RuntimeHelper;
@@ -209,7 +210,7 @@ public class Graph implements NodeVisitor {
 
         public void force(Graph graph) {
             if (!newMethod.isTemplatesShared()) {
-                Collection<TemplateAttribute> templateAttributes = oldMethod != null ? oldMethod.getTemplateAttributes() : null;
+                Collection<TemplateAttribute> templateAttributes = oldMethod != null ? oldMethod.getTemplates().keySet() : null;
                 if (templateAttributes != null && !templateAttributes.isEmpty()) {
                     RuntimeHelper.dummyCallForTemplates(graph, node, newMethod, templateAttributes);
                 } else {
@@ -474,9 +475,8 @@ public class Graph implements NodeVisitor {
                                 if (newName != null && oldName != null) {
                                     RubyModule module = (RubyModule) receiver;
                                     DynamicMethod method = module.getMethod(oldName);
-                                    if (method != null) {
-                                        module.addMethod(newName, method);
-                                    }
+                                    if (method instanceof Method)
+                                        module.addMethod(newName, new AliasMethod(newName, (Method) method));
                                 }
                             }
                         }
@@ -570,13 +570,13 @@ public class Graph implements NodeVisitor {
         RubyClass classClass = runtime.getClassClass();
         RubyClass procClass = runtime.getProc();
         
-        objectClass.addMethod("class", new Method(objectClass, "class", Visibility.PUBLIC, null) {
+        objectClass.addMethod("class", new DefaultMethod(objectClass, "class", null, null, Visibility.PUBLIC, null) {
                 public Vertex call(Graph graph, Template template, IRubyObject receiver, IRubyObject[] args, Vertex[] argVertices, Block block) {
                     return graph.createFreeSingleTypeVertex(receiver.getMetaClass());
                 }
             });
 
-        classClass.addMethod("superclass", new Method(classClass, "superclass", Visibility.PUBLIC, null) {
+        classClass.addMethod("superclass", new DefaultMethod(classClass, "superclass", null, null, Visibility.PUBLIC, null) {
                 public Vertex call(Graph graph, Template template, IRubyObject receiver, IRubyObject[] args, Vertex[] argVertices, Block block) {
                     if (receiver instanceof RubyClass) {
                         return graph.createFreeSingleTypeVertex(((RubyClass) receiver).getSuperClass());
@@ -722,9 +722,8 @@ public class Graph implements NodeVisitor {
     public Object visitAliasNode(AliasNode node) {
         RubyModule module = context.getFrameModule();
         DynamicMethod method = module.getMethod(node.getOldName());
-        if (method != null) {
-            module.addMethod(node.getNewName(), method);
-        }
+        if (method instanceof Method)
+            module.addMethod(node.getNewName(), new AliasMethod(node.getNewName(), (Method) method));
         return Vertex.EMPTY;
     }
     

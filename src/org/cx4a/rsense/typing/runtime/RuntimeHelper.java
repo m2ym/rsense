@@ -565,9 +565,9 @@ public class RuntimeHelper {
     }
 
     public static void methodPartialUpdate(Graph graph, MethodDefNode node, DynamicMethod newMethod, DynamicMethod oldMethod, IRubyObject receiver) {
-        if (newMethod instanceof DefaultMethod && oldMethod instanceof DefaultMethod) {
-            DefaultMethod newmeth = (DefaultMethod) newMethod;
-            DefaultMethod oldmeth = (DefaultMethod) oldMethod;
+        if (newMethod instanceof Method && oldMethod instanceof Method) {
+            Method newmeth = (Method) newMethod;
+            Method oldmeth = (Method) oldMethod;
             NodeDiff nodeDiff = graph.getNodeDiff();
 
             if (nodeDiff != null
