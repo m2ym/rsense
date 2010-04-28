@@ -56,3 +56,11 @@ a = SortedSet.new
 a << 1
 a.max_|_
 EOF
+
+type-inference --test=OptionParser --should-be=String,Boolean,TrueClass,FalseClass
+require 'optparse'
+OptionParser.new do |opt|
+  opt.on('-a') {|v| v_|_}
+  opt.order!
+end
+EOF

@@ -317,7 +317,7 @@ Mostly done.
 | open3            |        |
 | open-uri         |        |
 | openssl          |        |
-| optparse         |        |
+| optparse         |  Done  |
 | ostruct          |        |
 | parsearg         |        |
 | parsedate        |        |
