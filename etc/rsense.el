@@ -241,9 +241,16 @@ Nil means proper socket will be selected.")
   (ignore-errors
     (rsense-lookup-document (cadr item))))
 
+(defun ac-rsense-cbase-of-qname (qname)
+  (and (stringp qname)
+       (string-match "^\\(.*\\)[#.][^#.]+$" qname)
+       (match-string 1 qname)))
+
 (defun ac-rsense-candidates ()
   (mapcar (lambda (entry)
-            (cons (car entry) entry))
+            (propertize (car entry)
+                        'value entry
+                        'summary (ac-rsense-cbase-of-qname (cadr entry))))
           (assoc-default 'completion
                          (rsense-code-completion (current-buffer)
                                                  ac-point
