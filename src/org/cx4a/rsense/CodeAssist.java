@@ -188,7 +188,7 @@ public class CodeAssist {
         private int closest;
         private String name;
 
-        public WhereEventListener(int line) {
+        public void prepare(int line) {
             this.line = line;
         }
 
@@ -215,10 +215,15 @@ public class CodeAssist {
     }
 
     private class FindDefinitionEventListener implements Project.EventListener {
-        private Set<SourceLocation> locations;
+        private int counter = 0;
+        private String prefix;
+        private Set<SourceLocation> locations = new HashSet<SourceLocation>();
 
-        public FindDefinitionEventListener() {
-            locations = new HashSet<SourceLocation>();
+        public String setup() {
+            locations.clear();
+
+            // Make unique prefix to distinguish older find-definition command results.
+            return prefix = FIND_DEFINITION_METHOD_NAME_PREFIX + counter++;
         }
 
         public Collection<SourceLocation> getLocations() {
@@ -230,9 +235,9 @@ public class CodeAssist {
             if (context.main
                 && event.type == EventType.METHOD_MISSING
                 && (vertex = (CallVertex) event.vertex) != null
-                && vertex.getName().startsWith(FIND_DEFINITION_METHOD_NAME_PREFIX)
+                && vertex.getName().startsWith(prefix)
                 && vertex.getReceiverVertex() != null) {
-                String realName = vertex.getName().substring(FIND_DEFINITION_METHOD_NAME_PREFIX.length());
+                String realName = vertex.getName().substring(prefix.length());
                 for (IRubyObject receiver : vertex.getReceiverVertex().getTypeSet()) {
                     RubyClass receiverType = receiver.getMetaClass();
                     if (receiverType != null) {
@@ -276,6 +281,8 @@ public class CodeAssist {
     private final Context context;
     private Map<String, Project> projects;
     private Project sandbox;
+    private FindDefinitionEventListener definitionFinder;
+    private WhereEventListener whereListener;
 
     private SpecialMethod typeInferenceMethod = new SpecialMethod() {
             public void call(Ruby runtime, TypeSet receivers, Vertex[] args, Block blcck, Result result) {
@@ -609,17 +616,17 @@ public class CodeAssist {
             prepare(project);
             Node ast = parseFileContents(file, readAll(reader));
 
-            WhereEventListener eventListener = new WhereEventListener(line);
-            project.addEventListener(eventListener);
+            whereListener.prepare(line);
+            project.addEventListener(whereListener);
             try {
                 project.getGraph().load(ast);
             } finally {
-                project.removeEventListener(eventListener);
+                project.removeEventListener(whereListener);
             }
 
             WhereResult result = new WhereResult();
             result.setAST(ast);
-            result.setName(eventListener.getName());
+            result.setName(whereListener.getName());
             
             return result;
         } catch (IOException e) {
@@ -643,20 +650,19 @@ public class CodeAssist {
     public FindDefinitionResult findDefinition(Project project, File file, Reader reader, Location loc) {
         try {
             prepare(project);
-            Node ast = parseFileContents(file, readAndInjectCode(reader, loc, FIND_DEFINITION_METHOD_NAME_PREFIX, "(?:\\.|::|\\s)(\\w+?[!?]?)", null));
+            Node ast = parseFileContents(file, readAndInjectCode(reader, loc, definitionFinder.setup(), "(?:\\.|::|\\s)(\\w+?[!?]?)", null));
 
-            FindDefinitionEventListener eventListener = new FindDefinitionEventListener();
-            project.addEventListener(eventListener);
+            project.addEventListener(definitionFinder);
             try {
                 project.getGraph().load(ast);
             } finally {
-                project.removeEventListener(eventListener);
+                project.removeEventListener(definitionFinder);
             }
 
             FindDefinitionResult result = new FindDefinitionResult();
             result.setAST(ast);
 
-            result.setLocations(eventListener.getLocations());
+            result.setLocations(definitionFinder.getLocations());
 
             return result;
         } catch (IOException e) {
@@ -671,6 +677,8 @@ public class CodeAssist {
         this.sandbox = new Project("(sandbox)", new File("."));
         this.sandbox.setLoadPath(options.getLoadPath());
         this.sandbox.setGemPath(options.getGemPath());
+        this.definitionFinder = new FindDefinitionEventListener();
+        this.whereListener = new WhereEventListener();
         openProject(this.sandbox);
     }
 
