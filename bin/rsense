@@ -4,9 +4,25 @@ require 'optparse'
 require 'stringio'
 require 'socket'
 require 'shellwords'
+require 'pathname'
 
 def Shellwords.unshellwords(array)
   array.map {|elt| elt.index(/\s/) ? "\"#{elt.gsub(/([\"\\$])/, '\\1')}\"" : elt}.join(' ')
+end
+
+# win32-deamon class
+module Win32
+  class Daemon
+    def self.set_proc(proc)
+      @@proc = proc
+    end
+    
+    def service_main
+      while running?
+        @@proc.call
+      end
+    end
+  end
 end
 
 class RSense
@@ -152,14 +168,14 @@ class RSense
 
   def start_server
     case @args[0]
-    when 'server'
-      close_server
-      server_process
-    when 'zap'
+    when 'server', 'zap', 'service'
       # do nothing here
     else
       # already started
       return if File.exists? @pid_file
+      
+      die "Server daemon is not supported in Windows.\nRegister service instead like:\n
+    > ruby #{$0} service create" if IS_WIN
 
       fork do
         daemonize
@@ -181,9 +197,41 @@ class RSense
 
   def exec_command
     args = @args
-    if args[0] == 'zap'
+    case args[0]
+    when 'server'
+      close_server
+      server_process
+    when 'zap'
       File.unlink @pid_file rescue nil
       args = ['exit']
+    when 'service'
+      begin
+        require 'rubygems'
+        require 'win32/service'
+        require 'win32/daemon'
+        # Empty to avoid exiting windows service
+        def puts(s) end
+      rescue LoadError
+        die 'Please install win32-service and win32-daemon gems first.'
+      end
+      case args[1]
+      when 'create'
+        path = Pathname.new(@rsense_home).realpath
+        Win32::Service.create(:service_name       => 'RSense',
+                              :service_type       => Win32::Service::WIN32_OWN_PROCESS,
+                              :description        => 'RSense Service',
+                              :start_type         => Win32::Service::DEMAND_START,
+                              :binary_path_name   => "rubyw.exe \"#{path}/bin/rsense\" service daemon",
+                              :display_name       => 'RSense')
+      when 'delete'
+        Win32::Service.delete('RSense')
+      when 'daemon'
+        Win32::Daemon.set_proc method('server_process')
+        Win32::Daemon.mainloop
+      else
+        die 'Please specify create/delete/start/stop/status as an argument.' unless args[1]
+      end
+      return
     end
     open_client do |sock|
       sock.puts Shellwords.unshellwords(args)

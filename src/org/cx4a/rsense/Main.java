@@ -150,6 +150,7 @@ public class Main {
 
         Integer interval = options.getProgress();
         progressMonitor = new ProgressMonitor(out, interval != null ? interval * 1000 : -1);
+        progressMonitor.setDaemon(true);
     }
 
     private void start(String command, Options options) {
