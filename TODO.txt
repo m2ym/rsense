@@ -6,14 +6,11 @@
 * callcc
 * Recursive customization
 * Integrate document server
-* Aliasing new method (date.rb)
 * Scanf type inference
-* Aliased method name
 * Performance tuning
   * CPU usage
   * Memory footprint
   * Cloning template
   * Cut branches
   * Statistics
-* InstVar megamorphic
 * stubs load-path

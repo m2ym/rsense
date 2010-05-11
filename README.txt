@@ -10,4 +10,4 @@ Documentation
 License
 -------
 
-RSense is distributed under the term of GPLv3. And its documentations under doc directory is distributed under the term of GFDL.
+RSense is distributed under the term of GPLv3+. And its documentations under doc directory is distributed under the term of GFDL.

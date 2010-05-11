@@ -20,16 +20,14 @@ Introduction
 
 ### What is RSense? ###
 
-RSense is a development tools for [Ruby][], which is written in Java. Following [UNIX philosophy][], RSense can be used from anywhere easily. Generally, it is used from editors such like Emacs, Vim, etc. We are struggling to keep a transparency for hackers to learn, extend, and fix easily.
+RSense is a [Ruby][] development tools, which is specialized for high function text editors such as [Emacs][] and [Vim][]. Following [UNIX philosophy][], RSense has a high transparency and is easy to learn, extend and fix for users. Adopting copyleft license, it also keeps being a [free software](http://www.gnu.org/philosophy/free-sw.html).
 
 ### Features ###
-
-Main available features are:
 
 * Code completion
 * Type inspection
 
-In the future, the following features will be also available:
+In the future, the following features will be available:
 
 * Static code checking
 * Definition jump
@@ -50,7 +48,6 @@ Installation
 * JRE 1.5 or later
   * SunJDK or OpenJDK
 * Editors
-
   * Emacs
   * Vim
 
@@ -79,7 +76,7 @@ You need to install Java Runtime Environment 1.5 or later. [SunJDK](http://java.
 
 ### Install RSense ###
 
-Basically, You just copy a package directory to some directory. **Note that currently there is a bug that RSense doesn't work in a space containing directory such as `C:\\Documents and Settings`.** This bug will be fixed in v0.3.
+Basically, You just copy a package directory to some directory.
 
 #### UNIX-like Systems ####
 
@@ -92,7 +89,7 @@ For later sections, `RSENSE_HOME` environment variable should be read as a direc
     $ echo $RSENSE_HOME
     /home/tomo/opt/rsense-0.1
 
-After installation, make sure that you can execute `bin/rsnese` script which hides a complexity about server/client model.
+After installation, make sure that you can execute `bin/rsnese` script. This script has a role hiding a complexity about server/client model and executes server on demand automatically by using `fork(2)` and `setsid(2)` in UNIX-like systems. So there is no need to care about server/client model for users.
 
     $ cd $RSENSE_HOME
     $ chmod +x bin/rsense
@@ -113,19 +110,53 @@ You may copy the package directory to `C:\\` or `C:\\Program Files`. For later s
 
     > echo %RSENSE_HOME%
     C:\rsense-0.1
+    > echo %RSENSE_HOME%
 
-After installation, make sure that you can execute `bin\rsense` script which hides a complexity about server/client model. Unlink unix-like systems, Windows doesn't have `fork(2)` and `setsid(2)`, `bin\rsense` can't run service program in background. So **you have to run server first** and then run client.
+After installation, make sure that you can execute `bin\rsense` script, which hides a complexity about server/client model. Unlike UNIX-like systems, Windows doesn't have effective ways to execute server in background automatically, so **users need to execute server manually**. There are two ways to execute server. One is to execute `bin\rsense` with passing `server` command in command prompt and another is to execute as Windows service. **You need to execute server before using RSense in both case**. To execute in command prompt, execute the folloing command:
 
-    > cd %RSENSE_HOME%
     > ruby bin\rsense server
+
+To execute as Windows service, first of all, you need to install `win32-service` from RubyGems as following. `gem` program must be installed, but almost installers install `gem` program automatically.
+
+    > gem install win32-service
+
+Then, register RSense as a Windows service.
+
+    > ruby bin\rsense service create
+
+To delete service, do
+
+    > ruby bin\rsense service delete
+
+To start the service, click "Start" label in "Services" or do
+
+    > ruby bin\rsense service start
+    Service started
+
+You can also use `net` program.
+
+    > net start RSense
+
+To stop the service, clik "Stop" label in "Services" or do
+
+    > ruby bin\rsense service stop
+    Service stopped
+
+You can also use `net` program.
+
+    > net stop RSense
+
+To see service status, do
+
+    > ruby bin\rsense service status
+    Running
 
 Server will be listening to TCP/77367 by default. Then run client in another command prompt:
 
-    > cd %RSENSE_HOME%
     > ruby bin\rsense version
     RSense 0.1
 
-Finally create a config file named `%HOME%\\.rsense` that tells RSense `load-path` and `gem-path` of Ruby runtime. If you don't set `HOME` environment variable, you can see its default value and set by:
+You may find it is correctly running. Finally create a config file named `%HOME%\\.rsense` that tells RSense `load-path` and `gem-path` of Ruby runtime. If you don't set `HOME` environment variable, you can see its default value and set by:
 
     > echo %HOME%
     %HOME%
@@ -156,11 +187,13 @@ An Emacs extension for RSense is found at `etc/rsense.el`. Add the following cod
     (add-to-list 'load-path (concat rsense-home "/etc"))
     (require 'rsense)
 
+There is no need to setup `load-path` with `add-to-list` if you copy `etc/rsense.el` to `load-path` directories.
+
 You also need to install [`auto-complete-mode`](http://cx4a.org/software/auto-complete/) if you want to use with `aut-complete-mode`. See documentation for how to install.
 
 ### Install Vim Plugin ###
 
-An Vim plugin for RSense is found at `etc/rsense.vim`. Just copy `etc/rsense.vim` to your plugins directory. For unix-like systems:
+An Vim plugin for RSense is found at `etc/rsense.vim`. Just copy `etc/rsense.vim` to your plugins directory. For UNIX-like systems:
 
     $ mkdir -p ~/.vim/plugin
     $ cp etc/rsense.vim ~/.vim/plugin
@@ -179,11 +212,11 @@ Then write the following code to `.vimrc`:
 Usage
 -----
 
-**For Windows, you have to run server before anytime you use client**, as we said. See [installation](#Windows) section.
+**For Windows, you have to run server before anytime you use client**, as we said. See [installation](#Windows) section for details.
 
 ### Emacs ###
 
-First of all, you should make sure that you can use RSense from Emacs by `M-x rsense-version`. If you see nothing, there is a problem probably. See [trouble shooting](#Trouble_Shooting).
+First of all, you should make sure that you can see RSense version information by `M-x rsense-version`. If you see nothing, there is a problem probably. See [trouble shooting](#Trouble_Shooting).
 
 #### Code Completion #### {#Code_Completion_in_Emacs}
 
@@ -245,6 +278,15 @@ There are other commands operating a project and RSense itself.
 `rsense-close-project`
 : Close currently opened project.
 
+`rsense-service-start`
+: Start Windows service.
+
+`rsense-service-stop`
+: STop Windows service.
+
+`rsense-service-status`
+: Show Windows service status.
+
 `rsense-clear`
 : Clear current environment.
 
@@ -252,6 +294,10 @@ There are other commands operating a project and RSense itself.
 : Exit RSense server.
 
 ### Vim ###
+
+First of all, you should make sure that you can see RSense version information by `:RSenseVersion`. If you see nothing, there is a problem probably. See [trouble shooting](#Trouble_Shooting).
+
+#### Code Completion #### {#Code_Completion_in_Vim}
 
 You can complete method name and constant name by `^X ^U` after `.` and `::`.
 
@@ -263,13 +309,51 @@ If you want to start completion automatically, add the following code to `.vimrc
 
 If you don't use `autocomplpop.vim` or related plugins, you need to type `^X ^O` to start omni completion.
 
-Currently, Vim plugin is experimentally implemented, because I am not familiar with Vim script. So no commands are available for Vim. Use [Command Line Interface](#) instead at now.
+#### Type Help #### {#Type_Help_in_Vim}
+
+You can infer types of an expression at point by `:RSenseTypeHelp`.
+
+#### Definition Jump #### {#Definition_Jump_in_Vim}
+
+You can jump to definition of a method or a constant you are pointing at by `:RSenseJumpToDefinition`.
+
+#### Where Is #### {#Where_Is_in_Vim}
+
+You can find which class/method you are editing by `:RSenseWhereIs`.
+
+#### Other Commands #### {#Other_Commands_in_Vim}
+
+There are other commands operating a project and RSense itself.
+
+`:RSenseVersion`
+: See RSense version.
+
+`:RSenseOpenProject`
+: Open a project of specified directory.
+
+`:RSenseCloseProject`
+: Close currently opened project.
+
+`:RSenseServiceStart`
+: Start Windows service.
+
+`:RSenseServiceStop`
+: STop Windows service.
+
+`:RSenseServiceStatus`
+: Show Windows service status.
+
+`:RSenseClear`
+: Clear current environment.
+
+`:RSenseExit`
+: Exit RSense server.
 
 ### Command Line Interface ###
 
 You can also use RSense from terminal as CLI (command line interface). There are two CLI frontends in RSense. The first one is called [*primitive frontend*](#Primitive_Frontend) which means only one process can run once a command. The second one is called [*wrapper frontend*](#Wrapper_Frontend) which means you don't have to care about processes. In other words, in wrapper frontend, you can execute a command regardless server/client model and initialization time. Wrapper frontend would be used in general.
 
-Code examples for later sections are valid only for unix-like systems.
+Code examples for later sections are valid only for UNIX-like systems.
 
 #### Primitive Frontend ####
 
@@ -568,6 +652,7 @@ Trouble Shooting
 
 Check list:
 
+* Server or service is running?
 * Ruby interpreter is executable?
 * Java program is executable?
 * Primitive frontend works well?
@@ -597,10 +682,10 @@ Check list:
   
   For Windows:
   ~~~~
-  > ruby bin\rsense version
   > ruby bin\rsense server
   ...
   ^C
+  > ruby bin\rsense version
   RSense 0.1
   ~~~~
 
@@ -626,6 +711,9 @@ Reporting Bugs
 
 Visit [RSense Bug Tracking System](http://cx4a.org/redmine/projects/rsense) and create a new ticket.
 
+[Emacs]: http://www.gnu.org/software/emacs/
+[Vim]: http://www.vim.org/
 [Ruby]: http://www.ruby-lang.org/ "Ruby Programming Language"
+[Rumix]: http://ruby.morphball.net/rumix/
 [UNIX philosophy]: http://en.wikipedia.org/wiki/Unix_philosophy
 [Java Supported Encodings]: http://java.sun.com/j2se/1.5.0/docs/guide/intl/encoding.doc.html

@@ -547,7 +547,8 @@ public class Main {
                     out.print("(");
                     out.print("(location");
                     for (SourceLocation location : result.getLocations()) {
-                        out.printf(" (\"%s\" . %d)", location.getFile(), location.getLine());
+                        if (location.getFile() != null)
+                            out.printf(" (%s . %d)", emacsStringLiteral(location.getFile()), location.getLine());
                     }
                     out.println(")");
                     codeAssistError(result, options);
@@ -889,5 +890,9 @@ public class Main {
         if (emacsFormat) {
             out.println(")");
         }
+    }
+
+    private String emacsStringLiteral(String s) {
+        return "\"" + s.replace("\\", "\\\\").replaceAll("\"", "\\\"") + "\"";
     }
 }

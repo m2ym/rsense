@@ -18,9 +18,7 @@ module Win32
     end
     
     def service_main
-      while running?
-        @@proc.call
-      end
+      @@proc.call method(:running?)
     end
   end
 end
@@ -29,6 +27,7 @@ class RSense
   IS_WIN = /mswin(?!ce)|mingw|cygwin|bccwin/ =~ RUBY_PLATFORM.downcase
   END_MARK = 'END'
   USE_HEART_BEAT = true
+  SERVICE_NAME = 'RSense'
 
   def initialize(args)
     @rsense_home  = ENV['RSENSE_HOME'] || File.dirname(File.dirname(File.expand_path($0)))
@@ -36,6 +35,7 @@ class RSense
     @classpath    = ENV['RSENSE_CLASSPATH']
     @pid_file     = ENV['RSENSE_PID_FILE']
     @log          = ENV['RSENSE_LOG']
+    @service_log  = ENV['RSENSE_SERVICE_LOG']
     @debug        = ENV['RSENSE_DEBUG']
     @config       = ENV['RSENSE_CONFIG']
     @oneshot      = false
@@ -64,6 +64,8 @@ class RSense
 
     @pid_file ||= IS_WIN ? File.join(@rsense_home, 'rsense-pid') : '/tmp/rsense-pid'
 
+    @service_log ||= File.join(@rsense_home, 'rsense-service.log') if IS_WIN
+    
     @classpath ||= '.' + ['', 'rsense.jar', 'antlr-runtime-3.2.jar', 'jruby.jar'].join(File.join(File::PATH_SEPARATOR + @rsense_home, 'lib', ''))
 
     @config ||= File.join(ENV['HOME'], '.rsense')
@@ -99,7 +101,7 @@ class RSense
     die "No server response.\nTry to kill the process and delete pid file #@pid_file."
   end
 
-  def server_process
+  def server_process(cont_proc = nil)
     begin
       command = %W(java -cp #@classpath org.cx4a.rsense.Main script)
       command += %W(--home=#@rsense_home --no-prompt --end-mark=#{END_MARK} --config=#@config)
@@ -131,13 +133,15 @@ class RSense
           puts "start: #{@host ? (@host + ':' + @port.to_s) : @socket_path} (#$$)"
           loop do
             begin
+              break if cont_proc && !cont_proc.call
+              next unless select([serv], nil, nil, 0.1)
               sock = serv.accept
               cmd = sock.gets
               puts "recv: #{cmd}"
               if /^(exit|quit)/ =~ cmd
                 sock.puts END_MARK
                 sock.close
-                return
+                break
               end
               io.puts cmd
               sock.close_read
@@ -162,7 +166,6 @@ class RSense
       $stderr.puts $!.backtrace
     ensure
       io.close if io && !io.closed?
-      exit
     end
   end
 
@@ -174,8 +177,13 @@ class RSense
       # already started
       return if File.exists? @pid_file
       
-      die "Server daemon is not supported in Windows.\nRegister service instead like:\n
-    > ruby #{$0} service create" if IS_WIN
+      die "Server daemon is not supported in Windows.\nRegister service instead like:
+
+    > ruby #{$0} service create
+
+And start service like:
+
+    > ruby #{$0} service start" if IS_WIN
 
       fork do
         daemonize
@@ -201,6 +209,7 @@ class RSense
     when 'server'
       close_server
       server_process
+      exit
     when 'zap'
       File.unlink @pid_file rescue nil
       args = ['exit']
@@ -209,29 +218,42 @@ class RSense
         require 'rubygems'
         require 'win32/service'
         require 'win32/daemon'
-        # Empty to avoid exiting windows service
-        def puts(s) end
       rescue LoadError
         die 'Please install win32-service and win32-daemon gems first.'
       end
       case args[1]
       when 'create'
         path = Pathname.new(@rsense_home).realpath
-        Win32::Service.create(:service_name       => 'RSense',
+        command = Shellwords.unshellwords %W(rubyw.exe #{path}/bin/rsense --config=#@config service daemon)
+        Win32::Service.create(:service_name       => SERVICE_NAME,
                               :service_type       => Win32::Service::WIN32_OWN_PROCESS,
                               :description        => 'RSense Service',
                               :start_type         => Win32::Service::DEMAND_START,
-                              :binary_path_name   => "rubyw.exe \"#{path}/bin/rsense\" service daemon",
+                              :binary_path_name   => command,
                               :display_name       => 'RSense')
       when 'delete'
-        Win32::Service.delete('RSense')
+        Win32::Service.delete(SERVICE_NAME)
       when 'daemon'
-        Win32::Daemon.set_proc method('server_process')
+        $stdout = $strerr = open(@service_log, 'a')
+        # Redefine puts() not to hang Windows service (I don't know why)
+        def puts(*a)
+          $stdout.puts *a
+          $stdout.flush
+        end
+        Win32::Daemon.set_proc method(:server_process)
         Win32::Daemon.mainloop
+      when 'start'
+        Win32::Service.start(SERVICE_NAME)
+        puts 'Service started'
+      when 'stop'
+        Win32::Service.stop(SERVICE_NAME)
+        puts 'Service stopped'
+      when 'status'
+        puts Win32::Service.status(SERVICE_NAME).current_state.capitalize
       else
-        die 'Please specify create/delete/start/stop/status as an argument.' unless args[1]
+        die 'Please specify create/delete/start/stop/status as an argument.'
       end
-      return
+      exit
     end
     open_client do |sock|
       sock.puts Shellwords.unshellwords(args)

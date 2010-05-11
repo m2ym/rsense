@@ -40,7 +40,7 @@ Nil means proper socket will be selected.")
 (defcustom rsense-log-file nil
   "RSense log file.")
 
-(defcustom rsense-debug t
+(defcustom rsense-debug nil
   "Non-nil means RSense runs on debug mode.")
 
 (defcustom rsense-temp-file nil
@@ -84,15 +84,17 @@ Nil means proper socket will be selected.")
                (apply 'rsense-args
                       (append command '("--format=emacs"))))))
 
-(defun rsense-command (&rest command)
-  (car-safe
-   (read-from-string
-    (with-output-to-string
+(defun rsense-command-to-string (&rest command)
+  (with-output-to-string
       (with-current-buffer standard-output
-        (rsense-command-1 command nil))))))
+        (rsense-command-1 command nil))))
 
 (defun rsense-command-no-output (&rest command)
   (rsense-command-1 command t))
+
+(defun rsense-command (&rest command)
+  (let ((output (apply 'rsense-command-to-string command)))
+    (car-safe (read-from-string output))))
 
 (defun* rsense-buffer-command (buffer
                                command
@@ -200,6 +202,7 @@ Nil means proper socket will be selected.")
                                            (popup-make-item (format "%s:%s" (car loc) (cdr loc))
                                                             :value loc))
                                          locations)))
+        ;; TODO selection interface
         (setq loc (car locations)))
       (if (null loc)
           (funcall (if (featurep 'popup) 'popup-tip 'message)
@@ -236,6 +239,21 @@ Nil means proper socket will be selected.")
 (defun rsense-version ()
   (interactive)
   (message "%s" (rsense-command "version")))
+
+(defun rsense-service-start ()
+  "Start Windows service."
+  (interactive)
+  (message "%s" (rsense-command-to-string "service" "start")))
+
+(defun rsense-service-stop ()
+  "Stop Windows service."
+  (interactive)
+  (message "%s" (rsense-command-to-string "service" "stop")))
+
+(defun rsense-service-status ()
+  "Show Windows service status."
+  (interactive)
+  (message "%s" (rsense-command-to-string "service" "status")))
 
 (defun ac-rsense-documentation (item)
   (ignore-errors

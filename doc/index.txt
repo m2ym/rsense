@@ -1,10 +1,10 @@
-Title: RSense - The most useful development tools for Ruby
+Title: RSense - A Ruby development tools for Emacs and Vim
 CSS: style.css
 
 RSense
 ======
 
-*The most useful development tools for [Ruby][]*
+*A [Ruby][] development tools for Emacs and Vim*
 
 \[[Japanese](index.ja.txt)]
 
@@ -17,17 +17,15 @@ RSense
 What is RSense?
 ---------------
 
-RSense is a development tools for [Ruby][], which is written in Java. Following [UNIX philosophy][], RSense can be used from anywhere easily. Generally, it is used from editors such like Emacs, Vim, etc. We are struggling to keep a transparency for hackers to learn, extend, and fix easily.
+RSense is a [Ruby][] development tools, which is specialized for high function text editors such as [Emacs][] and [Vim][]. Following [UNIX philosophy][], RSense has a high transparency and is easy to learn, extend and fix for users. Adopting copyleft license, it also keeps being a [free software](http://www.gnu.org/philosophy/free-sw.html).
 
 Features
 --------
 
-Main available features are:
-
 * Code completion
 * Type inspection
 
-In the future, the following features will be also available:
+In the future, the following features will be available:
 
 * Static code checking
 * Definition jump
@@ -80,13 +78,15 @@ Visit [RSense Bug Tracking System](http://cx4a.org/redmine/projects/rsense) and 
 License
 -------
 
-This software is distributed under the term of [GPLv3][].
+This software is distributed under the term of [GPLv3][]+.
 
 Contribution
 ------------
 
 We welcome any contribution. Read [development guide](devel.txt).
 
+[Emacs]: http://www.gnu.org/software/emacs/
+[Vim]: http://www.vim.org/
 [Ruby]: http://www.ruby-lang.org/ "Ruby Programming Language"
 [UNIX philosophy]: http://en.wikipedia.org/wiki/Unix_philosophy
 [GPLv3]: http://gplv3.fsf.org/
