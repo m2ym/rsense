@@ -1,4 +1,4 @@
-Title: RSense - A Ruby development tools for Emacs and Vim
+Title: RSense - A Ruby development tools for Emacs, Vim and others
 CSS: style.css
 
 RSense
@@ -17,18 +17,18 @@ RSense
 What is RSense?
 ---------------
 
-RSense is a [Ruby][] development tools, which is specialized for high function text editors such as [Emacs][] and [Vim][]. Following [UNIX philosophy][], RSense has a high transparency and is easy to learn, extend and fix for users. Adopting copyleft license, it also keeps being a [free software](http://www.gnu.org/philosophy/free-sw.html).
+RSense is a [Ruby][] development tools, which is specialized for high function text editors such as [Emacs][], [Vim][], etc. Following [UNIX philosophy][], RSense has a high transparency and is easy to learn, extend and fix for users. Adopting copyleft license, it also keeps being a [free software](http://www.gnu.org/philosophy/free-sw.html).
 
 Features
 --------
 
 * Code completion
 * Type inspection
+* Definition jump
 
 In the future, the following features will be available:
 
 * Static code checking
-* Definition jump
 * Caller jump
 * Refactoring
 
@@ -47,7 +47,14 @@ Demo
 Downloads
 ---------
 
-### Latest Stable ###
+### Latest Stable (v0.3) ###
+
+[Changes v0.3](changes-v0.3.txt)
+
+* [rsense-0.3.tar.bz2](/pub/rsense/rsense-0.3.tar.bz2)
+* [rsense-0.3.zip](/pub/rsense/rsense-0.3.zip)
+
+### v0.2 ###
 
 * [rsense-0.2.tar.bz2](/pub/rsense/rsense-0.2.tar.bz2)
 * [rsense-0.2.zip](/pub/rsense/rsense-0.2.zip)

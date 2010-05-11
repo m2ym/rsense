@@ -1,0 +1,54 @@
+Title: RSense - v0.3の変更点
+CSS: style.css
+
+RSense v0.3の変更点
+===================
+
+[Index](index.txt)
+
+\[[English](changes-v0.3.txt)]
+
+v0.2からv0.3の主な変更点は次のようになります。詳しくは[ユーザーマニュアル](manual.ja.txt)をご覧ください。
+
+新機能
+------
+
+* [定義元ジャンプ](manual.ja.txt#Definition_Jump_in_Emacs) (#35)
+* [Where Is](manual.ja.txt#Where_Is_in_Emacs)
+* auto-complete-modeやVimにおけるメソッドシグネチャ表示
+* 部分的な`Proc`, `lambda`対応 (#6)
+* Windowsサービス対応 (#15)
+
+修正されたバグ
+--------------
+
+* スペースを含むディレクトリでの問題 (#14)
+* CRLFのファイルでの問題 (#19)
+* パフォーマンス改善 (#3)
+* メモリ使用量削減 (#4)
+* エディタが固まる問題 (#9)
+* いくつかのクリティカルな問題と多くの問題
+
+Emacsの新しいコマンド
+---------------------
+
+* [`rsense-jump-to-definition`](manual.ja.txt#Definition_Jump_in_Emacs)
+* [`rsense-where-is`](manual.ja.txt#Where_Is_in_Emacs)
+* `rsense-service-start`
+* `rsense-service-stop`
+* `rsense-service-status`
+
+Vimの新しいコマンド
+-------------------
+
+* [`:RSenseTypeHelp`](manual.ja.txt#Type_Help_in_Vim)
+* [`:RSenseDefinitionJump`](manual.ja.txt#Definition_Jump_in_Vim)
+* [`:RSenseWhereIs`](manual.ja.txt#Where_Is_in_Vim)
+* `:RSenseVersion`
+* `:RSenseOpenProject`
+* `:RSenseCloseProject`
+* `:RSenseServiceStart`
+* `:RSenseServiceStop`
+* `:RSenseServiceStatus`
+* `:RSenseClear`
+* `:RSenseExit`

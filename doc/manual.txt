@@ -20,17 +20,17 @@ Introduction
 
 ### What is RSense? ###
 
-RSense is a [Ruby][] development tools, which is specialized for high function text editors such as [Emacs][] and [Vim][]. Following [UNIX philosophy][], RSense has a high transparency and is easy to learn, extend and fix for users. Adopting copyleft license, it also keeps being a [free software](http://www.gnu.org/philosophy/free-sw.html).
+RSense is a [Ruby][] development tools, which is specialized for high function text editors such as [Emacs][], [Vim][], etc. Following [UNIX philosophy][], RSense has a high transparency and is easy to learn, extend and fix for users. Adopting copyleft license, it also keeps being a [free software](http://www.gnu.org/philosophy/free-sw.html).
 
 ### Features ###
 
 * Code completion
 * Type inspection
+* Definition jump
 
 In the future, the following features will be available:
 
 * Static code checking
-* Definition jump
 * Caller jump
 * Refactoring
 

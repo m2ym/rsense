@@ -1,0 +1,54 @@
+Title: RSense - Changes v0.3
+CSS: style.css
+
+RSense Changes v0.3
+===================
+
+[Index](index.txt)
+
+\[[Japanese](changes-v0.3.ja.txt)]
+
+Major changes from v0.2 to v0.3. See also [documentation](manual.txt).
+
+New Features
+------------
+
+* [Definition jump](manual.txt#Definition_Jump_in_Emacs) (#35)
+* [Where Is](manual.txt#Where_Is_in_Emacs)
+* Method signature with auto-complete-mode and Vim
+* `Proc` and `lambda` are partially supported (#6)
+* Support Windows service (#15)
+
+Fixed Bugs
+----------
+
+* White space containing directory bug (#14)
+* CRLF file bug (#19)
+* Improve performance (#3)
+* Reduce memory usage (#4)
+* Stalling editors bug (#9)
+* Some critical bugs and many bugs
+
+New Commands for Emacs
+----------------------
+
+* [`rsense-jump-to-definition`](manual.txt#Definition_Jump_in_Emacs)
+* [`rsense-where-is`](manual.txt#Where_Is_in_Emacs)
+* `rsense-service-start`
+* `rsense-service-stop`
+* `rsense-service-status`
+
+New Commands for Vim
+--------------------
+
+* [`:RSenseTypeHelp`](manual.txt#Type_Help_in_Vim)
+* [`:RSenseDefinitionJump`](manual.txt#Definition_Jump_in_Vim)
+* [`:RSenseWhereIs`](manual.txt#Where_Is_in_Vim)
+* `:RSenseVersion`
+* `:RSenseOpenProject`
+* `:RSenseCloseProject`
+* `:RSenseServiceStart`
+* `:RSenseServiceStop`
+* `:RSenseServiceStatus`
+* `:RSenseClear`
+* `:RSenseExit`
