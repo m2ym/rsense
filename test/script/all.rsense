@@ -1,6 +1,0 @@
-script builtin.rsense
-script stdlib.rsense
-script misc.rsense
-script regression.rsense
-script where.rsense
-script find-definition.rsense
