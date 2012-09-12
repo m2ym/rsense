@@ -149,14 +149,15 @@ You also need to install [`auto-complete-mode`](http://cx4a.org/software/auto-co
 
 ### Install Vim Plugin ###
 
-An Vim plugin for RSense is found at `etc/rsense.vim`. Just copy `etc/rsense.vim` to your plugins directory. For unix-like systems:
+An Vim plugin for RSense is found at `etc/vim/plugin/rsense.vim`. Just copy `etc/vim/plugin/rsense.vim` to your plugins directory. For unix-like systems:
 
     $ mkdir -p ~/.vim/plugin
-    $ cp etc/rsense.vim ~/.vim/plugin
+    $ cp etc/vim/plugin/rsense.vim ~/.vim/plugin
 
 For Windows:
 
-    > copy etc\rsense.vim "C:\Program Files\Vim\vim72\plugin"
+    > mkdir "C:\Program Files\Vim\.plugin"
+    > copy etc\vim\plugin\rsense.vim "C:\Program Files\Vim\.plugin\"
 
 See `help 'runtimepath'` for more detail.
 
