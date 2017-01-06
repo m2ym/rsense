@@ -96,7 +96,7 @@ Nil means proper socket will be selected.")
   (let ((output (apply 'rsense-command-to-string command)))
     (car-safe (read-from-string output))))
 
-(defun* rsense-buffer-command (buffer
+(defun rsense-buffer-command (buffer
                                command
                                &key
                                remove-until
